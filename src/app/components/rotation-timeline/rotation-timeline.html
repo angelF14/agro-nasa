@@ -1,3 +1,107 @@
-<section class="rotation-timeline">
-  <p>Rotation Timeline (Ciclo 1 → Ciclo 2 → Ciclo 3) placeholder</p>
+<section class="rotation-card">
+  @if (cropEvaluation(); as evalResult) {
+    <div class="eval-section">
+      <header class="eval-header">
+        <div>
+          <h2>
+            Diagnóstico de Aptitud — {{ primaryName(evalResult.crop) }}
+            <span class="eval-sci">({{ evalResult.crop.scientificName }})</span>
+          </h2>
+          <p class="eval-summary">{{ evalResult.summary }}</p>
+        </div>
+
+        <div
+          class="score-badge"
+          [class.score-badge--optimal]="evalResult.overallScore >= 80 && evalResult.isViable"
+          [class.score-badge--acceptable]="evalResult.overallScore < 80 && evalResult.isViable"
+          [class.score-badge--low]="!evalResult.isViable"
+        >
+          <span class="score-badge__number">{{ evalResult.overallScore }}%</span>
+          <span class="score-badge__label">
+            {{ evalResult.overallScore >= 80 && evalResult.isViable ? 'Óptimo' : evalResult.isViable ? 'Viable' : 'No recomendado' }}
+          </span>
+        </div>
+      </header>
+
+      <div class="checks-grid">
+        @for (check of evalResult.checks; track check.label) {
+          <div class="check-item" [attr.data-status]="check.status">
+            <div class="check-item__top">
+              <strong>{{ check.label }}</strong>
+              @if (check.score !== null) {
+                <span class="check-item__score">{{ check.score }}%</span>
+              }
+            </div>
+            <div class="check-item__values">
+              <span><strong>NASA POWER:</strong> {{ check.observed }}</span>
+              <span><strong>Requerido EcoCrop:</strong> {{ check.expected }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  @if (rotationPlan(); as plan) {
+    @if (plan.alerts.length > 0) {
+      <div class="alerts-section">
+        <h3>Alertas Climáticas y de Manejo</h3>
+        <div class="alerts-list">
+          @for (alert of plan.alerts; track alert.id) {
+            <div class="alert-item" [attr.data-severity]="alert.severity">
+              <strong>{{ alert.title }}:</strong> {{ alert.message }}
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <div class="timeline-section">
+      <header class="timeline-header">
+        <h2>Plan de Rotación Recomendado (Ciclo 1 → Ciclo 2 → Ciclo 3)</h2>
+        <p>{{ plan.soilHealthImpactSummary }}</p>
+      </header>
+
+      <div class="cycles-grid">
+        @for (cycle of plan.cycles; track cycle.cycleNumber) {
+          <article class="cycle-card">
+            <div class="cycle-card__header">
+              <span class="cycle-step">Ciclo {{ cycle.cycleNumber }}</span>
+              <span class="cycle-score">{{ cycle.compatibilityScore }}% aptitud</span>
+            </div>
+
+            <h3 class="cycle-crop-name">{{ primaryName(cycle.crop) }}</h3>
+            <p class="cycle-crop-sci">
+              {{ cycle.crop.scientificName }}
+              @if (cycle.crop.family) {
+                — <strong>{{ cycle.crop.family }}</strong>
+              }
+            </p>
+
+            <ul class="cycle-reasons">
+              @for (reason of cycle.reasons; track reason) {
+                <li>{{ reason }}</li>
+              }
+            </ul>
+
+            @if (cycle.agronomicNotes.length > 0) {
+              <div class="cycle-notes">
+                @for (note of cycle.agronomicNotes; track note) {
+                  <p>💡 {{ note }}</p>
+                }
+              </div>
+            }
+          </article>
+        }
+      </div>
+    </div>
+  } @else {
+    <div class="empty-state">
+      <h2>Recomendación de Rotación y Aptitud</h2>
+      <p>
+        Selecciona primero un <strong>lugar en el mapa</strong> (para obtener datos reales de NASA POWER)
+        y un <strong>cultivo del catálogo</strong> para generar el diagnóstico de aptitud y el plan de rotación de 3 ciclos.
+      </p>
+    </div>
+  }
 </section>

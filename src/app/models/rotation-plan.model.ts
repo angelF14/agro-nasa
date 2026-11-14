@@ -1,6 +1,22 @@
 import { Crop } from './crop.model';
 import { FarmEnvironmentProfile } from './farm-environment.model';
 
+export interface ParameterCheck {
+  label: string;
+  observed: string;
+  expected: string;
+  status: 'optimal' | 'acceptable' | 'out-of-range' | 'unknown';
+  score: number | null;
+}
+
+export interface CropEvaluation {
+  crop: Crop;
+  overallScore: number;
+  isViable: boolean;
+  summary: string;
+  checks: ParameterCheck[];
+}
+
 export interface EnvironmentAlert {
   id: string;
   severity: 'info' | 'warning' | 'critical';

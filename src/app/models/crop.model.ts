@@ -56,5 +56,6 @@ export interface Crop extends CropRequirements {
   id: string;
   scientificName: string;
   commonNames: string[];
+  family: string | null;
   category: string;
 }

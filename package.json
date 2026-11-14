@@ -9,7 +9,7 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "serve:ssr:agro-nasa": "node dist/agro-nasa/server/server.mjs",
-    "parsecrops:csv": "node scripts/convert-ecocrop.ts"
+    "parsecrops:csv": "node --experimental-strip-types scripts/convert-ecocrop.ts"
   },
   "prettier": {
     "printWidth": 100,

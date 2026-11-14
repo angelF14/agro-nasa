@@ -64,9 +64,19 @@
             <strong class="climate-metric__value">{{ climate.minTempC }} / {{ climate.maxTempC }} °C</strong>
           </div>
           <div class="climate-metric">
-            <span class="climate-metric__label">Precipitación del Período</span>
-            <strong class="climate-metric__value">{{ climate.totalPrecipitationMm }} mm</strong>
+            <span class="climate-metric__label">Precipitación Período</span>
+            <strong class="climate-metric__value">{{ climate.totalPrecipitationMm }} mm ({{ climate.analyzedDays }} d)</strong>
           </div>
+          <div class="climate-metric">
+            <span class="climate-metric__label">Lluvia Equivalente Anual</span>
+            <strong class="climate-metric__value">{{ climate.annualizedPrecipitationMm }} mm/año</strong>
+          </div>
+          @if (climate.elevationM !== undefined) {
+            <div class="climate-metric">
+              <span class="climate-metric__label">Altitud (NASA DEM)</span>
+              <strong class="climate-metric__value">{{ climate.elevationM }} m s.n.m.</strong>
+            </div>
+          }
           <div class="climate-metric">
             <span class="climate-metric__label">Radiación Solar</span>
             <strong class="climate-metric__value">{{ climate.solarRadiationMjM2Day }} MJ/m²/día</strong>
@@ -84,5 +94,10 @@
     </section>
   }
 
-  <app-rotation-timeline />
+  <app-crop-selector (cropChange)="onCropChange($event)" />
+
+  <app-rotation-timeline
+    [cropEvaluation]="cropEvaluation()"
+    [rotationPlan]="rotationPlan()"
+  />
 </main>

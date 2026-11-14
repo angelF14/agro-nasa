@@ -1,0 +1,79 @@
+<section class="crop-selector-card">
+  <header class="crop-selector-header">
+    <div>
+      <h2>Catálogo de Cultivos Disponibles ({{ filteredCrops().length }})</h2>
+      <p>Busca por nombre común, nombre científico o familia botánica y selecciona el cultivo que deseas evaluar.</p>
+    </div>
+
+    @if (selectedCrop(); as active) {
+      <div class="selected-crop-pill">
+        <span class="selected-crop-pill__badge">Cultivo seleccionado</span>
+        <strong>{{ primaryName(active) }}</strong>
+        <span class="selected-crop-pill__sci">({{ active.scientificName }})</span>
+      </div>
+    }
+  </header>
+
+  <div class="crop-filters">
+    <input
+      type="text"
+      class="crop-filters__search"
+      name="cropSearch"
+      [ngModel]="searchQuery()"
+      (ngModelChange)="onSearchChange($event)"
+      placeholder="Buscar cultivo (ej. frijol, Phaseolus, maíz, Zea mays, papa, Solanum, arroz)..."
+      autocomplete="off"
+    />
+
+    <select
+      class="crop-filters__category"
+      name="cropCategory"
+      [ngModel]="selectedCategory()"
+      (ngModelChange)="onCategoryChange($event)"
+    >
+      @for (cat of categories; track cat.value) {
+        <option [value]="cat.value">{{ cat.label }}</option>
+      }
+    </select>
+  </div>
+
+  @if (isLoading()) {
+    <p class="crop-status">Cargando catálogo FAO EcoCrop...</p>
+  } @else if (filteredCrops().length === 0) {
+    <p class="crop-status">No se encontraron cultivos con ese criterio de búsqueda.</p>
+  } @else {
+    <div class="crop-grid">
+      @for (crop of visibleCrops(); track crop.id) {
+        <button
+          type="button"
+          class="crop-item"
+          [class.crop-item--active]="selectedCrop()?.id === crop.id"
+          (click)="selectCrop(crop)"
+        >
+          <div class="crop-item__top">
+            <strong class="crop-item__name">{{ primaryName(crop) }}</strong>
+            @if (crop.family) {
+              <span class="crop-item__family">{{ crop.family }}</span>
+            }
+          </div>
+          <span class="crop-item__sci">{{ crop.scientificName }}</span>
+          <div class="crop-item__meta">
+            <span>🌡️ {{ crop.temp.optMin }}–{{ crop.temp.optMax }} °C</span>
+            <span>🌧️ {{ crop.rain.optMin }}–{{ crop.rain.optMax }} mm</span>
+            @if (crop.agronomy.cycleDays.min) {
+              <span>⏱️ {{ crop.agronomy.cycleDays.min }}–{{ crop.agronomy.cycleDays.max }} d</span>
+            }
+          </div>
+        </button>
+      }
+    </div>
+
+    @if (visibleCrops().length < filteredCrops().length) {
+      <div class="crop-more">
+        <button type="button" class="btn-more" (click)="showMore()">
+          Mostrar más cultivos ({{ visibleCrops().length }} de {{ filteredCrops().length }})
+        </button>
+      </div>
+    }
+  }
+</section>

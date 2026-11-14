@@ -33,6 +33,12 @@ export interface ClimateSummary {
   minTempC: number;
   /** Total precipitation over analyzed period (mm) */
   totalPrecipitationMm: number;
+  /** Annualized precipitation scaled to 365 days (mm/year) for EcoCrop comparison */
+  annualizedPrecipitationMm?: number;
+  /** Number of valid days in the analyzed period */
+  analyzedDays?: number;
+  /** Site elevation above sea level from NASA POWER geometry (m) */
+  elevationM?: number;
   /** Mean solar radiation (MJ/m²/day) */
   solarRadiationMjM2Day: number;
   /** Mean relative humidity (%) */

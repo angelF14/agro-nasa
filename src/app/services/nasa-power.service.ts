@@ -87,7 +87,8 @@ export class NasaPowerService {
     return this.getRawDailyData(coords, startDate, endDate).pipe(
       map((res) => {
         const param = res?.properties?.parameter ?? {};
-        const t2m = Object.values(param.T2M ?? {});
+        const t2mRaw = Object.values(param.T2M ?? {});
+        const t2mValid = filterNasaFillValues(t2mRaw);
         const t2mMax = filterNasaFillValues(Object.values(param.T2M_MAX ?? {}));
         const t2mMin = filterNasaFillValues(Object.values(param.T2M_MIN ?? {}));
         const precip = filterNasaFillValues(Object.values(param.PRECTOTCORR ?? {}));
@@ -97,14 +98,28 @@ export class NasaPowerService {
         const totalPrecipitationMm = Number(
           precip.reduce((sum, val) => sum + val, 0).toFixed(2)
         );
+        const analyzedDays = precip.length || t2mValid.length;
+        const annualizedPrecipitationMm =
+          analyzedDays > 0
+            ? Number(((totalPrecipitationMm / analyzedDays) * 365).toFixed(2))
+            : totalPrecipitationMm;
+
         const maxTempC = t2mMax.length ? Math.max(...t2mMax) : 0;
         const minTempC = t2mMin.length ? Math.min(...t2mMin) : 0;
+        const rawElevation = res?.geometry?.coordinates?.[2];
+        const elevationM =
+          typeof rawElevation === 'number' && Number.isFinite(rawElevation) && rawElevation !== -999
+            ? Math.round(rawElevation)
+            : undefined;
 
         return {
-          meanTempC: Number(meanValidNasaValues(t2m).toFixed(2)),
+          meanTempC: Number(meanValidNasaValues(t2mRaw).toFixed(2)),
           maxTempC: Number(maxTempC.toFixed(2)),
           minTempC: Number(minTempC.toFixed(2)),
           totalPrecipitationMm,
+          annualizedPrecipitationMm,
+          analyzedDays,
+          elevationM,
           solarRadiationMjM2Day: Number(meanValidNasaValues(solar).toFixed(2)),
           relativeHumidityPct: Number(meanValidNasaValues(rh2m).toFixed(2)),
           heatwaveRisk: maxTempC >= 35 ? 'high' : maxTempC >= 30 ? 'moderate' : 'low',

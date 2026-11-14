@@ -6,6 +6,7 @@ export interface CropProfile {
   id: string;
   scientificName: string;
   commonNames: string[];
+  family: string | null;
   category: string;
   lifeSpan: string;
   temp: {
@@ -60,26 +61,71 @@ export interface CropProfile {
   };
 }
 
-// Helper: safely convert CSV strings to numbers or null
+const FAMILY_SYNONYMS: Record<string, string> = {
+  leguminosae: 'Fabaceae',
+  papilionaceae: 'Fabaceae',
+  mimosaceae: 'Fabaceae',
+  caesalpiniaceae: 'Fabaceae',
+  gramineae: 'Poaceae',
+  umbelliferae: 'Apiaceae',
+  compositae: 'Asteraceae',
+  cruciferae: 'Brassicaceae',
+  palmae: 'Arecaceae',
+  labiatae: 'Lamiaceae',
+  guttiferae: 'Clusiaceae',
+};
+
 const toNum = (val: string | undefined): number | null => {
   if (!val || val.trim() === '' || val.trim().toUpperCase() === 'NA') return null;
   const parsed = Number(val.trim());
   return Number.isNaN(parsed) ? null : parsed;
 };
 
-// Helper: clean nullable strings
 const toStr = (val: string | undefined): string | null => {
   if (!val || val.trim() === '' || val.trim().toUpperCase() === 'NA') return null;
   return val.trim();
 };
 
-// Helper: split comma-separated cell values into clean arrays
+/**
+ * Splits comma-separated cell values into clean arrays while keeping commas inside parentheses intact.
+ */
 const toList = (val: string | undefined): string[] => {
   if (!val || val.trim() === '' || val.trim().toUpperCase() === 'NA') return [];
-  return val
-    .split(',')
+  const items: string[] = [];
+  let current = '';
+  let depth = 0;
+
+  for (const ch of val) {
+    if (ch === '(') {
+      depth++;
+      current += ch;
+    } else if (ch === ')') {
+      depth = Math.max(0, depth - 1);
+      current += ch;
+    } else if (ch === ',' && depth === 0) {
+      const trimmed = current.trim();
+      if (trimmed) items.push(trimmed);
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+
+  const last = current.trim();
+  if (last) items.push(last);
+  return items;
+};
+
+const extractBotanicalFamily = (rawFam: string | undefined): string | null => {
+  const cleaned = toStr(rawFam);
+  if (!cleaned) return null;
+  const segments = cleaned
+    .split(':')
     .map((s) => s.trim())
     .filter(Boolean);
+  const rawLast = segments[segments.length - 1] ?? cleaned;
+  const normalizedKey = rawLast.toLowerCase();
+  return FAMILY_SYNONYMS[normalizedKey] ?? rawLast;
 };
 
 // 1. Read and parse raw CSV (Note: older EcoCrop files sometimes use latin1 encoding)
@@ -87,7 +133,7 @@ const csvPath = path.resolve(import.meta.dirname, '../src/app/data/EcoCrop_DB.cs
 const rawCsv = fs.readFileSync(csvPath, 'latin1');
 
 const records: Record<string, string>[] = parse(rawCsv, {
-  columns: true, // Uses first row as keys
+  columns: true,
   skip_empty_lines: true,
   trim: true,
 });
@@ -109,14 +155,12 @@ const agriculturalCategories = [
 const cleanedCrops: CropProfile[] = [];
 
 for (const row of records) {
-  // Normalize column keys to lowercase in case your CSV headers are uppercase (e.g., TOPMN vs topmn)
   const r = Object.fromEntries(Object.entries(row).map(([k, v]) => [k.toLowerCase(), v]));
 
   const category = (r['cat'] || '').toLowerCase();
   const isAgCrop = agriculturalCategories.some((c) => category.includes(c));
   if (!isAgCrop) continue;
 
-  // Parse core climate thresholds; skip species missing temperature or rainfall bounds
   const tmin = toNum(r['tmin']);
   const topmn = toNum(r['topmn']);
   const topmx = toNum(r['topmx']);
@@ -144,6 +188,7 @@ for (const row of records) {
     id: String(r['ecoportcode'] || '').trim(),
     scientificName: r['scientificname'] || r['sciname'] || 'Unknown',
     commonNames: toList(r['comname']),
+    family: extractBotanicalFamily(r['famname']),
     category: r['cat'] || 'Other',
     lifeSpan: r['lispa'] || 'annual',
     temp: {
@@ -202,9 +247,9 @@ for (const row of records) {
   });
 }
 
-// 3. Save clean JSON
-const outPath = path.resolve(import.meta.dirname, '../src/app/data/crops.json');
+// 3. Save minified JSON to public/data/crops.json
+const outPath = path.resolve(import.meta.dirname, '../public/data/crops.json');
 fs.mkdirSync(path.dirname(outPath), { recursive: true });
-fs.writeFileSync(outPath, JSON.stringify(cleanedCrops, null, 2), 'utf8');
+fs.writeFileSync(outPath, JSON.stringify(cleanedCrops), 'utf8');
 
 console.log(`Converted ${cleanedCrops.length} agricultural crops to ${outPath}`);

@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { Crop, CropEvaluation, RotationPlan } from '@models/index';
 
 @Component({
   selector: 'app-rotation-timeline',
@@ -7,4 +8,11 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   styleUrl: './rotation-timeline.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class RotationTimeline {}
+export class RotationTimeline {
+  readonly cropEvaluation = input<CropEvaluation | null>(null);
+  readonly rotationPlan = input<RotationPlan | null>(null);
+
+  protected primaryName(crop: Crop): string {
+    return crop.commonNames[0] || crop.scientificName;
+  }
+}
