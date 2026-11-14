@@ -60,13 +60,10 @@ Estas fuentes complementan perfectamente a NASA POWER + Open-Meteo sin complicar
 2. **OpenEPI (Soil / Crop / Geoclimatic APIs)** *(Gratuita, enfocada en agricultura)*
    - **Qué entrega:** Resúmenes de suelo y condiciones agroclimáticas listas para apps agrícolas.
 
-### Capas Satelitales NASA en Leaflet (Alto impacto visual)
-3. **NASA GIBS (Global Imagery Browse Services - WMTS)** *(Sin API key)*
-   - **Qué entrega:** Tiles de mapa listos para montar directo en Leaflet (`L.tileLayer`), por ejemplo:
-     - **NDVI (MODIS / VIIRS):** Índice de vegetación / vigor de cultivos.
-     - **SMAP:** Humedad superficial del suelo.
-     - **Anomalías de temperatura superficial.**
-   - **Para qué sirve:** Que el agricultor vea en el mapa el estado real de vegetación/humedad de su zona con datos oficiales de la NASA.
+### Capas Satelitales NASA en Leaflet *(Fase 2 / Opcional para después)*
+3. **NASA GIBS (Global Imagery Browse Services - WMTS)** *(Sin API key — pospuesto para fase posterior)*
+   - **Qué entrega:** Tiles de mapa listos para montar directo en Leaflet (`L.tileLayer`), por ejemplo NDVI (MODIS/VIIRS), humedad superficial del suelo (SMAP) y anomalías de temperatura superficial.
+   - **Estado:** Dejado para después del MVP.
 
 ### Cultivos y Reglas de Rotación
 4. **Catálogo Curado de Cultivos (JSON local en el proyecto) + OpenFarm / FAO Crop Info (opcional)**
@@ -88,7 +85,6 @@ flowchart LR
     AGG -->|"Histórico (1-5 años)"| NP["NASA POWER API\n(Lluvia, Temp, Radiación, HR)"]
     AGG -->|"Corto y largo plazo"| OM["Open-Meteo API\n(Pronóstico + ET0 + CMIP6)"]
     AGG -->|"Propiedades del suelo"| SG["SoilGrids v2.0\n(pH, N, Carbono, Textura)"]
-    U -.->|"Capas visuales WMTS"| GIBS["NASA GIBS\n(NDVI / Humedad SMAP)"]
 
     NP --> NORM["Normalización y Limpieza\n(Filtrar -999, unificar unidades)"]
     OM --> NORM
@@ -106,7 +102,7 @@ flowchart LR
    - **NASA POWER:** Descarga serie diaria histórica para calcular promedios estacionales, picos de calor y déficit/exceso de lluvia.
    - **Open-Meteo:** Obtiene pronóstico inmediato (próximos 16 días) y tendencia futura (CMIP6) + evapotranspiración (`ET0`).
    - **SoilGrids:** Obtiene pH, textura y materia orgánica estimada del punto.
-   - **NASA GIBS:** Carga capas visuales (NDVI / humedad) directo sobre Leaflet.
+   *(Nota: las capas visuales de NASA GIBS sobre Leaflet quedan para Fase 2).*
 3. **Limpieza y normalización:**
    - Se eliminan los valores `-999` de NASA POWER.
    - Se construye un objeto unificado `FarmEnvironmentProfile` con indicadores claros: *temperatura media, riesgo de ola de calor, lluvia acumulada, balance hídrico (Lluvia - ET0), pH y textura del suelo*.
