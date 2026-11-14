@@ -1,3 +1,62 @@
-<section class="farm-map-container">
-  <p>Farm Map (Leaflet + NASA GIBS) placeholder</p>
+<section class="farm-map-card">
+  <header class="farm-map-header">
+    <div>
+      <h2>Selección de Región / Parcela</h2>
+      <p>Busca un país, estado o ciudad, o haz clic directamente sobre la región en el mapa.</p>
+    </div>
+  </header>
+
+  <!-- Barra de búsqueda de País / Ciudad / Región -->
+  <form class="search-bar" (ngSubmit)="onSearchSubmit()">
+    <input
+      type="text"
+      name="searchQuery"
+      [ngModel]="searchQuery()"
+      (ngModelChange)="searchQuery.set($event)"
+      placeholder="Buscar país, región o ciudad (ej. Sinaloa, México, Iowa, Bogotá)..."
+      autocomplete="off"
+    />
+    <button type="submit" class="btn-primary" [disabled]="isSearching()">
+      {{ isSearching() ? 'Buscando...' : 'Buscar' }}
+    </button>
+    <button type="button" class="btn-secondary" (click)="locateUser()" title="Usar mi ubicación">
+      Mi ubicación
+    </button>
+  </form>
+
+  @if (searchError()) {
+    <p class="search-error">{{ searchError() }}</p>
+  }
+
+  @if (searchResults().length > 1) {
+    <ul class="search-results">
+      @for (item of searchResults(); track item.place_id) {
+        <li>
+          <button type="button" (click)="selectSearchResult(item, true)">
+            {{ item.display_name }}
+          </button>
+        </li>
+      }
+    </ul>
+  }
+
+  <!-- Contenedor de Leaflet -->
+  <div #mapContainer class="leaflet-map"></div>
+
+  <!-- Resumen de coordenadas retornadas -->
+  <footer class="coords-footer">
+    <div class="location-label">
+      <span class="badge">Ubicación</span>
+      <span>{{ selectedLocationName() }}</span>
+    </div>
+
+    @if (selectedCoords(); as coords) {
+      <div class="coords-values">
+        <span><strong>Lat:</strong> {{ coords.lat }}</span>
+        <span><strong>Lon:</strong> {{ coords.lon }}</span>
+      </div>
+    } @else {
+      <div class="coords-values muted">Sin coordenadas seleccionadas aún</div>
+    }
+  </footer>
 </section>
