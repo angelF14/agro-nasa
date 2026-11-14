@@ -1,40 +1,16 @@
-export type BotanicalFamily =
-    | 'Fabaceae'
-    | 'Poaceae'
-    | 'Solanaceae'
-    | 'Brassicaceae'
-    | 'Asteraceae'
-    | 'Cucurbitaceae';
-
-export type RotationRole =
-    | 'nitrogen-fixer'
-    | 'high-extractor'
-    | 'cover-crop'
-    | 'pest-breaker';
-
 export interface CropRequirements {
-    minTempC: number;
-    maxTempC: number;
-    optimalPrecipitationMm: {
-        min: number;
-        max: number;
-    };
-    phRange: {
-        min: number;
-        max: number;
-    };
-    droughtTolerance: 'low' | 'moderate' | 'high';
-    waterDemand: 'low' | 'moderate' | 'high';
+  temp: { min: number; optMin: number; optMax: number; max: number };
+  rain: { min: number; optMin: number; optMax: number; max: number };
+  ph: { min: number | null; optMin: number | null; optMax: number | null; max: number | null };
+  cycleDays: { min: number | null; max: number | null };
+  soilTexture: string[];
+  soilDepth: string | null;
 }
 
-export interface Crop {
-    id: string;
-    name: string;
-    scientificName: string;
-    family: BotanicalFamily;
-    role: RotationRole;
-    cycleDurationDays: number;
-    requirements: CropRequirements;
-    benefits: string[];
+export interface Crop extends CropRequirements {
+  id: string;
+  scientificName: string;
+  commonNames: string[];
+  category: string;
+  lifeSpan: string;
 }
-
