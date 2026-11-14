@@ -1,4 +1,88 @@
 <main class="dashboard">
-  <app-farm-map />
+  <app-farm-map
+    (coordinatesChange)="onCoordinatesChange($event)"
+    (locationNameChange)="onLocationNameChange($event)"
+  />
+
+  @if (selectedCoordinates(); as coords) {
+    <section class="climate-card">
+      <header class="climate-card__header">
+        <div>
+          <h2>Datos Climáticos NASA POWER</h2>
+          <p class="climate-card__subtitle">
+            {{ selectedLocationName() || 'Parcela seleccionada' }} — Lat: {{ coords.lat }}, Lon: {{ coords.lon }}
+          </p>
+        </div>
+        @if (isLoadingClimate()) {
+          <span class="status-badge status-badge--loading">Consultando NASA...</span>
+        }
+      </header>
+
+      <form class="date-filter" (ngSubmit)="onDateFilterSubmit()">
+        <label class="date-filter__field">
+          <span>Fecha inicio</span>
+          <input
+            type="date"
+            name="startDate"
+            [max]="endDate() || maxDateInput"
+            [ngModel]="startDate()"
+            (ngModelChange)="startDate.set($event)"
+            required
+          />
+        </label>
+
+        <label class="date-filter__field">
+          <span>Fecha fin</span>
+          <input
+            type="date"
+            name="endDate"
+            [min]="startDate()"
+            [max]="maxDateInput"
+            [ngModel]="endDate()"
+            (ngModelChange)="endDate.set($event)"
+            required
+          />
+        </label>
+
+        <button type="submit" class="date-filter__btn" [disabled]="isLoadingClimate()">
+          {{ isLoadingClimate() ? 'Consultando...' : 'Filtrar por fecha' }}
+        </button>
+      </form>
+
+      @if (climateError(); as err) {
+        <p class="climate-card__error">{{ err }}</p>
+      }
+
+      @if (climateSummary(); as climate) {
+        <div class="climate-grid">
+          <div class="climate-metric">
+            <span class="climate-metric__label">Temp. Media</span>
+            <strong class="climate-metric__value">{{ climate.meanTempC }} °C</strong>
+          </div>
+          <div class="climate-metric">
+            <span class="climate-metric__label">Temp. Mín / Máx</span>
+            <strong class="climate-metric__value">{{ climate.minTempC }} / {{ climate.maxTempC }} °C</strong>
+          </div>
+          <div class="climate-metric">
+            <span class="climate-metric__label">Precipitación del Período</span>
+            <strong class="climate-metric__value">{{ climate.totalPrecipitationMm }} mm</strong>
+          </div>
+          <div class="climate-metric">
+            <span class="climate-metric__label">Radiación Solar</span>
+            <strong class="climate-metric__value">{{ climate.solarRadiationMjM2Day }} MJ/m²/día</strong>
+          </div>
+          <div class="climate-metric">
+            <span class="climate-metric__label">Humedad Relativa</span>
+            <strong class="climate-metric__value">{{ climate.relativeHumidityPct }} %</strong>
+          </div>
+          <div class="climate-metric">
+            <span class="climate-metric__label">Riesgo de Calor</span>
+            <strong class="climate-metric__value">{{ climate.heatwaveRisk }}</strong>
+          </div>
+        </div>
+      }
+    </section>
+  }
+
   <app-rotation-timeline />
 </main>

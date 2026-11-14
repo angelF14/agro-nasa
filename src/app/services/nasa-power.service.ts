@@ -36,21 +36,41 @@ export class NasaPowerService {
   private readonly defaultParams = 'PRECTOTCORR,T2M,T2M_MAX,T2M_MIN,ALLSKY_SFC_SW_DWN,RH2M';
 
   /**
+   * Computes a default YYYYMMDD date range (last 365 days, ending 7 days ago to avoid unprocessed lag).
+   */
+  getDefaultDateRange(daysBack = 365, lagDays = 7): { startDate: string; endDate: string } {
+    const end = new Date();
+    end.setUTCDate(end.getUTCDate() - lagDays);
+
+    const start = new Date(end);
+    start.setUTCDate(start.getUTCDate() - daysBack);
+
+    return {
+      startDate: this.formatUtcYyyymmdd(start),
+      endDate: this.formatUtcYyyymmdd(end),
+    };
+  }
+
+  /**
    * Returns the raw JSON response from NASA POWER Daily API for inspection/testing.
-   * Dates must be in YYYYMMDD format (e.g. '20240101').
+   * Dates default to the last 365 days ending 7 days ago if omitted.
    */
   getRawDailyData(
     coords: Coordinates,
-    startDate: string,
-    endDate: string
+    startDate?: string,
+    endDate?: string
   ): Observable<NasaPowerRawResponse> {
+    const defaults = this.getDefaultDateRange();
+    const start = startDate ?? defaults.startDate;
+    const end = endDate ?? defaults.endDate;
+
     const params = new HttpParams()
       .set('parameters', this.defaultParams)
       .set('community', 'AG')
       .set('longitude', coords.lon.toString())
       .set('latitude', coords.lat.toString())
-      .set('start', startDate)
-      .set('end', endDate)
+      .set('start', start)
+      .set('end', end)
       .set('format', 'JSON');
 
     return this.http.get<NasaPowerRawResponse>(this.baseUrl, { params });
@@ -61,8 +81,8 @@ export class NasaPowerService {
    */
   getHistoricalClimate(
     coords: Coordinates,
-    startDate: string,
-    endDate: string
+    startDate?: string,
+    endDate?: string
   ): Observable<Partial<ClimateSummary>> {
     return this.getRawDailyData(coords, startDate, endDate).pipe(
       map((res) => {
@@ -91,5 +111,12 @@ export class NasaPowerService {
         };
       })
     );
+  }
+
+  private formatUtcYyyymmdd(date: Date): string {
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    return `${year}${month}${day}`;
   }
 }

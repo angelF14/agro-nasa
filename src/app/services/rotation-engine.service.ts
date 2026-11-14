@@ -37,7 +37,7 @@ export interface ScoredCrop {
   providedIn: 'root',
 })
 export class RotationEngineService {
-  private readonly catalog: Crop[] = cropsCatalog as Crop[];
+  private readonly catalog: Crop[] = cropsCatalog as unknown as Crop[];
 
   /**
    * 1. Returns all available crops from the curated local catalog for UI listing.
