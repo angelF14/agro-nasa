@@ -30,6 +30,15 @@
         <path stroke-linecap="round" d="M21 21l-4.35-4.35" />
       </svg>
       {{ isSearching() ? 'Buscando...' : 'Buscar' }}
+      <span class="btn__icon" aria-hidden="true">
+        @if (isSearching()) {
+          <span class="spinner"></span>
+        } @else {
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7 17 17 7M9 7h8v8" />
+          </svg>
+        }
+      </span>
     </button>
     <button type="button" class="agro-btn agro-btn--secondary" (click)="locateUser()" title="Usar mi ubicación actual">
       <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -38,6 +47,12 @@
         <circle cx="12" cy="12" r="7" />
       </svg>
       Mi ubicación
+      <span class="btn__icon btn__icon--still" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+        </svg>
+      </span>
     </button>
   </form>
 
@@ -65,7 +80,7 @@
   <div #mapContainer class="leaflet-map" aria-label="Mapa interactivo de selección de parcela"></div>
 
   <!-- Resumen de coordenadas retornadas -->
-  <footer class="coords-footer">
+  <footer class="coords-ticket">
     <div class="location-label">
       <span class="badge">
         <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">

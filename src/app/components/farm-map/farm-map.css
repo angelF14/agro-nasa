@@ -4,6 +4,7 @@
   gap: 0.85rem;
 }
 
+/* Search */
 .search-bar {
   display: flex;
   flex-wrap: wrap;
@@ -30,8 +31,10 @@
   padding-left: 2.3rem;
 }
 
+/* Results dropdown (spring in) */
 .search-results {
-  list-style: none;
+  display: grid;
+  gap: 0.35rem;
   margin: 0;
   padding: 0.3rem;
   border: 1px solid #cbd5e1;
@@ -39,6 +42,12 @@
   background: #fff;
   max-height: 190px;
   overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  transform-origin: top center;
+  animation: pop-in 0.5s var(--spring) backwards;
 }
 
 .search-results li button {
@@ -46,8 +55,7 @@
   align-items: center;
   gap: 0.5rem;
   width: 100%;
-  text-align: left;
-  background: transparent;
+  padding: 0.55rem 0.6rem;
   border: none;
   padding: 0.55rem 0.7rem;
   border-radius: 8px;
@@ -70,7 +78,15 @@
   z-index: 1;
 }
 
-.coords-footer {
+@media (min-width: 720px) {
+  .leaflet-map {
+    height: 460px;
+  }
+}
+
+/* Ticket-style location summary */
+.coords-ticket {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -90,6 +106,9 @@
   color: #14532d;
   font-weight: 500;
   flex: 1 1 280px;
+  min-width: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
 }
 
 .badge {
@@ -115,6 +134,17 @@
 .coords-values.muted {
   color: #475569;
   font-family: inherit;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+@media (max-width: 560px) {
+  .coords-values {
+    width: 100%;
+    padding: 0.85rem 0 0;
+    border-left: none;
+    border-top: 2px dashed rgba(255, 255, 255, 0.25);
+  }
 }
 
 @media (max-width: 600px) {
