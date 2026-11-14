@@ -1,5 +1,6 @@
 {
   "name": "agro-nasa",
+  "type": "module",
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
@@ -7,7 +8,8 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "serve:ssr:agro-nasa": "node dist/agro-nasa/server/server.mjs"
+    "serve:ssr:agro-nasa": "node dist/agro-nasa/server/server.mjs",
+    "parsecrops:csv": "node scripts/convert-ecocrop.ts"
   },
   "prettier": {
     "printWidth": 100,
@@ -31,6 +33,7 @@
     "@angular/platform-server": "^20.3.0",
     "@angular/router": "^20.3.0",
     "@angular/ssr": "^20.3.11",
+    "csv-parse": "^7.0.3",
     "express": "^5.1.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
