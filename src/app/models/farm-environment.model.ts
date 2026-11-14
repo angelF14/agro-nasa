@@ -79,3 +79,33 @@ export interface FarmEnvironmentProfile {
   soil: SoilProfile;
   generatedAt: string;
 }
+
+
+export interface DailyWeatherForecast {
+  date: string;
+  weatherCode: number;
+  temperatureMax: number;
+  temperatureMin: number;
+  precipitationMm: number;
+  precipitationProbability: number | null;
+  et0Mm: number;
+}
+
+export interface CurrentWeather {
+  time: string;
+  temperature: number;
+  apparentTemperature: number;
+  relativeHumidity: number;
+  precipitation: number;
+  windSpeed: number;
+  weatherCode: number;
+}
+
+export interface WeatherForecast {
+  latitude: number;
+  longitude: number;
+  timezone: string;
+  current: CurrentWeather;
+  daily: DailyWeatherForecast[];
+  generatedAt: string;
+}

@@ -12,6 +12,8 @@ import {
   FarmEnvironmentProfile,
   RotationPlan,
 } from '@models/index';
+import { WeatherForecastComponent } from '@components/weather-forecast/weather-forecast';
+
 import { NasaPowerService } from '@services/nasa-power.service';
 import { RotationEngineService } from '@services/rotation-engine.service';
 import { catchError, of, Subject, switchMap, tap } from 'rxjs';
@@ -24,7 +26,8 @@ interface ClimateQuery {
 
 @Component({
   selector: 'app-dashboard',
-  imports: [FormsModule, FarmMap, CropSelector, RotationTimeline],
+  imports: [FormsModule, FarmMap, CropSelector, RotationTimeline, WeatherForecastComponent],
+ 
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

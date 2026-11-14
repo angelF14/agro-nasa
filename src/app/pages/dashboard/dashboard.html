@@ -92,6 +92,8 @@
         </div>
       }
     </section>
+
+    <app-weather-forecast [coords]="coords" />
   }
 
   <app-crop-selector (cropChange)="onCropChange($event)" />

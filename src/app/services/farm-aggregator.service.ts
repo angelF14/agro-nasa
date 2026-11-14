@@ -5,6 +5,7 @@ import { calculateWaterBalance } from '@utils/water-balance.utils';
 import { NasaPowerService } from './nasa-power.service';
 import { OpenMeteoService } from './open-meteo.service';
 import { SoilGridsService } from './soil-grids.service';
+import { forecastToClimateSummary } from '@utils/forecast-summary.utils';
 
 @Injectable({
   providedIn: 'root',
@@ -28,7 +29,8 @@ export class FarmAggregatorService {
     }).pipe(
       map(({ historical, forecast, soil }) => {
         const totalPrecipitationMm = historical.totalPrecipitationMm ?? 0;
-        const evapotranspirationMm = forecast.evapotranspirationMm ?? 0;
+        const forecastSummary = forecastToClimateSummary(forecast);
+        const evapotranspirationMm = forecastSummary.evapotranspirationMm ?? 0;
 
         return {
           coordinates: coords,
@@ -47,7 +49,7 @@ export class FarmAggregatorService {
             waterBalanceMm: calculateWaterBalance(totalPrecipitationMm, evapotranspirationMm),
             heatwaveRisk: historical.heatwaveRisk ?? 'low',
           },
-          forecastClimate: forecast,
+          forecastClimate: forecastSummary,
           soil: {
             ph: soil.ph ?? 6.5,
             organicCarbonGKg: soil.organicCarbonGKg ?? 0,
