@@ -5,3 +5,135 @@
   margin: 0 auto;
   padding: 1.25rem;
 }
+
+.climate-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.climate-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.climate-card__header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #14532d;
+}
+
+.climate-card__subtitle {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  color: #4b5563;
+}
+
+.date-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.date-filter__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.date-filter__field input {
+  padding: 0.45rem 0.65rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  background: #ffffff;
+  color: #111827;
+}
+
+.date-filter__field input:focus {
+  outline: 2px solid #16a34a;
+  border-color: transparent;
+}
+
+.date-filter__btn {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: none;
+  background-color: #16a34a;
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.date-filter__btn:hover:not(:disabled) {
+  background-color: #15803d;
+}
+
+.date-filter__btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.status-badge {
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.status-badge--loading {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.climate-card__error {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  background-color: #fef2f2;
+  color: #b91c1c;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.climate-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+}
+
+.climate-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.75rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.climate-metric__label {
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
+.climate-metric__value {
+  font-size: 1rem;
+  color: #111827;
+}
