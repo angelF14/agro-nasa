@@ -8,12 +8,56 @@ export interface CropProfile {
   commonNames: string[];
   category: string;
   lifeSpan: string;
-  temp: { min: number; optMin: number; optMax: number; max: number };
-  rain: { min: number; optMin: number; optMax: number; max: number };
-  ph: { min: number | null; optMin: number | null; optMax: number | null; max: number | null };
-  cycleDays: { min: number | null; max: number | null };
-  soilTexture: string[];
-  soilDepth: string | null;
+  temp: {
+    min: number;
+    optMin: number;
+    optMax: number;
+    max: number;
+    killingEarlyGrowth: number | null;
+    killingRest: number | null;
+  };
+  rain: {
+    min: number;
+    optMin: number;
+    optMax: number;
+    max: number;
+  };
+  ph: {
+    min: number | null;
+    optMin: number | null;
+    optMax: number | null;
+    max: number | null;
+  };
+  geography: {
+    latMin: number | null;
+    latOptMin: number | null;
+    latOptMax: number | null;
+    latMax: number | null;
+    altMax: number | null;
+    climateZones: string[];
+  };
+  light: {
+    min: string | null;
+    optMin: string | null;
+    optMax: string | null;
+    max: string | null;
+    photoperiod: string[];
+  };
+  soil: {
+    depth: { optimal: string[]; absolute: string[] };
+    texture: { optimal: string[]; absolute: string[] };
+    fertility: { optimal: string[]; absolute: string[] };
+    alToxicity: { optimal: string[]; absolute: string[] };
+    salinity: { optimal: string[]; absolute: string[] };
+    drainage: { optimal: string[]; absolute: string[] };
+  };
+  agronomy: {
+    cycleDays: { min: number | null; max: number | null };
+    abioticTolerance: string[];
+    abioticSusceptibility: string[];
+    introductionRisk: string[];
+    productionSystem: string[];
+  };
 }
 
 // Helper: safely convert CSV strings to numbers or null
@@ -23,9 +67,15 @@ const toNum = (val: string | undefined): number | null => {
   return Number.isNaN(parsed) ? null : parsed;
 };
 
+// Helper: clean nullable strings
+const toStr = (val: string | undefined): string | null => {
+  if (!val || val.trim() === '' || val.trim().toUpperCase() === 'NA') return null;
+  return val.trim();
+};
+
 // Helper: split comma-separated cell values into clean arrays
 const toList = (val: string | undefined): string[] => {
-  if (!val || val.trim() === '') return [];
+  if (!val || val.trim() === '' || val.trim().toUpperCase() === 'NA') return [];
   return val
     .split(',')
     .map((s) => s.trim())
@@ -96,20 +146,59 @@ for (const row of records) {
     commonNames: toList(r['comname']),
     category: r['cat'] || 'Other',
     lifeSpan: r['lispa'] || 'annual',
-    temp: { min: tmin, optMin: topmn, optMax: topmx, max: tmax },
-    rain: { min: rmin, optMin: ropmn, optMax: ropmx, max: rmax },
+    temp: {
+      min: tmin,
+      optMin: topmn,
+      optMax: topmx,
+      max: tmax,
+      killingEarlyGrowth: toNum(r['ktmp']),
+      killingRest: toNum(r['ktmpr']),
+    },
+    rain: {
+      min: rmin,
+      optMin: ropmn,
+      optMax: ropmx,
+      max: rmax,
+    },
     ph: {
       min: toNum(r['phmin']),
       optMin: toNum(r['phopmn']),
       optMax: toNum(r['phopmx']),
       max: toNum(r['phmax']),
     },
-    cycleDays: {
-      min: toNum(r['gmin']),
-      max: toNum(r['gmax']),
+    geography: {
+      latMin: toNum(r['latmn']),
+      latOptMin: toNum(r['latopmn']),
+      latOptMax: toNum(r['latopmx']),
+      latMax: toNum(r['latmx']),
+      altMax: toNum(r['altmx']),
+      climateZones: toList(r['cliz']),
     },
-    soilTexture: toList(r['text']),
-    soilDepth: r['dep'] || null,
+    light: {
+      min: toStr(r['limn']),
+      optMin: toStr(r['liopmn']),
+      optMax: toStr(r['liopmx']),
+      max: toStr(r['limx']),
+      photoperiod: toList(r['photo']),
+    },
+    soil: {
+      depth: { optimal: toList(r['dep']), absolute: toList(r['depr']) },
+      texture: { optimal: toList(r['text']), absolute: toList(r['textr']) },
+      fertility: { optimal: toList(r['fer']), absolute: toList(r['ferr']) },
+      alToxicity: { optimal: toList(r['tox']), absolute: toList(r['toxr']) },
+      salinity: { optimal: toList(r['sal']), absolute: toList(r['salr']) },
+      drainage: { optimal: toList(r['dra']), absolute: toList(r['drar']) },
+    },
+    agronomy: {
+      cycleDays: {
+        min: toNum(r['gmin']),
+        max: toNum(r['gmax']),
+      },
+      abioticTolerance: toList(r['abitol']),
+      abioticSusceptibility: toList(r['abisus']),
+      introductionRisk: toList(r['intri']),
+      productionSystem: toList(r['prosy']),
+    },
   });
 }
 
