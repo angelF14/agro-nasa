@@ -1,11 +1,19 @@
+
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+
 import { FarmMap } from '@components/farm-map/farm-map';
 import { RotationTimeline } from '@components/rotation-timeline/rotation-timeline';
+import { WeatherForecastComponent } from '@components/weather-forecast/weather-forecast';
+
 import { Coordinates } from '@models/index';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [FarmMap, RotationTimeline],
+  imports: [
+    FarmMap,
+    RotationTimeline,
+    WeatherForecastComponent,
+  ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

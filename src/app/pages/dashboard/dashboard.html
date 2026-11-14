@@ -3,5 +3,10 @@
     (coordinatesChange)="onCoordinatesChange($event)"
     (locationNameChange)="onLocationNameChange($event)"
   />
+  @if (selectedCoordinates(); as coords) {
+  <app-weather-forecast
+    [coords]="coords"
+  />
+}
   <app-rotation-timeline />
 </main>
