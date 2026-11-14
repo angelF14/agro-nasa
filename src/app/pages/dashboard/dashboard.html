@@ -1,105 +1,125 @@
+<header class="topbar">
+  <div class="topbar__inner">
+    <div class="brand">
+      <div class="brand__mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 20V10M12 10c0-4 3.5-7 8-7 0 4.5-3 7-8 7Zm0 0C12 7 8.5 4.5 4 4.5 4 8.5 7 10 12 10Z" />
+          <circle cx="19" cy="5" r="2" fill="currentColor" stroke="none" />
+        </svg>
+      </div>
+      <div>
+        <h1 class="brand__title">AgroNasa</h1>
+        <p class="brand__subtitle">Inteligencia Climática NASA POWER · Catálogo FAO EcoCrop</p>
+      </div>
+    </div>
+
+    @if (selectedCoordinates(); as coords) {
+      <div class="parcel-pill" aria-live="polite">
+        <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z" />
+          <circle cx="12" cy="10" r="3" />
+        </svg>
+        <span class="parcel-pill__name">{{ selectedLocationName() || 'Parcela activa' }}</span>
+        <span class="parcel-pill__coords num-mono">{{ coords.lat }}, {{ coords.lon }}</span>
+      </div>
+    } @else {
+      <span class="parcel-pill parcel-pill--idle">Sin parcela seleccionada</span>
+    }
+  </div>
+</header>
+
 <main class="dashboard">
-  <app-farm-map
-    (coordinatesChange)="onCoordinatesChange($event)"
-    (locationNameChange)="onLocationNameChange($event)"
-  />
-
-  @if (selectedCoordinates(); as coords) {
-    <section class="climate-card">
-      <header class="climate-card__header">
-        <div>
-          <h2>Datos Climáticos NASA POWER</h2>
-          <p class="climate-card__subtitle">
-            {{ selectedLocationName() || 'Parcela seleccionada' }} — Lat: {{ coords.lat }}, Lon: {{ coords.lon }}
-          </p>
-        </div>
-        @if (isLoadingClimate()) {
-          <span class="status-badge status-badge--loading">Consultando NASA...</span>
+  <nav class="workflow-stepper agro-card" aria-label="Flujo de análisis agronómico">
+    <a class="step-pill" [class.step-pill--done]="!!selectedCoordinates()" href="#step-map">
+      <span class="step-pill__num num-mono">
+        @if (selectedCoordinates()) {
+          <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        } @else {
+          1
         }
-      </header>
+      </span>
+      <span class="step-pill__text">
+        <strong>Ubicación</strong>
+        <small>{{ selectedCoordinates() ? (selectedLocationName() || 'Parcela fijada') : 'Marca en el mapa' }}</small>
+      </span>
+    </a>
 
-      <form class="date-filter" (ngSubmit)="onDateFilterSubmit()">
-        <label class="date-filter__field">
-          <span>Fecha inicio</span>
-          <input
-            type="date"
-            name="startDate"
-            [max]="endDate() || maxDateInput"
-            [ngModel]="startDate()"
-            (ngModelChange)="startDate.set($event)"
-            required
-          />
-        </label>
-
-        <label class="date-filter__field">
-          <span>Fecha fin</span>
-          <input
-            type="date"
-            name="endDate"
-            [min]="startDate()"
-            [max]="maxDateInput"
-            [ngModel]="endDate()"
-            (ngModelChange)="endDate.set($event)"
-            required
-          />
-        </label>
-
-        <button type="submit" class="date-filter__btn" [disabled]="isLoadingClimate()">
-          {{ isLoadingClimate() ? 'Consultando...' : 'Filtrar por fecha' }}
-        </button>
-      </form>
-
-      @if (climateError(); as err) {
-        <p class="climate-card__error">{{ err }}</p>
-      }
-
-      @if (climateSummary(); as climate) {
-        <div class="climate-grid">
-          <div class="climate-metric">
-            <span class="climate-metric__label">Temp. Media</span>
-            <strong class="climate-metric__value">{{ climate.meanTempC }} °C</strong>
-          </div>
-          <div class="climate-metric">
-            <span class="climate-metric__label">Temp. Mín / Máx</span>
-            <strong class="climate-metric__value">{{ climate.minTempC }} / {{ climate.maxTempC }} °C</strong>
-          </div>
-          <div class="climate-metric">
-            <span class="climate-metric__label">Precipitación Período</span>
-            <strong class="climate-metric__value">{{ climate.totalPrecipitationMm }} mm ({{ climate.analyzedDays }} d)</strong>
-          </div>
-          <div class="climate-metric">
-            <span class="climate-metric__label">Lluvia Equivalente Anual</span>
-            <strong class="climate-metric__value">{{ climate.annualizedPrecipitationMm }} mm/año</strong>
-          </div>
-          @if (climate.elevationM !== undefined) {
-            <div class="climate-metric">
-              <span class="climate-metric__label">Altitud (NASA DEM)</span>
-              <strong class="climate-metric__value">{{ climate.elevationM }} m s.n.m.</strong>
-            </div>
+    <a
+      class="step-pill"
+      [class.step-pill--done]="!!climateSummary() && !isLoadingClimate()"
+      [class.step-pill--disabled]="!selectedCoordinates()"
+      [attr.href]="selectedCoordinates() ? '#step-weather' : '#step-map'"
+    >
+      <span class="step-pill__num num-mono">2</span>
+      <span class="step-pill__text">
+        <strong>Pronóstico y Análisis</strong>
+        <small>
+          @if (isLoadingClimate()) {
+            Analizando NASA POWER...
+          } @else if (climateSummary()) {
+            Clima calibrado
+          } @else {
+            Requiere parcela
           }
-          <div class="climate-metric">
-            <span class="climate-metric__label">Radiación Solar</span>
-            <strong class="climate-metric__value">{{ climate.solarRadiationMjM2Day }} MJ/m²/día</strong>
-          </div>
-          <div class="climate-metric">
-            <span class="climate-metric__label">Humedad Relativa</span>
-            <strong class="climate-metric__value">{{ climate.relativeHumidityPct }} %</strong>
-          </div>
-          <div class="climate-metric">
-            <span class="climate-metric__label">Riesgo de Calor</span>
-            <strong class="climate-metric__value">{{ climate.heatwaveRisk }}</strong>
-          </div>
-        </div>
-      }
-    </section>
+        </small>
+      </span>
+    </a>
 
-    <app-weather-forecast [coords]="coords" />
+    <a class="step-pill" [class.step-pill--done]="!!cropEvaluation()" [attr.href]="cropEvaluation() ? '#step-rotation' : '#step-crops'">
+      <span class="step-pill__num num-mono">3</span>
+      <span class="step-pill__text">
+        <strong>Cultivo y Rotación</strong>
+        <small>
+          @if (cropEvaluation(); as ev) {
+            {{ ev.overallScore }}% aptitud
+          } @else {
+            Elige del catálogo
+          }
+        </small>
+      </span>
+    </a>
+  </nav>
+
+  <div id="step-map">
+    <app-farm-map
+      (coordinatesChange)="onCoordinatesChange($event)"
+      (locationNameChange)="onLocationNameChange($event)"
+    />
+  </div>
+
+  @if (climateError(); as err) {
+    <p class="agro-alert-error" role="alert">{{ err }}</p>
   }
 
-  <app-crop-selector (cropChange)="onCropChange($event)" />
+  @if (selectedCoordinates(); as coords) {
+    <div id="step-weather">
+      <app-weather-forecast [coords]="coords" />
+    </div>
+  } @else {
+    <section class="agro-card climate-prompt" aria-label="Instrucción para análisis climático">
+      <svg class="climate-prompt__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z" />
+        <circle cx="12" cy="10" r="3" />
+      </svg>
+      <div>
+        <h2>Selecciona una parcela en el mapa para iniciar</h2>
+        <p>
+          Al elegir o buscar un lugar obtendrás el pronóstico meteorológico y calibraremos automáticamente los datos de NASA POWER para puntuar tus cultivos.
+        </p>
+      </div>
+    </section>
+  }
 
-  <app-rotation-timeline
-    [cropEvaluation]="cropEvaluation()"
-    [rotationPlan]="rotationPlan()"
-  />
+  <div id="step-crops">
+    <app-crop-selector (cropChange)="onCropChange($event)" />
+  </div>
+
+  <div id="step-rotation">
+    <app-rotation-timeline
+      [cropEvaluation]="cropEvaluation()"
+      [rotationPlan]="rotationPlan()"
+    />
+  </div>
 </main>

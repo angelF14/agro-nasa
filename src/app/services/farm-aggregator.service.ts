@@ -1,7 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { forkJoin, map, Observable } from 'rxjs';
 import { Coordinates, FarmEnvironmentProfile, FarmLocalContext } from '@models/index';
-import { calculateWaterBalance } from '@utils/water-balance.utils';
 import { NasaPowerService } from './nasa-power.service';
 import { OpenMeteoService } from './open-meteo.service';
 import { SoilGridsService } from './soil-grids.service';
@@ -30,7 +29,6 @@ export class FarmAggregatorService {
       map(({ historical, forecast, soil }) => {
         const totalPrecipitationMm = historical.totalPrecipitationMm ?? 0;
         const forecastSummary = forecastToClimateSummary(forecast);
-        const evapotranspirationMm = forecastSummary.evapotranspirationMm ?? 0;
 
         return {
           coordinates: coords,
@@ -45,8 +43,8 @@ export class FarmAggregatorService {
             elevationM: historical.elevationM,
             solarRadiationMjM2Day: historical.solarRadiationMjM2Day ?? 0,
             relativeHumidityPct: historical.relativeHumidityPct ?? 0,
-            evapotranspirationMm,
-            waterBalanceMm: calculateWaterBalance(totalPrecipitationMm, evapotranspirationMm),
+            evapotranspirationMm: 0,
+            waterBalanceMm: forecastSummary.waterBalanceMm ?? 0,
             heatwaveRisk: historical.heatwaveRisk ?? 'low',
           },
           forecastClimate: forecastSummary,

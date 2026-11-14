@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormsModule } from '@angular/forms';
 import { CropSelector } from '@components/crop-selector/crop-selector';
 import { FarmMap } from '@components/farm-map/farm-map';
 import { RotationTimeline } from '@components/rotation-timeline/rotation-timeline';
+import { WeatherForecastComponent } from '@components/weather-forecast/weather-forecast';
 import {
   ClimateSummary,
   Coordinates,
@@ -12,22 +12,13 @@ import {
   FarmEnvironmentProfile,
   RotationPlan,
 } from '@models/index';
-import { WeatherForecastComponent } from '@components/weather-forecast/weather-forecast';
-
 import { NasaPowerService } from '@services/nasa-power.service';
 import { RotationEngineService } from '@services/rotation-engine.service';
 import { catchError, of, Subject, switchMap, tap } from 'rxjs';
 
-interface ClimateQuery {
-  coords: Coordinates;
-  startDate: string;
-  endDate: string;
-}
-
 @Component({
   selector: 'app-dashboard',
-  imports: [FormsModule, FarmMap, CropSelector, RotationTimeline, WeatherForecastComponent],
- 
+  imports: [FarmMap, CropSelector, RotationTimeline, WeatherForecastComponent],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -35,11 +26,7 @@ interface ClimateQuery {
 export class Dashboard {
   private readonly nasaPowerService = inject(NasaPowerService);
   private readonly rotationEngine = inject(RotationEngineService);
-  private readonly climateQuery$ = new Subject<ClimateQuery>();
-
-  protected readonly maxDateInput: string;
-  protected readonly startDate = signal<string>('');
-  protected readonly endDate = signal<string>('');
+  private readonly climateQuery$ = new Subject<Coordinates>();
 
   protected readonly selectedCoordinates = signal<Coordinates | null>(null);
   protected readonly selectedLocationName = signal<string>('');
@@ -102,24 +89,18 @@ export class Dashboard {
   });
 
   constructor() {
-    const defaults = this.nasaPowerService.getDefaultDateRange();
-    const defaultStart = this.toInputDate(defaults.startDate);
-    const defaultEnd = this.toInputDate(defaults.endDate);
-
-    this.maxDateInput = defaultEnd;
-    this.startDate.set(defaultStart);
-    this.endDate.set(defaultEnd);
-
     this.climateQuery$
       .pipe(
         tap(() => {
           this.isLoadingClimate.set(true);
           this.climateError.set(null);
         }),
-        switchMap(({ coords, startDate, endDate }) =>
-          this.nasaPowerService.getHistoricalClimate(coords, startDate, endDate).pipe(
+        switchMap((coords) =>
+          this.nasaPowerService.getHistoricalClimate(coords).pipe(
             catchError(() => {
-              this.climateError.set('No se pudieron obtener los datos climáticos de NASA POWER.');
+              this.climateError.set(
+                'No se pudieron obtener los datos climáticos de NASA POWER para puntuar el cultivo.'
+              );
               return of(null);
             })
           )
@@ -134,7 +115,7 @@ export class Dashboard {
 
   protected onCoordinatesChange(coords: Coordinates): void {
     this.selectedCoordinates.set(coords);
-    this.requestClimateData();
+    this.climateQuery$.next(coords);
   }
 
   protected onLocationNameChange(name: string): void {
@@ -143,43 +124,5 @@ export class Dashboard {
 
   protected onCropChange(crop: Crop): void {
     this.selectedCrop.set(crop);
-  }
-
-  protected onDateFilterSubmit(): void {
-    this.requestClimateData();
-  }
-
-  private requestClimateData(): void {
-    const coords = this.selectedCoordinates();
-    if (!coords) {
-      return;
-    }
-
-    const start = this.startDate().trim();
-    const end = this.endDate().trim();
-
-    if (!start || !end) {
-      this.climateError.set('Selecciona ambas fechas para consultar los datos.');
-      return;
-    }
-
-    if (start > end) {
-      this.climateError.set('La fecha de inicio no puede ser mayor que la fecha fin.');
-      return;
-    }
-
-    this.climateQuery$.next({
-      coords,
-      startDate: this.toNasaDate(start),
-      endDate: this.toNasaDate(end),
-    });
-  }
-
-  private toInputDate(yyyymmdd: string): string {
-    return `${yyyymmdd.slice(0, 4)}-${yyyymmdd.slice(4, 6)}-${yyyymmdd.slice(6, 8)}`;
-  }
-
-  private toNasaDate(isoDate: string): string {
-    return isoDate.replaceAll('-', '');
   }
 }

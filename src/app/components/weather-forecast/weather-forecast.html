@@ -1,172 +1,241 @@
+<ng-template #weatherSvg let-kind="kind">
+  @switch (kind) {
+    @case ('sun') {
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+        <circle cx="12" cy="12" r="4" />
+        <path stroke-linecap="round" d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32 1.41-1.41" />
+      </svg>
+    }
+    @case ('partly-cloudy') {
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1.5M5.6 5.6l1.1 1.1M18.4 5.6l-1.1 1.1M4 11h1.5M9.5 10.5a3.5 3.5 0 0 1 6.7-1.1A4 4 0 1 1 17 19H8a4 4 0 0 1-1.5-7.7" />
+      </svg>
+    }
+    @case ('cloud') {
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M17.5 19H7a4.5 4.5 0 0 1-.4-8.98A5.5 5.5 0 0 1 17.3 8.5 4 4 0 0 1 17.5 19Z" />
+      </svg>
+    }
+    @case ('drizzle') {
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M17.5 15H7a4 4 0 0 1-.4-7.98A5 5 0 0 1 16.5 6.5 3.5 3.5 0 0 1 17.5 15Zm-9 3v2m4-2v2m4-2v2" />
+      </svg>
+    }
+    @case ('rain') {
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M17.5 15H7a4 4 0 0 1-.4-7.98A5 5 0 0 1 16.5 6.5 3.5 3.5 0 0 1 17.5 15ZM9 18l-1 3m4-3-1 3m4-3-1 3" />
+      </svg>
+    }
+    @case ('snow') {
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M17.5 15H7a4 4 0 0 1-.4-7.98A5 5 0 0 1 16.5 6.5 3.5 3.5 0 0 1 17.5 15ZM9 18h.01M12 19.5h.01M15 18h.01" />
+      </svg>
+    }
+    @case ('storm') {
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M17.5 15H7a4 4 0 0 1-.4-7.98A5 5 0 0 1 16.5 6.5 3.5 3.5 0 0 1 17.5 15ZM13 15l-2 4h3l-2 4" />
+      </svg>
+    }
+    @default {
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0Z" />
+      </svg>
+    }
+  }
+</ng-template>
 
-<section class="weather-container">
-
-  <div class="section-header">
+<section class="agro-card weather-container" aria-labelledby="weather-forecast-title">
+  <header class="agro-header section-header">
     <div>
-      <h2>Condiciones meteorológicas</h2>
-      <p>Información climática de tu parcela</p>
+      <span class="step-badge step-badge--sky">Paso 2 · Pronóstico Open-Meteo</span>
+      <h2 id="weather-forecast-title" class="agro-title">Condiciones Meteorológicas de la Parcela</h2>
+      <p class="agro-subtitle">Lectura en tiempo real y proyección diaria de precipitación y evapotranspiración (ET₀)</p>
     </div>
 
-    <button class="refresh-button"
+    <button
+      type="button"
+      class="agro-btn agro-btn--primary"
       (click)="loadForecast()"
-      [disabled]="loading()">
-      ↻ Actualizar
+      [disabled]="loading()"
+    >
+      <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6" />
+      </svg>
+      {{ loading() ? 'Actualizando...' : 'Actualizar' }}
     </button>
-  </div>
+  </header>
 
   @if (loading()) {
-    <div class="message">
-      Consultando información meteorológica...
+    <div class="weather-skeleton" aria-busy="true" aria-label="Consultando pronóstico meteorológico">
+      <div class="skeleton-box weather-skeleton__hero"></div>
+      <div class="forecast-grid">
+        @for (item of [1, 2, 3, 4]; track item) {
+          <div class="skeleton-box weather-skeleton__card"></div>
+        }
+      </div>
     </div>
   }
 
   @if (error()) {
-    <div class="error-message">
-      No fue posible obtener los datos de Open-Meteo.
-      <button (click)="loadForecast()">Reintentar</button>
+    <div class="agro-alert-error agro-alert-row" role="alert">
+      <span>No fue posible obtener los datos meteorológicos de Open-Meteo.</span>
+      <button type="button" class="agro-btn agro-btn--secondary agro-btn--sm" (click)="loadForecast()">Reintentar</button>
     </div>
   }
 
   @if (forecast(); as weather) {
-
     <div class="current-weather">
-
       <div class="current-main">
-        <span class="weather-icon">
-          {{ getWeatherIcon(weather.current.weatherCode) }}
-        </span>
+        <div class="weather-icon" [attr.data-kind]="getWeatherKind(weather.current.weatherCode)">
+          <ng-container *ngTemplateOutlet="weatherSvg; context: { kind: getWeatherKind(weather.current.weatherCode) }" />
+        </div>
 
         <div>
-          <span class="temperature">
+          <span class="temperature num-mono">
             {{ weather.current.temperature | number:'1.0-1' }} °C
           </span>
-
-          <p>
-            {{ getWeatherDescription(weather.current.weatherCode) }}
-          </p>
+          <p>{{ getWeatherDescription(weather.current.weatherCode) }}</p>
         </div>
       </div>
 
       <div class="current-details">
-
-        <div class="weather-detail">
-          <span>🌡️ Sensación térmica</span>
-          <strong>
-            {{ weather.current.apparentTemperature }} °C
-          </strong>
+        <div class="agro-metric weather-detail">
+          <span class="detail-label">
+            <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0Z" />
+            </svg>
+            Sensación térmica
+          </span>
+          <strong class="num-mono">{{ weather.current.apparentTemperature }} °C</strong>
         </div>
 
-        <div class="weather-detail">
-          <span>💧 Humedad relativa</span>
-          <strong>{{ weather.current.relativeHumidity }} %</strong>
+        <div class="agro-metric weather-detail">
+          <span class="detail-label">
+            <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+            </svg>
+            Humedad relativa
+          </span>
+          <strong class="num-mono">{{ weather.current.relativeHumidity }} %</strong>
         </div>
 
-        <div class="weather-detail">
-          <span>🌧️ Precipitación actual</span>
-          <strong>{{ weather.current.precipitation }} mm</strong>
+        <div class="agro-metric weather-detail">
+          <span class="detail-label">
+            <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17.5 15H7a4 4 0 0 1-.4-7.98A5 5 0 0 1 16.5 6.5 3.5 3.5 0 0 1 17.5 15ZM9 18l-1 3m4-3-1 3" />
+            </svg>
+            Precipitación actual
+          </span>
+          <strong class="num-mono">{{ weather.current.precipitation }} mm</strong>
         </div>
 
-        <div class="weather-detail">
-          <span>💨 Velocidad del viento</span>
-          <strong>{{ weather.current.windSpeed }} km/h</strong>
+        <div class="agro-metric weather-detail">
+          <span class="detail-label">
+            <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" />
+            </svg>
+            Velocidad del viento
+          </span>
+          <strong class="num-mono">{{ weather.current.windSpeed }} km/h</strong>
         </div>
-
       </div>
     </div>
 
     <div class="forecast-header">
       <div>
-        <h3>Pronóstico diario</h3>
-        <p>Consulta las condiciones esperadas</p>
+        <h3>Pronóstico Diario</h3>
+        <p>Temperatura, lluvia esperada y demanda hídrica (ET₀)</p>
       </div>
 
-      <div class="period-selector">
+      <div class="period-selector" role="group" aria-label="Horizonte de pronóstico">
         <button
+          type="button"
           [class.active]="selectedPeriod() === 7"
-          (click)="selectedPeriod.set(7)">
+          [attr.aria-pressed]="selectedPeriod() === 7"
+          (click)="selectedPeriod.set(7)"
+        >
           7 días
         </button>
 
         <button
+          type="button"
           [class.active]="selectedPeriod() === 16"
-          (click)="selectedPeriod.set(16)">
+          [attr.aria-pressed]="selectedPeriod() === 16"
+          (click)="selectedPeriod.set(16)"
+        >
           16 días
         </button>
       </div>
     </div>
 
     <div class="forecast-grid">
-
       @for (day of displayedDays; track day.date; let i = $index) {
-
-        <article class="forecast-card"
-          [class.extended]="i >= 7">
-
+        <article class="forecast-card" [class.extended]="i >= 7">
           @if (i === 7) {
             <span class="extended-label">Pronóstico extendido</span>
           }
 
-          <span class="forecast-date">
-            {{ formatDate(day.date) }}
-          </span>
+          <span class="forecast-date">{{ formatDate(day.date) }}</span>
 
-          <span class="forecast-icon">
-            {{ getWeatherIcon(day.weatherCode) }}
-          </span>
+          <div class="forecast-icon" [attr.data-kind]="getWeatherKind(day.weatherCode)">
+            <ng-container *ngTemplateOutlet="weatherSvg; context: { kind: getWeatherKind(day.weatherCode) }" />
+          </div>
 
-          <span class="forecast-description">
-            {{ getWeatherDescription(day.weatherCode) }}
-          </span>
+          <span class="forecast-description">{{ getWeatherDescription(day.weatherCode) }}</span>
 
-          <div class="temperatures">
+          <div class="temperatures num-mono">
             <strong>{{ day.temperatureMax }}°</strong>
             <span>{{ day.temperatureMin }}°</span>
           </div>
 
-          <div class="forecast-data">
-            <span>🌧️ {{ day.precipitationMm }} mm</span>
-
-            <span>
-              💧
-              {{ day.precipitationProbability === null
-                ? 'N/D'
-                : day.precipitationProbability + '%' }}
+          <div class="forecast-data num-mono">
+            <span class="forecast-metric">
+              <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17.5 15H7a4 4 0 0 1-.4-7.98A5 5 0 0 1 16.5 6.5 3.5 3.5 0 0 1 17.5 15ZM9 18l-1 3m5-3-1 3" />
+              </svg>
+              {{ day.precipitationMm }} mm
             </span>
 
-            <span>🌱 ET₀: {{ day.et0Mm }} mm</span>
-          </div>
+            <span class="forecast-metric">
+              <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+              </svg>
+              {{ day.precipitationProbability === null ? 'N/D' : day.precipitationProbability + '%' }}
+            </span>
 
+            <span class="forecast-metric">
+              <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 20V10m0 0c0-4 3.5-7 8-7 0 4.5-3 7-8 7Zm0 0c0-3-3.5-5.5-8-5.5 0 4 3 5.5 8 5.5Z" />
+              </svg>
+              ET₀: {{ day.et0Mm }} mm
+            </span>
+          </div>
         </article>
       }
-
     </div>
 
     <div class="water-balance">
-
       <div>
         <h3>Balance hídrico estimado</h3>
         <p>Precipitación acumulada − ET₀ de los próximos 7 días</p>
       </div>
 
-      <strong [class.negative]="waterBalance < 0"
-              [class.positive]="waterBalance >= 0">
-        {{ waterBalance > 0 ? '+' : '' }}
-        {{ waterBalance | number:'1.1-1' }} mm
+      <strong
+        class="num-mono"
+        [class.negative]="waterBalance < 0"
+        [class.positive]="waterBalance >= 0"
+      >
+        {{ waterBalance > 0 ? '+' : '' }}{{ waterBalance | number:'1.1-1' }} mm
       </strong>
-
     </div>
 
-    <p class="forecast-disclaimer">
-      Los datos representan pronósticos meteorológicos y pueden cambiar
-      conforme se actualizan los modelos. La incertidumbre aumenta
-      conforme se amplía el horizonte de predicción.
-    </p>
-
-    <p class="last-update">
-      Última consulta: {{ weather.generatedAt | date:'short' }}
-      · Fuente: Open-Meteo
-    </p>
-
+    <footer class="weather-footer">
+      <p class="forecast-disclaimer">
+        Los datos representan pronósticos meteorológicos y pueden variar conforme se actualizan los modelos. La incertidumbre aumenta conforme se amplía el horizonte de predicción.
+      </p>
+      <p class="last-update">
+        Última consulta: {{ weather.generatedAt | date:'short' }} · Fuente: Open-Meteo
+      </p>
+    </footer>
   }
-
 </section>

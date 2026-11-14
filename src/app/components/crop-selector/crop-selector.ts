@@ -93,6 +93,12 @@ export class CropSelector {
     this.pageSize.set(24);
   }
 
+  protected clearFilters(): void {
+    this.searchQuery.set('');
+    this.selectedCategory.set('');
+    this.pageSize.set(24);
+  }
+
   protected selectCrop(crop: Crop): void {
     this.selectedCrop.set(crop);
     this.cropChange.emit(crop);

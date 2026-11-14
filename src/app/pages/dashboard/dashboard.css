@@ -1,139 +1,20 @@
-.dashboard {
-  display: grid;
-  gap: 1rem;
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 1.25rem;
-}
-
-.climate-card {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 1rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-}
-
-.climate-card__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.climate-card__header h2 {
-  margin: 0;
-  font-size: 1.1rem;
-  color: #14532d;
-}
-
-.climate-card__subtitle {
-  margin: 0.25rem 0 0;
-  font-size: 0.875rem;
-  color: #4b5563;
-}
-
-.date-filter {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-}
-
-.date-filter__field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #374151;
-}
-
-.date-filter__field input {
-  padding: 0.45rem 0.65rem;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  background: #ffffff;
-  color: #111827;
-}
-
-.date-filter__field input:focus {
-  outline: 2px solid #16a34a;
-  border-color: transparent;
-}
-
-.date-filter__btn {
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  border: none;
-  background-color: #16a34a;
-  color: #ffffff;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.date-filter__btn:hover:not(:disabled) {
-  background-color: #15803d;
-}
-
-.date-filter__btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.status-badge {
-  padding: 0.25rem 0.6rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.status-badge--loading {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.climate-card__error {
-  margin: 0;
-  padding: 0.5rem 0.75rem;
-  background-color: #fef2f2;
-  color: #b91c1c;
-  border-radius: 6px;
-  font-size: 0.85rem;
-}
-
-.climate-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 0.75rem;
-}
-
-.climate-metric {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  padding: 0.75rem;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-}
-
-.climate-metric__label {
-  font-size: 0.78rem;
-  color: #6b7280;
-}
-
-.climate-metric__value {
-  font-size: 1rem;
-  color: #111827;
-}
+.parcel-pill { display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.34rem 0.75rem; border-radius: 999px; background: #f0fdf4; border: 1px solid #bbf7d0; color: #14532d; font-size: 0.8rem; font-weight: 600; }
+.parcel-pill--idle { background: #f8fafc; border-color: #e2e8f0; color: #475569; font-weight: 500; }
+.parcel-pill__coords { padding-left: 0.4rem; border-left: 1px solid #bbf7d0; color: #15803d; }
+.dashboard { display: grid; gap: 1.1rem; max-width: 1140px; margin: 0 auto; padding: 1.1rem 1.25rem 2.4rem; }
+.workflow-stepper { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.65rem; padding: 0.65rem; }
+.step-pill { display: flex; align-items: center; gap: 0.65rem; padding: 0.55rem 0.75rem; border-radius: 12px; border: 1px solid #e2e8f0; background: #f8fafc; color: #0f172a; text-decoration: none; }
+.step-pill:hover, .step-pill--done { border-color: #bbf7d0; background: #f0fdf4; }
+.step-pill--disabled { opacity: 0.75; }
+.step-pill__num { width: 1.7rem; height: 1.7rem; border-radius: 999px; background: #e2e8f0; color: #334155; font-size: 0.8rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.step-pill--done .step-pill__num { background: #15803d; color: #fff; }
+.step-pill__text { display: flex; flex-direction: column; min-width: 0; }
+.step-pill__text strong { font-size: 0.84rem; line-height: 1.2; }
+.step-pill__text small, .climate-prompt p { color: #475569; }
+.step-pill__text small { font-size: 0.74rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.climate-prompt { display: flex; align-items: center; gap: 0.85rem; padding: 0.95rem 1.15rem; border-left: 4px solid #16a34a; }
+.climate-prompt__icon { width: 1.5rem; height: 1.5rem; color: #15803d; flex-shrink: 0; }
+.climate-prompt h2 { margin: 0; font-size: 0.96rem; color: #14532d; }
+.climate-prompt p { margin: 0.15rem 0 0; font-size: 0.85rem; }
+@media (max-width: 768px) { .workflow-stepper { grid-template-columns: 1fr; } }
+@media (max-width: 600px) { .dashboard { padding: 0.85rem 0.85rem 2rem; } }

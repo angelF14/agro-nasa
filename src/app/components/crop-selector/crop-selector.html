@@ -1,13 +1,19 @@
-<section class="crop-selector-card">
-  <header class="crop-selector-header">
+<section class="agro-card crop-selector-card" aria-labelledby="crop-selector-title">
+  <header class="agro-header">
     <div>
-      <h2>Catálogo de Cultivos Disponibles ({{ filteredCrops().length }})</h2>
-      <p>Busca por nombre común, nombre científico o familia botánica y selecciona el cultivo que deseas evaluar.</p>
+      <span class="step-badge">Paso 3 · Cultivo</span>
+      <h2 id="crop-selector-title" class="agro-title">Catálogo de Cultivos FAO EcoCrop ({{ filteredCrops().length }})</h2>
+      <p class="agro-subtitle">Busca por nombre común, científico o familia botánica para evaluar compatibilidad climática y rotación.</p>
     </div>
 
     @if (selectedCrop(); as active) {
-      <div class="selected-crop-pill">
-        <span class="selected-crop-pill__badge">Cultivo seleccionado</span>
+      <div class="selected-crop-pill" role="status" aria-live="polite">
+        <span class="selected-crop-pill__badge">
+          <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          Activo
+        </span>
         <strong>{{ primaryName(active) }}</strong>
         <span class="selected-crop-pill__sci">({{ active.scientificName }})</span>
       </div>
@@ -15,39 +21,75 @@
   </header>
 
   <div class="crop-filters">
-    <input
-      type="text"
-      class="crop-filters__search"
-      name="cropSearch"
-      [ngModel]="searchQuery()"
-      (ngModelChange)="onSearchChange($event)"
-      placeholder="Buscar cultivo (ej. frijol, Phaseolus, maíz, Zea mays, papa, Solanum, arroz)..."
-      autocomplete="off"
-    />
-
-    <select
-      class="crop-filters__category"
-      name="cropCategory"
-      [ngModel]="selectedCategory()"
-      (ngModelChange)="onCategoryChange($event)"
-    >
-      @for (cat of categories; track cat.value) {
-        <option [value]="cat.value">{{ cat.label }}</option>
+    <div class="crop-search-wrap">
+      <label for="crop-search-input" class="sr-only">Buscar cultivo por nombre o familia</label>
+      <svg class="crop-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <circle cx="11" cy="11" r="8" />
+        <path stroke-linecap="round" d="M21 21l-4.35-4.35" />
+      </svg>
+      <input
+        id="crop-search-input"
+        type="search"
+        class="crop-filters__search"
+        name="cropSearch"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="onSearchChange($event)"
+        placeholder="Buscar cultivo (ej. frijol, Phaseolus, maíz, papa, arroz)..."
+        autocomplete="off"
+      />
+      @if (searchQuery()) {
+        <button
+          type="button"
+          class="crop-search-clear"
+          (click)="onSearchChange('')"
+          aria-label="Limpiar búsqueda de cultivos"
+        >
+          <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
       }
-    </select>
+    </div>
+
+    <div class="crop-category-wrap">
+      <label for="crop-category-select" class="sr-only">Filtrar por categoría botánica</label>
+      <select
+        id="crop-category-select"
+        class="agro-input crop-filters__category"
+        name="cropCategory"
+        [ngModel]="selectedCategory()"
+        (ngModelChange)="onCategoryChange($event)"
+      >
+        @for (cat of categories; track cat.value) {
+          <option [value]="cat.value">{{ cat.label }}</option>
+        }
+      </select>
+    </div>
   </div>
 
   @if (isLoading()) {
-    <p class="crop-status">Cargando catálogo FAO EcoCrop...</p>
+    <div class="crop-skeleton-grid" aria-busy="true" aria-label="Cargando catálogo de cultivos">
+      @for (item of [1, 2, 3, 4, 5, 6]; track item) {
+        <div class="skeleton-box crop-skeleton-item"></div>
+      }
+    </div>
   } @else if (filteredCrops().length === 0) {
-    <p class="crop-status">No se encontraron cultivos con ese criterio de búsqueda.</p>
+    <div class="crop-empty">
+      <svg class="crop-empty__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+        <circle cx="11" cy="11" r="8" />
+        <path stroke-linecap="round" d="M21 21l-4.35-4.35" />
+      </svg>
+      <p>No se encontraron cultivos con ese criterio de búsqueda.</p>
+      <button type="button" class="agro-btn agro-btn--secondary agro-btn--sm" (click)="clearFilters()">Restablecer filtros</button>
+    </div>
   } @else {
-    <div class="crop-grid">
+    <div class="crop-grid" role="listbox" aria-label="Lista de cultivos disponibles">
       @for (crop of visibleCrops(); track crop.id) {
         <button
           type="button"
           class="crop-item"
           [class.crop-item--active]="selectedCrop()?.id === crop.id"
+          [attr.aria-pressed]="selectedCrop()?.id === crop.id"
           (click)="selectCrop(crop)"
         >
           <div class="crop-item__top">
@@ -57,11 +99,27 @@
             }
           </div>
           <span class="crop-item__sci">{{ crop.scientificName }}</span>
-          <div class="crop-item__meta">
-            <span>🌡️ {{ crop.temp.optMin }}–{{ crop.temp.optMax }} °C</span>
-            <span>🌧️ {{ crop.rain.optMin }}–{{ crop.rain.optMax }} mm</span>
+          <div class="crop-item__meta num-mono">
+            <span class="meta-chip" title="Rango térmico óptimo">
+              <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0Z" />
+              </svg>
+              {{ crop.temp.optMin }}–{{ crop.temp.optMax }} °C
+            </span>
+            <span class="meta-chip" title="Precipitación óptima">
+              <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+              </svg>
+              {{ crop.rain.optMin }}–{{ crop.rain.optMax }} mm
+            </span>
             @if (crop.agronomy.cycleDays.min) {
-              <span>⏱️ {{ crop.agronomy.cycleDays.min }}–{{ crop.agronomy.cycleDays.max }} d</span>
+              <span class="meta-chip" title="Duración del ciclo">
+                <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9" />
+                  <path stroke-linecap="round" d="M12 7v5l3 2" />
+                </svg>
+                {{ crop.agronomy.cycleDays.min }}–{{ crop.agronomy.cycleDays.max }} d
+              </span>
             }
           </div>
         </button>
