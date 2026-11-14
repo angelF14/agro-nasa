@@ -3,6 +3,7 @@ import * as path from 'node:path';
 import { parse } from 'csv-parse/sync';
 
 export interface CropProfile {
+  id: string;
   scientificName: string;
   commonNames: string[];
   category: string;
@@ -33,7 +34,7 @@ const toList = (val: string | undefined): string[] => {
 
 // 1. Read and parse raw CSV (Note: older EcoCrop files sometimes use latin1 encoding)
 const csvPath = path.resolve(import.meta.dirname, '../src/app/data/EcoCrop_DB.csv');
-const rawCsv = fs.readFileSync(csvPath, 'utf8');
+const rawCsv = fs.readFileSync(csvPath, 'latin1');
 
 const records: Record<string, string>[] = parse(rawCsv, {
   columns: true, // Uses first row as keys
@@ -90,6 +91,7 @@ for (const row of records) {
   }
 
   cleanedCrops.push({
+    id: String(r['ecoportcode'] || '').trim(),
     scientificName: r['scientificname'] || r['sciname'] || 'Unknown',
     commonNames: toList(r['comname']),
     category: r['cat'] || 'Other',
