@@ -1,4 +1,7 @@
 <main class="dashboard">
-  <app-farm-map />
+  <app-farm-map
+    (coordinatesChange)="onCoordinatesChange($event)"
+    (locationNameChange)="onLocationNameChange($event)"
+  />
   <app-rotation-timeline />
 </main>
