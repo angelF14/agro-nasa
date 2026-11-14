@@ -1,139 +1,267 @@
 .dashboard {
   display: grid;
-  gap: 1rem;
-  max-width: 1100px;
+  gap: 1.5rem;
+  max-width: 1120px;
   margin: 0 auto;
-  padding: 1.25rem;
+  padding: 1rem 1rem 3rem;
 }
 
-.climate-card {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+@media (min-width: 640px) {
+  .dashboard {
+    gap: 2rem;
+    padding: 1.75rem 1.5rem 4rem;
+  }
+}
+
+/* Header */
+.app-header {
+  display: grid;
+  gap: 0.9rem;
+  animation: card-in 0.7s var(--spring) backwards;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-weight: 800;
+  font-size: 1.05rem;
+}
+
+.brand__logo {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
   border-radius: 12px;
-  padding: 1rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  background: var(--ink);
+  box-shadow: 0 6px 14px -6px rgba(23, 35, 27, 0.6);
+}
+
+.brand__name .serif {
+  font-size: 1.2em;
+  color: var(--brand);
+}
+
+/* Climate card */
+.climate-card {
+  display: grid;
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.climate-card__art {
+  position: absolute;
+  top: -42px;
+  right: 14px;
+  width: 92px;
+  height: 92px;
 }
 
 .climate-card__header {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: flex-start;
   gap: 0.75rem;
+  padding-right: 5.5rem;
+}
+
+.coord-pills {
+  display: flex;
   flex-wrap: wrap;
-}
-
-.climate-card__header h2 {
-  margin: 0;
-  font-size: 1.1rem;
-  color: #14532d;
-}
-
-.climate-card__subtitle {
-  margin: 0.25rem 0 0;
-  font-size: 0.875rem;
-  color: #4b5563;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+  font-family: var(--font-mono);
 }
 
 .date-filter {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 0.75rem;
-  padding: 0.75rem;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-}
-
-.date-filter__field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #374151;
-}
-
-.date-filter__field input {
-  padding: 0.45rem 0.65rem;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  background: #ffffff;
-  color: #111827;
-}
-
-.date-filter__field input:focus {
-  outline: 2px solid #16a34a;
-  border-color: transparent;
+  padding: 0.9rem;
+  background: var(--surface-2);
+  border-radius: var(--radius);
 }
 
 .date-filter__btn {
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  border: none;
-  background-color: #16a34a;
-  color: #ffffff;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
+  grid-column: 1 / -1;
 }
 
-.date-filter__btn:hover:not(:disabled) {
-  background-color: #15803d;
+@media (min-width: 640px) {
+  .date-filter {
+    grid-template-columns: 1fr 1fr auto;
+    align-items: end;
+  }
+
+  .date-filter__btn {
+    grid-column: auto;
+  }
 }
 
-.date-filter__btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.status-badge {
-  padding: 0.25rem 0.6rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.status-badge--loading {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.climate-card__error {
-  margin: 0;
-  padding: 0.5rem 0.75rem;
-  background-color: #fef2f2;
-  color: #b91c1c;
-  border-radius: 6px;
-  font-size: 0.85rem;
-}
-
-.climate-grid {
+/* Bento grid */
+.bento {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+  padding-top: 1.25rem;
+  transition: opacity 0.3s, filter 0.3s;
 }
 
-.climate-metric {
+@media (min-width: 860px) {
+  .bento {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+  }
+}
+
+.bento.is-loading {
+  opacity: 0.55;
+  filter: saturate(0.6);
+}
+
+.metric {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
-  padding: 0.75rem;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  min-height: 140px;
+  padding: 2.6rem 1rem 1rem;
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  animation: card-in 0.7s var(--spring) backwards;
+  animation-delay: calc(var(--i, 0) * 70ms);
+  transition: transform 0.45s var(--spring), box-shadow 0.3s var(--ease-out);
 }
 
-.climate-metric__label {
+.metric:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow);
+}
+
+.metric:active {
+  transform: scale(0.97);
+}
+
+.metric--wide {
+  grid-column: span 2;
+}
+
+.metric--hero {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #fff;
+}
+
+.metric--sky {
+  background: #e4f1ff;
+  border-color: #cfe3fa;
+}
+
+.metric--sun {
+  background: #fff4d1;
+  border-color: #fbe6a6;
+}
+
+.metric--risk {
+  background: var(--accent-soft);
+  border-color: #ffd4b8;
+}
+
+.metric__art {
+  position: absolute;
+  top: -16px;
+  right: 14px;
+  width: 42px;
+  height: 42px;
+}
+
+.metric--hero .metric__art {
+  width: 52px;
+  height: 52px;
+  top: -20px;
+}
+
+.metric__label {
   font-size: 0.78rem;
-  color: #6b7280;
+  font-weight: 600;
+  color: var(--muted);
 }
 
-.climate-metric__value {
-  font-size: 1rem;
-  color: #111827;
+.metric--hero .metric__label {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.metric__value {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem;
+  font-size: clamp(1.45rem, 1.2rem + 1vw, 1.9rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.metric--hero .metric__value {
+  font-size: clamp(2.6rem, 2rem + 2.5vw, 3.6rem);
+  color: var(--lime);
+}
+
+.metric__value small {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+
+.metric--hero .metric__value small {
+  font-size: 1.1rem;
+  color: #fff;
+}
+
+.metric__sep {
+  margin: 0 0.15rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.meter {
+  height: 8px;
+  margin-top: 0.3rem;
+  border-radius: 99px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.meter span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #8fd0ff, #2a6ee8);
+  transition: width 1s var(--spring);
+}
+
+.risk-pill {
+  padding: 0.35rem 1rem;
+  border-radius: 999px;
+  font-size: 1.05rem;
+  text-transform: capitalize;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+[data-risk='low'] .risk-pill {
+  background: var(--lime);
+}
+
+[data-risk='moderate'] .risk-pill {
+  background: var(--sun);
+}
+
+[data-risk='high'] .risk-pill {
+  background: var(--accent);
+  color: #fff;
 }

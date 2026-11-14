@@ -1,3 +1,18 @@
-<section class="rotation-timeline">
-  <p>Rotation Timeline (Ciclo 1 → Ciclo 2 → Ciclo 3) placeholder</p>
+<section class="card rotation-timeline">
+  <header class="rotation-timeline__header">
+    <p class="eyebrow">Paso 2 · Rotación</p>
+    <h2 class="card-title">Plan de <span class="serif">rotación</span></h2>
+    <p class="card-subtitle">Rotation Timeline (Ciclo 1 → Ciclo 2 → Ciclo 3) placeholder</p>
+  </header>
+
+  <ol class="cycle-track">
+    @for (cycle of [1, 2, 3]; track cycle) {
+      <li class="cycle" [style.--i]="cycle">
+        <span class="cycle__num">{{ cycle }}</span>
+        <span class="pill">Ciclo {{ cycle }}</span>
+        <span class="cycle__skeleton"></span>
+        <span class="cycle__skeleton cycle__skeleton--short"></span>
+      </li>
+    }
+  </ol>
 </section>

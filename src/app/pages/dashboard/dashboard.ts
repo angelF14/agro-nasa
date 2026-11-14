@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { CountUp } from '../../directives/count-up.directive';
 import { FarmMap } from '@components/farm-map/farm-map';
 import { RotationTimeline } from '@components/rotation-timeline/rotation-timeline';
 import { ClimateSummary, Coordinates } from '@models/index';
@@ -15,7 +16,7 @@ interface ClimateQuery {
 
 @Component({
   selector: 'app-dashboard',
-  imports: [FormsModule, FarmMap, RotationTimeline],
+  imports: [FormsModule, CountUp, FarmMap, RotationTimeline],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

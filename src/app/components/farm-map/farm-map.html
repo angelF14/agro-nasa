@@ -1,39 +1,82 @@
-<section class="farm-map-card">
+<section class="card farm-map-card">
+  <svg class="pop-art farm-map-art" viewBox="0 0 96 96" aria-hidden="true">
+    <defs>
+      <radialGradient id="art-globe" cx=".35" cy=".3" r=".85">
+        <stop offset="0" stop-color="#b6f0c8" />
+        <stop offset="1" stop-color="#1f8a55" />
+      </radialGradient>
+      <linearGradient id="art-pin" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#ff9a5a" />
+        <stop offset="1" stop-color="#ff4d1a" />
+      </linearGradient>
+    </defs>
+    <circle cx="44" cy="54" r="32" fill="url(#art-globe)" />
+    <path d="M22 40c8 2 10 8 18 7s6 9 14 10M30 74c2-8 10-8 12-14M58 28c-2 6 4 10 10 10" stroke="#d4f26b" stroke-width="4" fill="none" stroke-linecap="round" />
+    <ellipse cx="68" cy="58" rx="8" ry="3" fill="#17231b" opacity=".25" />
+    <path d="M68 56S54 40 54 30a14 14 0 0 1 28 0c0 10-14 26-14 26z" fill="url(#art-pin)" />
+    <circle cx="68" cy="30" r="5.5" fill="#fffdf8" />
+  </svg>
+
   <header class="farm-map-header">
-    <div>
-      <h2>Selección de Región / Parcela</h2>
-      <p>Busca un país, estado o ciudad, o haz clic directamente sobre la región en el mapa.</p>
-    </div>
+    <p class="eyebrow">Paso 1 · Tu parcela</p>
+    <h2 class="card-title">Selección de <span class="serif">Región / Parcela</span></h2>
+    <p class="card-subtitle">Busca un país, estado o ciudad, o haz clic directamente sobre la región en el mapa.</p>
   </header>
 
   <!-- Barra de búsqueda de País / Ciudad / Región -->
   <form class="search-bar" (ngSubmit)="onSearchSubmit()">
-    <input
-      type="text"
-      name="searchQuery"
-      [ngModel]="searchQuery()"
-      (ngModelChange)="searchQuery.set($event)"
-      placeholder="Buscar país, región o ciudad (ej. Sinaloa, México, Iowa, Bogotá)..."
-      autocomplete="off"
-    />
-    <button type="submit" class="btn-primary" [disabled]="isSearching()">
+    <div class="search-bar__field">
+      <svg class="search-bar__glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="7" />
+        <path d="m20 20-3.5-3.5" />
+      </svg>
+      <input
+        class="input"
+        type="text"
+        name="searchQuery"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+        placeholder="Buscar país, región o ciudad (ej. Sinaloa, México, Iowa, Bogotá)..."
+        autocomplete="off"
+      />
+    </div>
+    <button type="submit" class="btn btn--primary" [disabled]="isSearching()">
       {{ isSearching() ? 'Buscando...' : 'Buscar' }}
+      <span class="btn__icon" aria-hidden="true">
+        @if (isSearching()) {
+          <span class="spinner"></span>
+        } @else {
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7 17 17 7M9 7h8v8" />
+          </svg>
+        }
+      </span>
     </button>
-    <button type="button" class="btn-secondary" (click)="locateUser()" title="Usar mi ubicación">
+    <button type="button" class="btn btn--ghost" (click)="locateUser()" title="Usar mi ubicación">
       Mi ubicación
+      <span class="btn__icon btn__icon--still" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+        </svg>
+      </span>
     </button>
   </form>
 
   @if (searchError()) {
-    <p class="search-error">{{ searchError() }}</p>
+    <p class="alert">{{ searchError() }}</p>
   }
 
   @if (searchResults().length > 1) {
     <ul class="search-results">
-      @for (item of searchResults(); track item.place_id) {
-        <li>
+      @for (item of searchResults(); track item.place_id; let i = $index) {
+        <li [style.--i]="i">
           <button type="button" (click)="selectSearchResult(item, true)">
-            {{ item.display_name }}
+            <span class="search-results__pin" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 22s-7-7.6-7-13a7 7 0 0 1 14 0c0 5.4-7 13-7 13zm0-10a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" /></svg>
+            </span>
+            <span class="search-results__name">{{ item.display_name }}</span>
+            <span class="search-results__go" aria-hidden="true">↗</span>
           </button>
         </li>
       }
@@ -41,19 +84,21 @@
   }
 
   <!-- Contenedor de Leaflet -->
-  <div #mapContainer class="leaflet-map"></div>
+  <div class="map-frame">
+    <div #mapContainer class="leaflet-map"></div>
+  </div>
 
   <!-- Resumen de coordenadas retornadas -->
-  <footer class="coords-footer">
+  <footer class="coords-ticket">
     <div class="location-label">
-      <span class="badge">Ubicación</span>
-      <span>{{ selectedLocationName() }}</span>
+      <span class="pill pill--lime">Ubicación</span>
+      <span class="location-label__name">{{ selectedLocationName() }}</span>
     </div>
 
     @if (selectedCoords(); as coords) {
       <div class="coords-values">
-        <span><strong>Lat:</strong> {{ coords.lat }}</span>
-        <span><strong>Lon:</strong> {{ coords.lon }}</span>
+        <span><small>Lat</small><strong>{{ coords.lat }}</strong></span>
+        <span><small>Lon</small><strong>{{ coords.lon }}</strong></span>
       </div>
     } @else {
       <div class="coords-values muted">Sin coordenadas seleccionadas aún</div>
