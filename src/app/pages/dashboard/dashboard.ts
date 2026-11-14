@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { CountUp } from '../../directives/count-up.directive';
 import { FarmMap } from '@components/farm-map/farm-map';
 import { RotationTimeline } from '@components/rotation-timeline/rotation-timeline';
+import { WeatherForecastComponent } from '@components/weather-forecast/weather-forecast';
 import { ClimateSummary, Coordinates } from '@models/index';
 import { NasaPowerService } from '@services/nasa-power.service';
 import { catchError, of, Subject, switchMap, tap } from 'rxjs';
@@ -16,7 +17,8 @@ interface ClimateQuery {
 
 @Component({
   selector: 'app-dashboard',
-  imports: [FormsModule, CountUp, FarmMap, RotationTimeline],
+  imports: [FormsModule, CountUp, FarmMap, RotationTimeline, WeatherForecastComponent],
+ 
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

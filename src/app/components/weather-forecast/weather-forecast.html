@@ -1,0 +1,172 @@
+
+<section class="weather-container">
+
+  <div class="section-header">
+    <div>
+      <h2>Condiciones meteorológicas</h2>
+      <p>Información climática de tu parcela</p>
+    </div>
+
+    <button class="refresh-button"
+      (click)="loadForecast()"
+      [disabled]="loading()">
+      ↻ Actualizar
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="message">
+      Consultando información meteorológica...
+    </div>
+  }
+
+  @if (error()) {
+    <div class="error-message">
+      No fue posible obtener los datos de Open-Meteo.
+      <button (click)="loadForecast()">Reintentar</button>
+    </div>
+  }
+
+  @if (forecast(); as weather) {
+
+    <div class="current-weather">
+
+      <div class="current-main">
+        <span class="weather-icon">
+          {{ getWeatherIcon(weather.current.weatherCode) }}
+        </span>
+
+        <div>
+          <span class="temperature">
+            {{ weather.current.temperature | number:'1.0-1' }} °C
+          </span>
+
+          <p>
+            {{ getWeatherDescription(weather.current.weatherCode) }}
+          </p>
+        </div>
+      </div>
+
+      <div class="current-details">
+
+        <div class="weather-detail">
+          <span>🌡️ Sensación térmica</span>
+          <strong>
+            {{ weather.current.apparentTemperature }} °C
+          </strong>
+        </div>
+
+        <div class="weather-detail">
+          <span>💧 Humedad relativa</span>
+          <strong>{{ weather.current.relativeHumidity }} %</strong>
+        </div>
+
+        <div class="weather-detail">
+          <span>🌧️ Precipitación actual</span>
+          <strong>{{ weather.current.precipitation }} mm</strong>
+        </div>
+
+        <div class="weather-detail">
+          <span>💨 Velocidad del viento</span>
+          <strong>{{ weather.current.windSpeed }} km/h</strong>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="forecast-header">
+      <div>
+        <h3>Pronóstico diario</h3>
+        <p>Consulta las condiciones esperadas</p>
+      </div>
+
+      <div class="period-selector">
+        <button
+          [class.active]="selectedPeriod() === 7"
+          (click)="selectedPeriod.set(7)">
+          7 días
+        </button>
+
+        <button
+          [class.active]="selectedPeriod() === 16"
+          (click)="selectedPeriod.set(16)">
+          16 días
+        </button>
+      </div>
+    </div>
+
+    <div class="forecast-grid">
+
+      @for (day of displayedDays; track day.date; let i = $index) {
+
+        <article class="forecast-card"
+          [class.extended]="i >= 7">
+
+          @if (i === 7) {
+            <span class="extended-label">Pronóstico extendido</span>
+          }
+
+          <span class="forecast-date">
+            {{ formatDate(day.date) }}
+          </span>
+
+          <span class="forecast-icon">
+            {{ getWeatherIcon(day.weatherCode) }}
+          </span>
+
+          <span class="forecast-description">
+            {{ getWeatherDescription(day.weatherCode) }}
+          </span>
+
+          <div class="temperatures">
+            <strong>{{ day.temperatureMax }}°</strong>
+            <span>{{ day.temperatureMin }}°</span>
+          </div>
+
+          <div class="forecast-data">
+            <span>🌧️ {{ day.precipitationMm }} mm</span>
+
+            <span>
+              💧
+              {{ day.precipitationProbability === null
+                ? 'N/D'
+                : day.precipitationProbability + '%' }}
+            </span>
+
+            <span>🌱 ET₀: {{ day.et0Mm }} mm</span>
+          </div>
+
+        </article>
+      }
+
+    </div>
+
+    <div class="water-balance">
+
+      <div>
+        <h3>Balance hídrico estimado</h3>
+        <p>Precipitación acumulada − ET₀ de los próximos 7 días</p>
+      </div>
+
+      <strong [class.negative]="waterBalance < 0"
+              [class.positive]="waterBalance >= 0">
+        {{ waterBalance > 0 ? '+' : '' }}
+        {{ waterBalance | number:'1.1-1' }} mm
+      </strong>
+
+    </div>
+
+    <p class="forecast-disclaimer">
+      Los datos representan pronósticos meteorológicos y pueden cambiar
+      conforme se actualizan los modelos. La incertidumbre aumenta
+      conforme se amplía el horizonte de predicción.
+    </p>
+
+    <p class="last-update">
+      Última consulta: {{ weather.generatedAt | date:'short' }}
+      · Fuente: Open-Meteo
+    </p>
+
+  }
+
+</section>
