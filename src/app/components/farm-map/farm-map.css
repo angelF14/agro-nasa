@@ -111,8 +111,6 @@
   margin: 0;
   padding: 0.3rem;
   list-style: none;
-  max-height: 200px;
-  overflow-y: auto;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -143,6 +141,35 @@
 .search-results .agro-icon {
   margin-top: 0.15rem;
   color: var(--accent);
+}
+
+.results-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.results-pagination button {
+  min-width: 2rem;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.results-pagination button:hover:not(:disabled) {
+  background: var(--surface-tint);
+}
+
+.results-pagination button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 /* Location summary */

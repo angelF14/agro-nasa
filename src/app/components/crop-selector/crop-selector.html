@@ -2,15 +2,19 @@
   <header class="agro-header">
     <div>
       <h2 id="crop-selector-title" class="agro-title">
-        {{ cropsListType() === 'suggested' ? 'Cultivos recomendados' : 'Catálogo de Cultivos FAO EcoCrop' }}
+        {{
+          cropsListType() === 'suggested'
+            ? 'Cultivos recomendados'
+            : 'Catálogo de Cultivos FAO EcoCrop'
+        }}
         ({{ activeCropCount() }})
       </h2>
       <p class="agro-subtitle">
         @if (cropsListType() === 'suggested') {
           Recomendaciones ordenadas por compatibilidad con el clima histórico de la parcela.
         } @else {
-          Busca por nombre común, científico o familia botánica para evaluar compatibilidad climática
-          y rotación.
+          Busca por nombre común, científico o familia botánica para evaluar compatibilidad
+          climática y rotación.
         }
       </p>
     </div>
@@ -257,12 +261,28 @@
       }
     </div>
 
-    @if (visibleCrops().length < activeCropCount()) {
-      <div class="crop-more">
-        <button type="button" class="btn-more" (click)="showMore()">
-          Mostrar más cultivos ({{ visibleCrops().length }} de {{ activeCropCount() }})
-        </button>
-      </div>
-    }
+    <nav class="list-pagination" aria-label="Paginación de cultivos">
+      <button
+        type="button"
+        class="btn-more"
+        (click)="goToPage(page() - 1)"
+        [disabled]="page() === 1"
+        aria-label="Página anterior"
+      >
+        ‹ Anterior
+      </button>
+      <span class="list-pagination__info num-mono" aria-live="polite"
+        >{{ page() }} / {{ totalPages() }}</span
+      >
+      <button
+        type="button"
+        class="btn-more"
+        (click)="goToPage(page() + 1)"
+        [disabled]="page() === totalPages()"
+        aria-label="Página siguiente"
+      >
+        Siguiente ›
+      </button>
+    </nav>
   }
 </section>

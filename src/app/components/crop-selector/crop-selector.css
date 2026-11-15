@@ -125,9 +125,14 @@
 }
 
 .crop-grid {
-  max-height: 560px;
-  overflow-y: auto;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   padding: 0.2rem;
+}
+
+@media (max-width: 720px) {
+  .crop-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .crop-item {
@@ -269,9 +274,16 @@
   font-size: 0.9rem;
 }
 
-.crop-more {
+.list-pagination {
   display: flex;
+  align-items: center;
   justify-content: center;
+  gap: 0.75rem;
+}
+
+.list-pagination__info {
+  color: var(--text-muted);
+  font-size: 0.85rem;
 }
 
 .btn-more {
@@ -285,7 +297,12 @@
   cursor: pointer;
 }
 
-.btn-more:hover {
+.btn-more:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-more:hover:not(:disabled) {
   background: var(--surface-tint);
   border-color: var(--brand);
 }

@@ -59,7 +59,7 @@
 
     @if (searchResults().length > 1) {
       <ul class="search-results" aria-label="Resultados de ubicación encontrados">
-        @for (item of searchResults(); track item.place_id) {
+        @for (item of visibleResults(); track item.place_id) {
           <li>
             <button type="button" (click)="selectSearchResult(item, true)">
               <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -71,6 +71,13 @@
           </li>
         }
       </ul>
+      @if (resultsTotalPages() > 1) {
+        <nav class="results-pagination" aria-label="Paginación de resultados de ubicación">
+          <button type="button" (click)="goToResultsPage(resultsPage() - 1)" [disabled]="resultsPage() === 1" aria-label="Página anterior">‹</button>
+          <span class="num-mono" aria-live="polite">{{ resultsPage() }} / {{ resultsTotalPages() }}</span>
+          <button type="button" (click)="goToResultsPage(resultsPage() + 1)" [disabled]="resultsPage() === resultsTotalPages()" aria-label="Página siguiente">›</button>
+        </nav>
+      }
     }
 
     <!-- Resumen de coordenadas retornadas -->
