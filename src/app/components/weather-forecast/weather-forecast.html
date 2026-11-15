@@ -44,6 +44,81 @@
   }
 </ng-template>
 
+<!-- Ilustraciones a color (pop-out) para la condición actual -->
+<ng-template #weatherArt let-kind="kind">
+  @switch (kind) {
+    @case ('sun') {
+      <svg viewBox="0 0 120 100" aria-hidden="true">
+        <g stroke="#ffc83d" stroke-width="6" stroke-linecap="round">
+          <path d="M60 8v10M60 82v10M18 50h10M92 50h10M37.4 27.4l-7.1-7.1M82.6 27.4l7.1-7.1M37.4 72.6l-7.1 7.1M82.6 72.6l7.1 7.1" />
+        </g>
+        <circle cx="60" cy="50" r="24" fill="url(#wa-sun)" />
+      </svg>
+    }
+    @case ('partly-cloudy') {
+      <svg viewBox="0 0 120 100" aria-hidden="true">
+        <g transform="translate(26 -12) scale(.8)">
+        <g stroke="#ffc83d" stroke-width="6" stroke-linecap="round">
+          <path d="M60 8v10M60 82v10M18 50h10M92 50h10M37.4 27.4l-7.1-7.1M82.6 27.4l7.1-7.1M37.4 72.6l-7.1 7.1M82.6 72.6l7.1 7.1" />
+        </g>
+        <circle cx="60" cy="50" r="24" fill="url(#wa-sun)" />
+        </g>
+        <path d="M30 90h60a20 20 0 0 0 1.5-39.94A27 27 0 0 0 39 48.5 21 21 0 0 0 30 90Z" fill="url(#wa-cloud)" />
+        <ellipse cx="44" cy="64" rx="10" ry="5" fill="#fff" opacity=".8" />
+      </svg>
+    }
+    @case ('cloud') {
+      <svg viewBox="0 0 120 100" aria-hidden="true">
+        <path transform="translate(30 -10) scale(.75)" d="M30 90h60a20 20 0 0 0 1.5-39.94A27 27 0 0 0 39 48.5 21 21 0 0 0 30 90Z" fill="url(#wa-cloud-back)" />
+        <path d="M30 90h60a20 20 0 0 0 1.5-39.94A27 27 0 0 0 39 48.5 21 21 0 0 0 30 90Z" fill="url(#wa-cloud)" />
+        <ellipse cx="44" cy="64" rx="10" ry="5" fill="#fff" opacity=".8" />
+      </svg>
+    }
+    @case ('drizzle') {
+      <svg viewBox="0 0 120 100" aria-hidden="true">
+        <path transform="translate(0 -14)" d="M30 90h60a20 20 0 0 0 1.5-39.94A27 27 0 0 0 39 48.5 21 21 0 0 0 30 90Z" fill="url(#wa-cloud)" />
+        <g fill="url(#wa-drop)">
+          <path transform="translate(44 86)" d="M0-8c3 4 5 7 5 9.5a5 5 0 0 1-10 0C-5-1-3-4 0-8Z" />
+          <path transform="translate(62 93)" d="M0-8c3 4 5 7 5 9.5a5 5 0 0 1-10 0C-5-1-3-4 0-8Z" />
+          <path transform="translate(80 86)" d="M0-8c3 4 5 7 5 9.5a5 5 0 0 1-10 0C-5-1-3-4 0-8Z" />
+        </g>
+      </svg>
+    }
+    @case ('rain') {
+      <svg viewBox="0 0 120 100" aria-hidden="true">
+        <path transform="translate(0 -16)" d="M30 90h60a20 20 0 0 0 1.5-39.94A27 27 0 0 0 39 48.5 21 21 0 0 0 30 90Z" fill="url(#wa-cloud-back)" />
+        <g stroke="#3b95e8" stroke-width="5" stroke-linecap="round">
+          <path d="M42 80l-5 12M58 80l-5 12M74 80l-5 12M90 80l-5 12" />
+        </g>
+      </svg>
+    }
+    @case ('snow') {
+      <svg viewBox="0 0 120 100" aria-hidden="true">
+        <path transform="translate(0 -16)" d="M30 90h60a20 20 0 0 0 1.5-39.94A27 27 0 0 0 39 48.5 21 21 0 0 0 30 90Z" fill="url(#wa-cloud)" />
+        <g fill="#fff" stroke="#9cc9ee" stroke-width="2">
+          <circle cx="44" cy="86" r="5" />
+          <circle cx="62" cy="93" r="5" />
+          <circle cx="80" cy="86" r="5" />
+        </g>
+      </svg>
+    }
+    @case ('storm') {
+      <svg viewBox="0 0 120 100" aria-hidden="true">
+        <path transform="translate(0 -18)" d="M30 90h60a20 20 0 0 0 1.5-39.94A27 27 0 0 0 39 48.5 21 21 0 0 0 30 90Z" fill="url(#wa-storm)" />
+        <path d="M66 62 50 84h11l-6 16 19-25H62l7-13Z" fill="url(#wa-bolt)" />
+      </svg>
+    }
+    @default {
+      <svg viewBox="0 0 120 100" aria-hidden="true">
+        <rect x="50" y="8" width="20" height="58" rx="10" fill="#fff" />
+        <rect x="55" y="26" width="10" height="44" rx="5" fill="url(#wa-thermo)" />
+        <circle cx="60" cy="76" r="16" fill="url(#wa-thermo)" />
+        <circle cx="54" cy="71" r="4" fill="#fff" opacity=".55" />
+      </svg>
+    }
+  }
+</ng-template>
+
 <section class="agro-card weather-container" aria-labelledby="weather-forecast-title">
   <header class="agro-header section-header">
     <div>
@@ -85,8 +160,41 @@
   @if (forecast(); as weather) {
     <div class="current-weather">
       <div class="current-main">
-        <div class="weather-icon" [attr.data-kind]="getWeatherKind(weather.current.weatherCode)">
-          <ng-container *ngTemplateOutlet="weatherSvg; context: { kind: getWeatherKind(weather.current.weatherCode) }" />
+        <svg class="weather-art-defs" width="0" height="0" aria-hidden="true" focusable="false">
+        <defs>
+          <radialGradient id="wa-sun" cx=".35" cy=".35" r=".75">
+            <stop offset="0" stop-color="#fff3b0" />
+            <stop offset=".55" stop-color="#ffc83d" />
+            <stop offset="1" stop-color="#f59e0b" />
+          </radialGradient>
+          <linearGradient id="wa-cloud" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#ffffff" />
+            <stop offset="1" stop-color="#d4e3ee" />
+          </linearGradient>
+          <linearGradient id="wa-cloud-back" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#eef3f8" />
+            <stop offset="1" stop-color="#b6c9d8" />
+          </linearGradient>
+          <linearGradient id="wa-storm" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#a9b8c8" />
+            <stop offset="1" stop-color="#5d7186" />
+          </linearGradient>
+          <linearGradient id="wa-drop" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#8fd3ff" />
+            <stop offset="1" stop-color="#2f86e0" />
+          </linearGradient>
+          <linearGradient id="wa-bolt" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#ffe27a" />
+            <stop offset="1" stop-color="#f5a623" />
+          </linearGradient>
+          <linearGradient id="wa-thermo" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#ff9a7a" />
+            <stop offset="1" stop-color="#e5484d" />
+          </linearGradient>
+        </defs>
+      </svg>
+        <div class="weather-art" [attr.data-kind]="getWeatherKind(weather.current.weatherCode)">
+          <ng-container *ngTemplateOutlet="weatherArt; context: { kind: getWeatherKind(weather.current.weatherCode) }" />
         </div>
 
         <div>
