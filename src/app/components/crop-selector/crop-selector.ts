@@ -4,6 +4,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   inject,
   output,
   PLATFORM_ID,
@@ -28,6 +29,7 @@ interface CategoryOption {
 export class CropSelector {
   private readonly rotationEngine = inject(RotationEngineService);
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly cropChange = output<Crop>();
 
@@ -46,7 +48,7 @@ export class CropSelector {
   protected readonly isLoading = signal<boolean>(false);
   protected readonly selectedCrop = signal<Crop | null>(null);
   protected readonly currentPage = signal<number>(1);
-  /** 3 filas × 3 columnas por página */
+  /** Escritorio: 3 filas × 3 columnas (9). Teléfono (≤720px): 6 por página. */
   protected readonly pageSize = signal<number>(9);
 
   protected readonly allCrops = this.rotationEngine.catalogSignal;
@@ -89,6 +91,12 @@ export class CropSelector {
         this.rotationEngine.loadCatalog().subscribe(() => {
           this.isLoading.set(false);
         });
+
+        const mobileQuery = window.matchMedia('(max-width: 720px)');
+        const updatePageSize = () => this.pageSize.set(mobileQuery.matches ? 6 : 9);
+        updatePageSize();
+        mobileQuery.addEventListener('change', updatePageSize);
+        this.destroyRef.onDestroy(() => mobileQuery.removeEventListener('change', updatePageSize));
       }
     });
   }
