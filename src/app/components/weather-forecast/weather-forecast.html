@@ -248,77 +248,246 @@
       </div>
     </div>
 
+    <div class="forecast-block">
     <div class="forecast-header">
-      <div>
+      <div class="forecast-heading">
         <h3>Pronóstico Diario</h3>
         <p>Temperatura, lluvia esperada y demanda hídrica (ET₀)</p>
       </div>
 
-      <div class="period-selector" role="group" aria-label="Horizonte de pronóstico">
-        <button
-          type="button"
-          [class.active]="selectedPeriod() === 7"
-          [attr.aria-pressed]="selectedPeriod() === 7"
-          (click)="selectedPeriod.set(7)"
-        >
-          7 días
-        </button>
+      <div class="forecast-controls">
+        <div class="day-filter" role="group" aria-label="Filtrar días">
+          <button
+            type="button"
+            [class.active]="dayFilter() === 'all'"
+            [attr.aria-pressed]="dayFilter() === 'all'"
+            (click)="dayFilter.set('all')"
+          >
+            Todos los días
+          </button>
+          <button
+            type="button"
+            [class.active]="dayFilter() === 'rainy'"
+            [attr.aria-pressed]="dayFilter() === 'rainy'"
+            (click)="dayFilter.set('rainy')"
+          >
+            <span class="day-filter__dot" aria-hidden="true"></span>
+            Días lluviosos
+          </button>
+        </div>
 
-        <button
-          type="button"
-          [class.active]="selectedPeriod() === 16"
-          [attr.aria-pressed]="selectedPeriod() === 16"
-          (click)="selectedPeriod.set(16)"
-        >
-          16 días
-        </button>
+        <div class="period-selector" role="group" aria-label="Horizonte de pronóstico">
+          <button
+            type="button"
+            [class.active]="selectedPeriod() === 7"
+            [attr.aria-pressed]="selectedPeriod() === 7"
+            (click)="selectedPeriod.set(7)"
+          >
+            7 días
+          </button>
+
+          <button
+            type="button"
+            [class.active]="selectedPeriod() === 16"
+            [attr.aria-pressed]="selectedPeriod() === 16"
+            (click)="selectedPeriod.set(16)"
+          >
+            16 días
+          </button>
+        </div>
       </div>
     </div>
 
-    <div class="forecast-grid">
-      @for (day of displayedDays; track day.date; let i = $index) {
-        <article class="forecast-card" [class.extended]="i >= 7">
-          @if (i === 7) {
+    @if (selectedDay(); as sel) {
+      <div class="forecast-layout">
+        <!-- Detalle del día seleccionado -->
+        <article class="day-detail" aria-live="polite">
+          <div class="day-detail__top">
+            <span class="day-detail__badge">
+              {{ getRainLabel(sel.day.precipitationMm) }} · {{ sel.index === 0 ? 'Hoy' : 'Día ' + (sel.index + 1) }}
+            </span>
+
+            <div class="day-detail__nav">
+              <button
+                type="button"
+                aria-label="Día anterior"
+                [disabled]="selectedPosition() <= 0"
+                (click)="stepDay(-1)"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m15 18-6-6 6-6" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                aria-label="Día siguiente"
+                [disabled]="selectedPosition() >= visibleDays().length - 1"
+                (click)="stepDay(1)"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <h4 class="day-detail__date">{{ formatDate(sel.day.date) }}</h4>
+
+          @if (sel.index >= 7) {
             <span class="extended-label">Pronóstico extendido</span>
           }
 
-          <span class="forecast-date">{{ formatDate(day.date) }}</span>
+          <div class="day-detail__hero">
+            <div>
+              <div class="day-detail__temps num-mono">
+                <strong>{{ sel.day.temperatureMax }}°</strong>
+                <span>
+                  <small>Mínima</small>
+                  {{ sel.day.temperatureMin }}°
+                </span>
+              </div>
+              <p class="day-detail__desc">{{ getWeatherDescription(sel.day.weatherCode) }}</p>
+            </div>
 
-          <div class="forecast-icon" [attr.data-kind]="getWeatherKind(day.weatherCode)">
-            <ng-container *ngTemplateOutlet="weatherSvg; context: { kind: getWeatherKind(day.weatherCode) }" />
+            <div class="day-detail__art">
+              <ng-container *ngTemplateOutlet="weatherArt; context: { kind: getWeatherKind(sel.day.weatherCode) }" />
+            </div>
           </div>
 
-          <span class="forecast-description">{{ getWeatherDescription(day.weatherCode) }}</span>
+          <div class="day-detail__stats">
+            <div class="detail-stat">
+              <span class="detail-stat__label">
+                Lluvia esperada
+                <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M17.5 15H7a4 4 0 0 1-.4-7.98A5 5 0 0 1 16.5 6.5 3.5 3.5 0 0 1 17.5 15ZM9 18l-1 3m5-3-1 3" />
+                </svg>
+              </span>
+              <strong class="num-mono">{{ sel.day.precipitationMm }} mm</strong>
+              <div class="detail-bar"><span class="detail-bar__fill detail-bar__fill--rain" [style.width.%]="getRainPercent(sel.day.precipitationMm)"></span></div>
+            </div>
 
-          <div class="temperatures num-mono">
-            <strong>{{ day.temperatureMax }}°</strong>
-            <span>{{ day.temperatureMin }}°</span>
+            <div class="detail-stat">
+              <span class="detail-stat__label">
+                Probabilidad
+                <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+                </svg>
+              </span>
+              <strong class="num-mono">{{ sel.day.precipitationProbability === null ? 'N/D' : sel.day.precipitationProbability + '%' }}</strong>
+              <div class="detail-bar"><span class="detail-bar__fill detail-bar__fill--prob" [style.width.%]="sel.day.precipitationProbability ?? 0"></span></div>
+            </div>
           </div>
 
-          <div class="forecast-data num-mono">
-            <span class="forecast-metric">
+          <div class="detail-et0">
+            <div class="detail-et0__head">
+              <span class="detail-et0__label">
+                <span class="detail-et0__icon">
+                  <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 20V10m0 0c0-4 3.5-7 8-7 0 4.5-3 7-8 7Zm0 0c0-3-3.5-5.5-8-5.5 0 4 3 5.5 8 5.5Z" />
+                  </svg>
+                </span>
+                Demanda hídrica (ET₀)
+              </span>
+              <strong class="num-mono">{{ sel.day.et0Mm }} mm</strong>
+            </div>
+            <div class="detail-bar"><span class="detail-bar__fill detail-bar__fill--et0" [style.width.%]="getEt0Percent(sel.day.et0Mm)"></span></div>
+            <p class="detail-et0__advice">
               <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M17.5 15H7a4 4 0 0 1-.4-7.98A5 5 0 0 1 16.5 6.5 3.5 3.5 0 0 1 17.5 15ZM9 18l-1 3m5-3-1 3" />
+                <circle cx="12" cy="12" r="9" />
+                <path stroke-linecap="round" d="M12 11v5m0-8h.01" />
               </svg>
-              {{ day.precipitationMm }} mm
-            </span>
-
-            <span class="forecast-metric">
-              <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
-              </svg>
-              {{ day.precipitationProbability === null ? 'N/D' : day.precipitationProbability + '%' }}
-            </span>
-
-            <span class="forecast-metric">
-              <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 20V10m0 0c0-4 3.5-7 8-7 0 4.5-3 7-8 7Zm0 0c0-3-3.5-5.5-8-5.5 0 4 3 5.5 8 5.5Z" />
-              </svg>
-              ET₀: {{ day.et0Mm }} mm
-            </span>
+              {{ getIrrigationAdvice(sel.day) }}
+            </p>
           </div>
         </article>
-      }
+
+        <!-- Resumen y lista de días -->
+        <div class="forecast-side">
+          <div class="forecast-summary">
+            <div class="summary-tile">
+              <span>Temp. media máx</span>
+              <strong class="num-mono">{{ forecastSummary().avgMax | number:'1.1-1' }}°C</strong>
+            </div>
+            <div class="summary-tile summary-tile--rain">
+              <span>Lluvia acumulada</span>
+              <strong class="num-mono">{{ forecastSummary().totalPrecipitation | number:'1.1-1' }} mm</strong>
+            </div>
+            <div class="summary-tile">
+              <span>ET₀ promedio</span>
+              <strong class="num-mono">{{ forecastSummary().avgEt0 | number:'1.2-2' }} mm</strong>
+            </div>
+          </div>
+
+          <div class="day-list-head" aria-hidden="true">
+            <span>Día y condición</span>
+            <span>Lluvia / Prob.</span>
+            <span>ET₀</span>
+            <span>Rango térmico</span>
+          </div>
+
+          <ul class="day-list" role="listbox" aria-label="Días del pronóstico">
+            @for (item of visibleDays(); track item.day.date) {
+              <li
+                class="day-row"
+                role="option"
+                tabindex="0"
+                [class.selected]="item === sel"
+                [class.extended]="item.index >= 7"
+                [attr.aria-selected]="item === sel"
+                (click)="selectDay(item.day.date)"
+                (keydown.enter)="selectDay(item.day.date)"
+                (keydown.space)="$event.preventDefault(); selectDay(item.day.date)"
+              >
+                <div class="day-row__main">
+                  <span class="day-row__icon" [attr.data-kind]="getWeatherKind(item.day.weatherCode)">
+                    <ng-container *ngTemplateOutlet="weatherSvg; context: { kind: getWeatherKind(item.day.weatherCode) }" />
+                  </span>
+                  <div>
+                    <span class="day-row__date">
+                      {{ formatDate(item.day.date) }}
+                      @if (item.index === 0) {
+                        <span class="day-row__tag">Hoy</span>
+                      } @else if (item.index >= 7) {
+                        <span class="day-row__tag day-row__tag--ext">Ext.</span>
+                      }
+                    </span>
+                    <span class="day-row__desc">{{ getWeatherDescription(item.day.weatherCode) }}</span>
+                  </div>
+                </div>
+
+                <div class="day-row__rain num-mono">
+                  <span class="rain-chip">
+                    <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+                    </svg>
+                    {{ item.day.precipitationMm }} mm
+                  </span>
+                  <span class="day-row__prob">{{ item.day.precipitationProbability === null ? 'N/D' : item.day.precipitationProbability + '%' }}</span>
+                </div>
+
+                <span class="et0-chip num-mono"><small>ET₀</small> {{ item.day.et0Mm }}</span>
+
+                <div class="day-row__range num-mono">
+                  <span class="day-row__min">{{ item.day.temperatureMin }}°</span>
+                  <span class="temp-track">
+                    <span
+                      class="temp-track__fill"
+                      [style.left.%]="getTempRange(item.day).left"
+                      [style.width.%]="getTempRange(item.day).width"
+                    ></span>
+                  </span>
+                  <strong>{{ item.day.temperatureMax }}°</strong>
+                </div>
+              </li>
+            }
+          </ul>
+        </div>
+      </div>
+    } @else {
+      <div class="forecast-empty">
+        No hay días con lluvia significativa en el horizonte seleccionado.
+      </div>
+    }
     </div>
 
     <div class="water-balance">
