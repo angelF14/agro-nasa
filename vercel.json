@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    {
+      "source": "/api/agronomist/status",
+      "destination": "/api/agronomist/status"
+    },
+    {
+      "source": "/api/agronomist/chat",
+      "destination": "/api/agronomist/chat"
+    }
+  ]
+}

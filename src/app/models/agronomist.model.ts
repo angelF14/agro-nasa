@@ -28,6 +28,41 @@ export interface AgronomistMessage {
   model?: string;
   usedFallback?: boolean;
   isError?: boolean;
+  resolvedCard?: AgronomistResolvedServiceCard;
+}
+
+export interface AgronomistResolvedServiceCard {
+  locationName?: string;
+  coordinates?: Coordinates;
+  cropName?: string;
+  scientificName?: string;
+  overallScore?: number;
+  isViable?: boolean;
+  meanTempC?: number;
+  annualRainMm?: number;
+  waterBalance7dMm?: number;
+  rotationSummary?: string;
+}
+
+export interface AgronomistComparedCropEvaluation {
+  commonName: string;
+  scientificName: string;
+  overallScore: number;
+  isViable: boolean;
+  summary: string;
+  tempOptRangeC: string;
+  rainOptRangeMm: string;
+}
+
+export interface AgronomistSuitableSeedSummary {
+  commonName: string;
+  scientificName: string;
+  family: string | null;
+  category: string;
+  suitabilityScore: number;
+  tempOptRangeC: string;
+  rainOptRangeMm: string;
+  cycleDaysRange: string | null;
 }
 
 export interface AgronomistCropSummary {
@@ -88,6 +123,13 @@ export interface AgronomistParcelContext {
     priorities: FarmerPriority[];
     customNotes?: string;
   };
+  autoResolvedFromPrompt?: {
+    locationResolved?: string;
+    cropResolved?: string;
+    comparedCrops?: string[];
+  };
+  comparedEvaluations?: AgronomistComparedCropEvaluation[];
+  topSuitableCrops?: AgronomistSuitableSeedSummary[];
 }
 
 export interface AgronomistChatRequest {

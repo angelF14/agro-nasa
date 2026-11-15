@@ -143,6 +143,37 @@ export class Dashboard {
   );
 
   constructor() {
+    this.agronomistAi.registerDashboardBridge({
+      getState: () => ({
+        coordinates: this.selectedCoordinates(),
+        locationName: this.selectedLocationName(),
+        climateSummary: this.climateSummary(),
+        weatherForecast: this.weatherForecast(),
+        selectedCrop: this.selectedCrop(),
+      }),
+      applyState: (updated) => {
+        this.selectedCoordinates.set(updated.coordinates);
+        this.selectedLocationName.set(updated.locationName);
+        this.climateSummary.set(updated.climateSummary);
+        this.weatherForecast.set(updated.weatherForecast);
+        this.selectedCrop.set(updated.selectedCrop);
+        this.climateError.set(null);
+        this.isLoadingClimate.set(false);
+        this.isConfirmingLocation.set(false);
+
+        // If the user is interacting via the floating drawer, automatically reflect the resolved
+        // view in the background page so they immediately see the Recommendations or Crops sheet.
+        if (this.agronomistAi.isDrawerOpen()) {
+          if (updated.coordinates && updated.selectedCrop) {
+            this.recommendationView.set('recommendations');
+            this.activeTab.set('recommendations');
+          } else if (updated.coordinates && this.activeTab() === 'map') {
+            this.activeTab.set('crops');
+          }
+        }
+      },
+    });
+
     this.climateQuery$
       .pipe(
         tap(() => {

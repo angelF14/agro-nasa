@@ -8,11 +8,34 @@ import {
   AgronomistImagePayload,
   AgronomistMessage,
   AgronomistParcelContext,
+  AgronomistResolvedServiceCard,
   AgronomistStatusResponse,
+  ClimateSummary,
+  Coordinates,
+  Crop,
   FarmerPriority,
   SoilObservation,
+  WeatherForecast,
 } from '@models/index';
 import { catchError, finalize, firstValueFrom, of, tap } from 'rxjs';
+import { AgronomistQueryResolverService } from './agronomist-query-resolver.service';
+
+export interface DashboardStateBridge {
+  getState: () => {
+    coordinates: Coordinates | null;
+    locationName: string;
+    climateSummary: Partial<ClimateSummary> | null;
+    weatherForecast: WeatherForecast | null;
+    selectedCrop: Crop | null;
+  };
+  applyState: (updated: {
+    coordinates: Coordinates | null;
+    locationName: string;
+    climateSummary: Partial<ClimateSummary> | null;
+    weatherForecast: WeatherForecast | null;
+    selectedCrop: Crop | null;
+  }) => void;
+}
 
 const SESSION_KEY_STORAGE = 'agronasa.gemini_api_key';
 
@@ -21,10 +44,10 @@ const WELCOME_MESSAGE: AgronomistMessage = {
   role: 'model',
   createdAt: new Date().toISOString(),
   text: [
-    'Hola, soy **AgroNasa IA**, tu asistente agrónomo con datos de **NASA POWER**, **Open-Meteo** y **FAO EcoCrop**.',
+    'Hola, soy **AgroNasa Superinteligencia**, tu superinteligencia agronómica conectada en vivo con **NASA POWER**, **Open-Meteo** y **FAO EcoCrop**.',
     '',
+    '- **Menciona un lugar y una semilla** (ej. *"Quiero sembrar maíz en Comayagua, Honduras"* o *"¿Qué semilla recomiendas en Sinaloa?"*) y buscaré automáticamente el clima satelital, pronóstico y plan de rotación.',
     '- Pregúntame sobre aptitud climática, riego, balance hídrico (ET₀) o tu secuencia de rotación de 3 ciclos.',
-    '- Marca tus observaciones de suelo y prioridades para ajustar las recomendaciones a tu parcela.',
     '- Adjunta una foto de **hojas, tallos, plagas o suelo** para obtener un diagnóstico visual preliminar.',
   ].join('\n'),
 };
@@ -34,13 +57,16 @@ const WELCOME_MESSAGE: AgronomistMessage = {
 })
 export class AgronomistAiService {
   private readonly http = inject(HttpClient);
+  private readonly queryResolver = inject(AgronomistQueryResolverService);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly isBrowser = isPlatformBrowser(this.platformId);
 
   private statusLoaded = false;
+  private dashboardBridge: DashboardStateBridge | null = null;
 
   readonly messages = signal<AgronomistMessage[]>([WELCOME_MESSAGE]);
   readonly isSending = signal<boolean>(false);
+  readonly progressLabel = signal<string | null>(null);
   readonly isDrawerOpen = signal<boolean>(false);
 
   readonly serverConfigured = signal<boolean>(false);
@@ -56,6 +82,10 @@ export class AgronomistAiService {
   readonly hasActiveApiKey = computed(
     () => this.serverConfigured() || this.customApiKey().trim().length > 0
   );
+
+  registerDashboardBridge(bridge: DashboardStateBridge): void {
+    this.dashboardBridge = bridge;
+  }
 
   loadStatus(force = false): void {
     if (!this.isBrowser || (this.statusLoaded && !force)) {
@@ -187,10 +217,47 @@ export class AgronomistAiService {
 
     this.messages.update((curr) => [...curr, userMessage]);
     this.isSending.set(true);
+    this.progressLabel.set('Analizando consulta...');
+
+    let effectiveContext = context;
+    let resolvedCard: AgronomistResolvedServiceCard | undefined;
+
+    if (text && this.dashboardBridge) {
+      try {
+        const liveState = this.dashboardBridge.getState();
+        const recentUserTexts = currentHistory
+          .filter((m) => m.role === 'user')
+          .map((m) => m.text);
+
+        const resolution = await this.queryResolver.resolveFromMessage(
+          text,
+          {
+            ...liveState,
+            soilObservations: this.soilObservations(),
+            priorities: this.priorities(),
+            customNotes: this.customFieldNotes(),
+          },
+          (label) => this.progressLabel.set(label),
+          recentUserTexts,
+          (immediateState) => this.dashboardBridge?.applyState(immediateState)
+        );
+
+        effectiveContext = resolution.context;
+        resolvedCard = resolution.resolvedCard;
+
+        if (resolution.stateChanged) {
+          this.dashboardBridge.applyState(resolution.updatedState);
+        }
+      } catch {
+        // Fallback to existing context if service resolution encounters an error.
+      }
+    }
+
+    this.progressLabel.set('Generando recomendación con Superinteligencia Gemini...');
 
     const requestBody: AgronomistChatRequest = {
       messages: dtoMessages,
-      context,
+      context: effectiveContext,
     };
 
     let headers = new HttpHeaders();
@@ -203,20 +270,53 @@ export class AgronomistAiService {
       const response = await firstValueFrom(
         this.http
           .post<AgronomistChatResponse>('/api/agronomist/chat', requestBody, { headers })
-          .pipe(finalize(() => this.isSending.set(false)))
+          .pipe(
+            finalize(() => {
+              this.isSending.set(false);
+              this.progressLabel.set(null);
+            })
+          )
       );
+
+      const { cleanReply, detectedLocation, detectedSeed } = this.extractDetectedEntitiesTag(
+        response.reply
+      );
+
+      if (this.dashboardBridge && (detectedLocation || detectedSeed)) {
+        try {
+          const postState = this.dashboardBridge.getState();
+          const postResolution = await this.queryResolver.resolveExplicitEntities(
+            detectedLocation,
+            detectedSeed,
+            {
+              ...postState,
+              soilObservations: this.soilObservations(),
+              priorities: this.priorities(),
+              customNotes: this.customFieldNotes(),
+            }
+          );
+          if (postResolution && postResolution.stateChanged) {
+            this.dashboardBridge.applyState(postResolution.updatedState);
+            resolvedCard = postResolution.resolvedCard ?? resolvedCard;
+          }
+        } catch {
+          // Ignore post-flight resolution errors.
+        }
+      }
 
       const assistantMessage: AgronomistMessage = {
         id: `model-${Date.now()}`,
         role: 'model',
-        text: response.reply,
+        text: cleanReply,
         createdAt: new Date().toISOString(),
         model: response.model,
         usedFallback: response.usedFallback,
+        resolvedCard,
       };
       this.messages.update((curr) => [...curr, assistantMessage]);
     } catch (error) {
       this.isSending.set(false);
+      this.progressLabel.set(null);
       const errorMessage: AgronomistMessage = {
         id: `err-${Date.now()}`,
         role: 'model',
@@ -226,6 +326,30 @@ export class AgronomistAiService {
       };
       this.messages.update((curr) => [...curr, errorMessage]);
     }
+  }
+
+  private extractDetectedEntitiesTag(rawReply: string): {
+    cleanReply: string;
+    detectedLocation?: string;
+    detectedSeed?: string;
+  } {
+    const tagRegex =
+      /\[\[AGRONASA_DETECTED:\s*lugar="([^"]*)"\s*\|\s*semilla="([^"]*)"\s*\]\]/gi;
+    let detectedLocation: string | undefined;
+    let detectedSeed: string | undefined;
+
+    let match: RegExpExecArray | null;
+    while ((match = tagRegex.exec(rawReply)) !== null) {
+      if (match[1]?.trim()) {
+        detectedLocation = match[1].trim();
+      }
+      if (match[2]?.trim()) {
+        detectedSeed = match[2].trim();
+      }
+    }
+
+    const cleanReply = rawReply.replace(tagRegex, '').trim();
+    return { cleanReply, detectedLocation, detectedSeed };
   }
 
   private extractErrorMessage(error: unknown): string {
@@ -241,7 +365,7 @@ export class AgronomistAiService {
         return 'No se pudo contactar al servidor de AgroNasa para consultar a Gemini. Verifica que el servidor SSR esté activo.';
       }
     }
-    return 'Ocurrió un error al consultar al Asistente Agrónomo IA. Intenta de nuevo en unos segundos.';
+    return 'Ocurrió un error al consultar a la Superinteligencia Agrónoma. Intenta de nuevo en unos segundos.';
   }
 
   private readStoredApiKey(): string {

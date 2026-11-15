@@ -4,7 +4,9 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
+  input,
   output,
   PLATFORM_ID,
   signal,
@@ -12,6 +14,15 @@ import {
 import { FormsModule } from '@angular/forms';
 import { Crop } from '@models/index';
 import { RotationEngineService } from '@services/rotation-engine.service';
+import {
+  normalizeSearchText,
+  searchCatalogWithAliases,
+  SPANISH_CROP_ALIASES,
+} from '@utils/agronomist-query-parser.utils';
+
+const PRIORITIZED_SCIENTIFIC_NAMES = new Set(
+  SPANISH_CROP_ALIASES.flatMap((a) => a.scientificTargets.map((s) => s.toLowerCase()))
+);
 
 interface CategoryOption {
   value: string;
@@ -29,6 +40,7 @@ export class CropSelector {
   private readonly rotationEngine = inject(RotationEngineService);
   private readonly platformId = inject(PLATFORM_ID);
 
+  readonly externalSelectedCrop = input<Crop | null>(null);
   readonly cropChange = output<Crop>();
 
   protected readonly categories: CategoryOption[] = [
@@ -50,22 +62,39 @@ export class CropSelector {
   protected readonly allCrops = this.rotationEngine.catalogSignal;
 
   protected readonly filteredCrops = computed(() => {
-    const query = this.searchQuery().trim().toLowerCase();
+    const query = normalizeSearchText(this.searchQuery());
     const cat = this.selectedCategory().trim().toLowerCase();
     const list = this.allCrops();
+    const active = this.selectedCrop();
 
-    return list.filter((crop) => {
+    let baseList: Crop[];
+    if (query) {
+      baseList = searchCatalogWithAliases(query, list);
+    } else {
+      const stapleCrops: Crop[] = [];
+      const otherCrops: Crop[] = [];
+      for (const crop of list) {
+        if (PRIORITIZED_SCIENTIFIC_NAMES.has(crop.scientificName.toLowerCase())) {
+          stapleCrops.push(crop);
+        } else {
+          otherCrops.push(crop);
+        }
+      }
+      baseList = [...stapleCrops, ...otherCrops];
+    }
+
+    const filtered = baseList.filter((crop) => {
       if (cat && !crop.category.toLowerCase().includes(cat)) {
         return false;
       }
-      if (!query) {
-        return true;
-      }
-      const sciMatch = crop.scientificName.toLowerCase().includes(query);
-      const commonMatch = crop.commonNames.some((n) => n.toLowerCase().includes(query));
-      const famMatch = (crop.family ?? '').toLowerCase().includes(query);
-      return sciMatch || commonMatch || famMatch;
+      return true;
     });
+
+    if (active && filtered.some((c) => c.id === active.id)) {
+      return [active, ...filtered.filter((c) => c.id !== active.id)];
+    }
+
+    return filtered;
   });
 
   protected readonly visibleCrops = computed(() => {
@@ -73,6 +102,13 @@ export class CropSelector {
   });
 
   constructor() {
+    effect(() => {
+      const ext = this.externalSelectedCrop();
+      if (ext) {
+        this.selectedCrop.set(ext);
+      }
+    });
+
     afterNextRender(() => {
       if (isPlatformBrowser(this.platformId)) {
         this.isLoading.set(true);

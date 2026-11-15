@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  effect,
   ElementRef,
   inject,
   input,
@@ -50,6 +51,9 @@ export class FarmMap {
   /** Coordenadas iniciales opcionales (por defecto: centro de México) */
   readonly initialCoordinates = input<Coordinates>({ lat: 23.6345, lon: -102.5528 });
   readonly initialZoom = input<number>(5);
+  readonly externalCoordinates = input<Coordinates | null>(null);
+  readonly externalLocationName = input<string>('');
+  readonly isVisible = input<boolean>(true);
 
   /** Emite { lat, lon } cada vez que el usuario selecciona un área/punto o busca una región */
   readonly coordinatesChange = output<Coordinates>();
@@ -72,6 +76,39 @@ export class FarmMap {
   private isDestroyed = false;
 
   constructor() {
+    effect(() => {
+      const extCoords = this.externalCoordinates();
+      const extName = this.externalLocationName();
+      if (extName) {
+        this.selectedLocationName.set(extName);
+        this.searchQuery.set(extName.split(',').slice(0, 2).join(',').trim());
+      }
+      const curr = this.selectedCoords();
+      if (
+        extCoords &&
+        (!curr ||
+          Math.abs(curr.lat - extCoords.lat) > 0.0001 ||
+          Math.abs(curr.lon - extCoords.lon) > 0.0001)
+      ) {
+        this.setSelectionOnMap(extCoords, true, undefined, false);
+      }
+    });
+
+    effect(() => {
+      const visible = this.isVisible();
+      const coords = this.selectedCoords();
+      if (visible && this.map) {
+        setTimeout(() => {
+          if (!this.map || this.isDestroyed) return;
+          this.map.invalidateSize();
+          if (coords) {
+            this.map.setView([coords.lat, coords.lon], Math.max(this.map.getZoom(), 9));
+            this.selectionMarker?.openPopup();
+          }
+        }, 50);
+      }
+    });
+
     afterNextRender(() => {
       if (isPlatformBrowser(this.platformId)) {
         void this.initMap();
@@ -154,6 +191,11 @@ export class FarmMap {
       this.setSelectionOnMap(coords, false);
       this.reverseGeocode(coords);
     });
+
+    const initialExt = this.selectedCoords();
+    if (initialExt) {
+      this.setSelectionOnMap(initialExt, true, undefined, false);
+    }
   }
 
   protected onSearchSubmit(): void {
@@ -231,10 +273,13 @@ export class FarmMap {
   private setSelectionOnMap(
     coords: Coordinates,
     flyTo: boolean,
-    boundingBox?: [string, string, string, string]
+    boundingBox?: [string, string, string, string],
+    emitChange = true
   ): void {
     this.selectedCoords.set(coords);
-    this.coordinatesChange.emit(coords);
+    if (emitChange) {
+      this.coordinatesChange.emit(coords);
+    }
 
     if (!this.map || !this.leafletLib) {
       return;

@@ -83,6 +83,33 @@ export class AgronomistAssistantComponent {
   protected readonly showKeyEditor = signal<boolean>(false);
   protected readonly apiKeyInput = signal<string>('');
   protected readonly copiedMessageId = signal<string | null>(null);
+  protected readonly showMobileContext = signal<boolean>(false);
+
+  protected readonly mobileContextSummary = computed<string>(() => {
+    const ctx = this.context();
+    const parts: string[] = [];
+
+    if (ctx.coordinates) {
+      const location = ctx.locationName?.split(',')[0]?.trim() || 'Parcela activa';
+      parts.push(ctx.selectedCrop ? `${location} · ${ctx.selectedCrop.commonName}` : location);
+    } else {
+      parts.push('Sin parcela');
+    }
+
+    const soilCount = this.ai.soilObservations().length;
+    const priorityCount = this.ai.priorities().length;
+    if (soilCount > 0) {
+      parts.push(`${soilCount} suelo`);
+    }
+    if (priorityCount > 0) {
+      parts.push(`${priorityCount} prior.`);
+    }
+    if (this.ai.statusChecked() && !this.ai.hasActiveApiKey()) {
+      parts.push('Falta API Key');
+    }
+
+    return parts.join(' · ');
+  });
 
   protected readonly parsedMessages = computed<
     { message: AgronomistMessage; blocks: MarkdownBlock[] }[]
@@ -116,15 +143,16 @@ export class AgronomistAssistantComponent {
 
     if (ctx.coordinates) {
       return [
-        'Según los datos de NASA POWER en esta coordenada, ¿qué 3 cultivos recomiendas priorizar?',
+        '¿Qué semilla del catálogo FAO EcoCrop me recomiendas para esta parcela?',
+        '¿Cómo le iría a la semilla de maíz o frijol en esta ubicación?',
         'Evalúa el riesgo térmico e hídrico de esta ubicación y cómo proteger el suelo.',
-        '¿Qué cultivos de cobertura o leguminosas funcionan mejor para iniciar rotación aquí?',
       ].slice(0, limit);
     }
 
     return [
-      '¿Cómo diseño una rotación de 3 ciclos que recupere nitrógeno y conserve agua?',
-      '¿Qué cultivos toleran mejor olas de calor y lluvia irregular?',
+      'Quiero sembrar maíz en Comayagua, Honduras, ¿me lo recomiendas?',
+      '¿Qué semilla me recomiendas sembrar en Sinaloa, México?',
+      'Evalúa la semilla de frijol en Boyacá, Colombia con NASA POWER',
       '¿Qué síntomas en hojas diferencian déficit de nitrógeno vs estrés hídrico?',
     ].slice(0, limit);
   });
@@ -160,10 +188,32 @@ export class AgronomistAssistantComponent {
     });
 
     effect(() => {
-      if (this.mode() === 'drawer' && this.active() && this.isBrowser) {
+      if (
+        this.mode() === 'drawer' &&
+        this.active() &&
+        this.isBrowser &&
+        window.matchMedia?.('(pointer: fine)').matches
+      ) {
         setTimeout(() => this.composerInputRef()?.nativeElement.focus(), 80);
       }
     });
+
+    effect(() => {
+      this.draftText();
+      this.active();
+      if (!this.isBrowser) {
+        return;
+      }
+      requestAnimationFrame(() => this.syncComposerHeight());
+    });
+  }
+
+  protected toggleMobileContext(): void {
+    this.showMobileContext.update((open) => !open);
+  }
+
+  protected onComposerInput(): void {
+    this.syncComposerHeight();
   }
 
   protected onEscape(): void {
@@ -240,7 +290,7 @@ export class AgronomistAssistantComponent {
   }
 
   protected onComposerKeydown(event: KeyboardEvent): void {
-    if (event.key === 'Enter' && !event.shiftKey) {
+    if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
       event.preventDefault();
       void this.onSubmit();
     }
@@ -286,6 +336,19 @@ export class AgronomistAssistantComponent {
     this.attachmentError.set(null);
 
     await this.ai.sendMessage(text, this.context(), image ?? undefined);
+  }
+
+  private syncComposerHeight(): void {
+    const el = this.composerInputRef()?.nativeElement;
+    if (!el) {
+      return;
+    }
+    el.style.height = 'auto';
+    if (!el.value) {
+      el.style.height = '';
+      return;
+    }
+    el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
   }
 
   private async attachImageFile(file: File): Promise<void> {

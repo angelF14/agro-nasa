@@ -11,7 +11,11 @@ import {
   RotationCycleSuggestion,
   RotationPlan,
 } from '@models/index';
-import { catchError, Observable, of, shareReplay, tap } from 'rxjs';
+import {
+  enrichCatalogWithSpanishNames,
+  searchCatalogWithAliases,
+} from '@utils/agronomist-query-parser.utils';
+import { catchError, map, Observable, of, shareReplay, tap } from 'rxjs';
 
 export interface CropFilterCriteria {
   lifeSpan?: string;
@@ -66,6 +70,7 @@ export class RotationEngineService {
     }
     if (!this.catalogRequest$) {
       this.catalogRequest$ = this.http.get<Crop[]>('/data/crops.json').pipe(
+        map((crops) => enrichCatalogWithSpanishNames(crops)),
         tap((crops) => {
           this.catalog = crops;
           this.catalogSignal.set(crops);
@@ -225,33 +230,10 @@ export class RotationEngineService {
   }
 
   /**
-   * Returns all matching crops (exact matches first, then partial matches).
+   * Returns all matching crops (Spanish aliases + exact matches first, then partial matches).
    */
   searchCropRequirements(query: string): Crop[] {
-    const normalized = query.trim().toLowerCase();
-    if (!normalized) return [];
-
-    const exactMatches: Crop[] = [];
-    const partialMatches: Crop[] = [];
-
-    for (const crop of this.catalog) {
-      const sciName = crop.scientificName.toLowerCase();
-      const commonNames = crop.commonNames.map((n) => n.toLowerCase());
-
-      const isExact = sciName === normalized || commonNames.includes(normalized);
-      if (isExact) {
-        exactMatches.push(crop);
-        continue;
-      }
-
-      const isPartial =
-        sciName.includes(normalized) || commonNames.some((n) => n.includes(normalized));
-      if (isPartial) {
-        partialMatches.push(crop);
-      }
-    }
-
-    return [...exactMatches, ...partialMatches];
+    return searchCatalogWithAliases(query, this.catalog);
   }
 
   /**

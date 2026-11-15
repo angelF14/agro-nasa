@@ -47,7 +47,7 @@ export async function compressAgronomistImage(file: File): Promise<CompressedAgr
   const dataBase64 = commaIdx >= 0 ? compressedDataUrl.slice(commaIdx + 1) : '';
 
   if (!dataBase64) {
-    throw new Error('No se pudo codificar la imagen para enviarla al asistente.');
+    throw new Error('No se pudo codificar la imagen para enviarla a la Superinteligencia.');
   }
 
   return {

@@ -6,6 +6,7 @@ import { AgronomistParcelContext } from '@models/index';
 import { buildAgronomistContext } from '@utils/agronomist-context.utils';
 import { parseMarkdownBlocks } from '@utils/markdown-blocks.utils';
 import { AgronomistAiService } from './agronomist-ai.service';
+import { AgronomistQueryResolverService } from './agronomist-query-resolver.service';
 
 describe('AgronomistAiService & Agronomist Utils', () => {
   let service: AgronomistAiService;
@@ -66,6 +67,76 @@ describe('AgronomistAiService & Agronomist Utils', () => {
     expect(msgs[1].role).toBe('user');
     expect(msgs[2].role).toBe('model');
     expect(msgs[2].text).toContain('Phaseolus vulgaris');
+  });
+
+  it('auto-resolves place and seed via AgronomistQueryResolverService and syncs DashboardStateBridge', async () => {
+    const resolver = TestBed.inject(AgronomistQueryResolverService);
+    let appliedLocation = '';
+
+    service.registerDashboardBridge({
+      getState: () => ({
+        coordinates: null,
+        locationName: '',
+        climateSummary: null,
+        weatherForecast: null,
+        selectedCrop: null,
+      }),
+      applyState: (updated) => {
+        appliedLocation = updated.locationName;
+      },
+    });
+
+    spyOn(resolver, 'resolveFromMessage').and.resolveTo({
+      context: {
+        coordinates: { lat: 14.46, lon: -87.64 },
+        locationName: 'Comayagua, Honduras',
+        localContext: { soilObservations: [], priorities: [] },
+        autoResolvedFromPrompt: {
+          locationResolved: 'Comayagua, Honduras (14.46, -87.64)',
+          cropResolved: 'maíz (Zea mays ssp. mays)',
+        },
+      },
+      stateChanged: true,
+      updatedState: {
+        coordinates: { lat: 14.46, lon: -87.64 },
+        locationName: 'Comayagua, Honduras',
+        climateSummary: { meanTempC: 24.5, annualizedPrecipitationMm: 980 },
+        weatherForecast: null,
+        selectedCrop: null,
+      },
+      resolvedCard: {
+        locationName: 'Comayagua, Honduras',
+        coordinates: { lat: 14.46, lon: -87.64 },
+        cropName: 'maíz',
+        scientificName: 'Zea mays ssp. mays',
+        overallScore: 92,
+        isViable: true,
+        meanTempC: 24.5,
+        annualRainMm: 980,
+      },
+    });
+
+    const sendPromise = service.sendMessage('Quiero sembrar maíz en Comayagua, Honduras', {
+      localContext: { soilObservations: [], priorities: [] },
+    });
+
+    // Wait a microtask for resolveFromMessage promise to settle before HTTP post is issued
+    await Promise.resolve();
+
+    const req = httpMock.expectOne('/api/agronomist/chat');
+    expect(req.request.body.context.autoResolvedFromPrompt.cropResolved).toContain('Zea mays');
+
+    req.flush({
+      reply: 'El **maíz** tiene 92% de aptitud en Comayagua.',
+      model: 'gemini-3.6-flash',
+    });
+
+    await sendPromise;
+
+    expect(appliedLocation).toBe('Comayagua, Honduras');
+    const lastMsg = service.messages()[service.messages().length - 1];
+    expect(lastMsg.resolvedCard?.overallScore).toBe(92);
+    expect(lastMsg.resolvedCard?.cropName).toBe('maíz');
   });
 
   it('parses markdown headings, bold/italic runs, and lists safely', () => {

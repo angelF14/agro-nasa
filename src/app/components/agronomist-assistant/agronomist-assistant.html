@@ -12,7 +12,7 @@
   }
 </ng-template>
 
-<ng-template #keyConfigBox>
+<ng-template #keyConfigBox let-suffix="suffix">
   <div class="key-card" [class.key-card--ready]="ai.hasActiveApiKey()">
     <div class="key-card__head">
       <div class="key-card__status">
@@ -45,9 +45,9 @@
           en <code>.env</code> (<code>GEMINI_API_KEY</code>) o pégala aquí para esta sesión.
         </p>
         <div class="key-card__row">
-          <label for="gemini-key-input-{{ mode() }}" class="sr-only">API Key gratuita de Google Gemini</label>
+          <label for="gemini-key-input-{{ mode() }}-{{ suffix }}" class="sr-only">API Key gratuita de Google Gemini</label>
           <input
-            id="gemini-key-input-{{ mode() }}"
+            id="gemini-key-input-{{ mode() }}-{{ suffix }}"
             type="password"
             class="agro-input key-card__input"
             [ngModel]="apiKeyInput()"
@@ -81,11 +81,41 @@
 
 <div class="agro-ai" [class.agro-ai--drawer]="mode() === 'drawer'" [class.agro-ai--panel]="mode() === 'panel'">
   @if (mode() === 'panel') {
-    <aside class="ai-sidebar" aria-label="Contexto agronómico de la parcela">
+    <button
+      type="button"
+      class="mobile-ctx-toggle"
+      [class.is-open]="showMobileContext()"
+      [attr.aria-expanded]="showMobileContext()"
+      aria-controls="ai-sidebar-panel"
+      (click)="toggleMobileContext()"
+    >
+      <span class="mobile-ctx-toggle__info">
+        <span class="mobile-ctx-toggle__title">
+          <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16" />
+            <circle cx="9" cy="6" r="2" fill="currentColor" />
+            <circle cx="15" cy="12" r="2" fill="currentColor" />
+            <circle cx="10" cy="18" r="2" fill="currentColor" />
+          </svg>
+          <span>Contexto y suelo</span>
+        </span>
+        <span class="mobile-ctx-toggle__summary">{{ mobileContextSummary() }}</span>
+      </span>
+      <svg class="agro-icon mobile-ctx-toggle__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6" />
+      </svg>
+    </button>
+
+    <aside
+      id="ai-sidebar-panel"
+      class="ai-sidebar"
+      [class.is-mobile-open]="showMobileContext()"
+      aria-label="Contexto agronómico de la parcela"
+    >
       <section class="agro-card ai-side-card">
         <header class="ai-side-card__head">
           <span class="eyebrow">Contexto en vivo</span>
-          <h3 class="ai-side-title">Datos enviados al Agrónomo IA</h3>
+          <h3 class="ai-side-title">Datos enviados a la Superinteligencia</h3>
         </header>
 
         @if (context().coordinates; as coords) {
@@ -199,14 +229,14 @@
         </div>
       </section>
 
-      <ng-container *ngTemplateOutlet="keyConfigBox" />
+      <ng-container *ngTemplateOutlet="keyConfigBox; context: { suffix: 'sidebar' }" />
     </aside>
   }
 
   <section
     class="ai-chat"
     [class.agro-card]="mode() === 'panel'"
-    aria-label="Conversación con Asistente Agrónomo IA"
+    aria-label="Conversación con la Superinteligencia Agrónoma"
     (dragover)="onDragOver($event)"
     (dragleave)="onDragLeave()"
     (drop)="onDrop($event)"
@@ -218,12 +248,12 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 20V10M12 10c0-4 3.5-7 8-7 0 4.5-3 7-8 7Zm0 0C12 7 8.5 4.5 4 4.5 4 8.5 7 10 12 10Z" />
           </svg>
         </span>
-        <div>
+        <div class="ai-chat__identity-text">
           <div class="ai-chat__title-row">
-            <h3 class="ai-chat__title">Agrónomo IA</h3>
+            <h3 class="ai-chat__title">Superinteligencia</h3>
             <span class="model-pill num-mono">{{ ai.defaultModel() }}</span>
           </div>
-          <p class="ai-chat__sub">{{ contextBadge() }}</p>
+          <p class="ai-chat__sub" [title]="contextBadge()">{{ contextBadge() }}</p>
         </div>
       </div>
 
@@ -248,7 +278,7 @@
             class="icon-btn"
             (click)="expandToPanel.emit()"
             title="Abrir vista completa"
-            aria-label="Abrir vista completa del Asistente IA"
+            aria-label="Abrir vista completa de la Superinteligencia"
           >
             <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
@@ -259,7 +289,7 @@
             class="icon-btn"
             (click)="closeDrawer.emit()"
             title="Cerrar panel"
-            aria-label="Cerrar panel del Asistente IA"
+            aria-label="Cerrar panel de la Superinteligencia"
           >
             <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" d="M18 6L6 18M6 6l12 12" />
@@ -269,13 +299,13 @@
       </div>
     </header>
 
-    @if (mode() === 'drawer' && ai.statusChecked() && !ai.hasActiveApiKey()) {
-      <div class="drawer-key-wrap">
-        <ng-container *ngTemplateOutlet="keyConfigBox" />
+    @if (ai.statusChecked() && !ai.hasActiveApiKey() && (mode() === 'drawer' || !showMobileContext())) {
+      <div class="chat-key-wrap" [class.chat-key-wrap--panel]="mode() === 'panel'">
+        <ng-container *ngTemplateOutlet="keyConfigBox; context: { suffix: 'chat' }" />
       </div>
     }
 
-    <div #messagesList class="ai-messages" role="log" aria-live="polite" aria-label="Mensajes del asistente">
+    <div #messagesList class="ai-messages" role="log" aria-live="polite" aria-label="Mensajes de la Superinteligencia">
       @for (entry of parsedMessages(); track entry.message.id) {
         <article
           class="msg"
@@ -300,6 +330,91 @@
               <p class="msg__text">{{ entry.message.text }}</p>
             </div>
           } @else {
+            @if (entry.message.resolvedCard; as card) {
+              <aside class="msg-service-card" aria-label="Datos consultados y sincronizados en la aplicación">
+                <div class="msg-service-card__top">
+                  <span class="msg-service-card__eyebrow">Sincronizado en la App · NASA POWER · FAO EcoCrop</span>
+                  @if (card.overallScore !== undefined) {
+                    <span
+                      class="msg-service-card__score num-mono"
+                      [class.is-viable]="card.isViable"
+                      [class.is-warn]="!card.isViable"
+                    >
+                      {{ card.overallScore }}% EcoCrop
+                    </span>
+                  }
+                </div>
+
+                <div class="msg-service-card__main">
+                  @if (card.cropName) {
+                    <div class="msg-service-card__row">
+                      <span class="msg-service-card__label">Semilla activa:</span>
+                      <strong class="capitalize">{{ card.cropName }}</strong>
+                      @if (card.scientificName) {
+                        <em class="msg-service-card__sci">({{ card.scientificName }})</em>
+                      }
+                    </div>
+                  }
+                  @if (card.locationName) {
+                    <div class="msg-service-card__row">
+                      <span class="msg-service-card__label">Parcela activa:</span>
+                      <strong>{{ card.locationName }}</strong>
+                    </div>
+                  }
+                </div>
+
+                @if (card.meanTempC !== undefined || card.annualRainMm !== undefined || card.waterBalance7dMm !== undefined) {
+                  <div class="msg-service-card__metrics num-mono">
+                    @if (card.meanTempC !== undefined) {
+                      <span>Temp: {{ card.meanTempC }} °C</span>
+                    }
+                    @if (card.annualRainMm !== undefined) {
+                      <span>Lluvia: {{ card.annualRainMm }} mm/año</span>
+                    }
+                    @if (card.waterBalance7dMm !== undefined) {
+                      <span>Balance 7d: {{ card.waterBalance7dMm > 0 ? '+' : '' }}{{ card.waterBalance7dMm }} mm</span>
+                    }
+                  </div>
+                }
+
+                @if (card.rotationSummary) {
+                  <p class="msg-service-card__rotation">
+                    <strong>Rotación 3 ciclos:</strong> {{ card.rotationSummary }}
+                  </p>
+                }
+
+                <div class="msg-service-card__actions">
+                  @if (card.coordinates && card.cropName) {
+                    <button
+                      type="button"
+                      class="agro-btn agro-btn--primary agro-btn--sm"
+                      (click)="goToStep.emit('recommendations')"
+                    >
+                      Ver Ficha y Rotación (Paso 03)
+                    </button>
+                  }
+                  @if (card.coordinates) {
+                    <button
+                      type="button"
+                      class="agro-btn agro-btn--secondary agro-btn--sm"
+                      (click)="goToStep.emit('map')"
+                    >
+                      Ver en Mapa (01)
+                    </button>
+                  }
+                  @if (card.cropName) {
+                    <button
+                      type="button"
+                      class="agro-btn agro-btn--secondary agro-btn--sm"
+                      (click)="goToStep.emit('crops')"
+                    >
+                      Ver Cultivo (02)
+                    </button>
+                  }
+                </div>
+              </aside>
+            }
+
             <div class="msg__md">
               @for (block of entry.blocks; track $index) {
                 @switch (block.type) {
@@ -357,9 +472,9 @@
       }
 
       @if (ai.isSending()) {
-        <div class="msg msg--model msg--typing" aria-label="El asistente está analizando">
+        <div class="msg msg--model msg--typing" aria-label="La Superinteligencia está analizando">
           <span class="typing-dots" aria-hidden="true"><span></span><span></span><span></span></span>
-          <span>Analizando datos de parcela y cultivo...</span>
+          <span>{{ ai.progressLabel() || 'Analizando datos de parcela y cultivo...' }}</span>
         </div>
       }
     </div>
@@ -375,6 +490,7 @@
         <button
           type="button"
           class="prompt-chip"
+          [title]="prompt"
           [disabled]="ai.isSending()"
           (click)="useQuickPrompt(prompt)"
         >
@@ -436,20 +552,22 @@
           #composerInput
           id="agronomist-prompt-{{ mode() }}"
           class="agro-input composer-input"
-          rows="2"
+          rows="1"
+          enterkeyhint="send"
           name="prompt"
           [ngModel]="draftText()"
           (ngModelChange)="draftText.set($event)"
+          (input)="onComposerInput()"
           (keydown)="onComposerKeydown($event)"
           (paste)="onPaste($event)"
-          placeholder="Pregunta sobre riego, plagas, suelo o rotación... (o pega una foto)"
+          placeholder="Escribe un lugar y una semilla (ej. maíz en Comayagua), pregunta sobre riego o pega una foto..."
         ></textarea>
 
         <button
           type="submit"
           class="agro-btn agro-btn--primary composer-send"
           [disabled]="ai.isSending() || (!draftText().trim() && !pendingImage())"
-          aria-label="Enviar consulta al Asistente Agrónomo"
+          aria-label="Enviar consulta a la Superinteligencia Agrónoma"
         >
           @if (ai.isSending()) {
             <span class="spinner" aria-hidden="true"></span>

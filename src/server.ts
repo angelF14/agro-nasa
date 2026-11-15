@@ -18,13 +18,31 @@ const browserDistFolder = join(import.meta.dirname, '../browser');
 const app = express();
 const angularApp = new AngularNodeAppEngine();
 
-app.use('/api', express.json({ limit: '10mb' }));
+const jsonParser = express.json({ limit: '10mb' });
 
-app.get('/api/agronomist/status', (_req, res) => {
+app.use(['/api', '/agronomist'], (req: Request, res: Response, next: NextFunction) => {
+  if (req.body !== undefined && typeof req.body === 'object' && req.body !== null) {
+    next();
+    return;
+  }
+  if (typeof req.body === 'string' && req.body.length > 0) {
+    try {
+      req.body = JSON.parse(req.body);
+      next();
+      return;
+    } catch {
+      res.status(400).json({ error: 'Formato JSON inválido en la solicitud.' });
+      return;
+    }
+  }
+  jsonParser(req, res, next);
+});
+
+app.get(['/api/agronomist/status', '/agronomist/status'], (_req, res) => {
   res.json(getAgronomistStatus());
 });
 
-app.post('/api/agronomist/chat', async (req, res) => {
+app.post(['/api/agronomist/chat', '/agronomist/chat'], async (req, res) => {
   try {
     const clientApiKey = req.header('x-gemini-api-key') ?? undefined;
     const payload = req.body as AgronomistChatRequest;
@@ -36,12 +54,12 @@ app.post('/api/agronomist/chat', async (req, res) => {
       return;
     }
     res.status(500).json({
-      error: 'Error interno al procesar la consulta con el Asistente Agrónomo IA.',
+      error: 'Error interno al procesar la consulta con la Superinteligencia Agrónoma.',
     });
   }
 });
 
-app.use('/api', (err: unknown, _req: Request, res: Response, next: NextFunction) => {
+app.use(['/api', '/agronomist'], (err: unknown, _req: Request, res: Response, next: NextFunction) => {
   if (typeof err === 'object' && err !== null && 'type' in err) {
     const errType = (err as { type?: string }).type;
     if (errType === 'entity.too.large') {
