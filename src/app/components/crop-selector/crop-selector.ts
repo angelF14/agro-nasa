@@ -6,17 +6,27 @@ import {
   computed,
   DestroyRef,
   inject,
+  input,
   output,
   PLATFORM_ID,
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Crop } from '@models/index';
-import { RotationEngineService } from '@services/rotation-engine.service';
+import { ClimateSummary, Crop } from '@models/index';
+import {
+  CropFilterCriteria,
+  RotationEngineService,
+  ScoredCrop,
+} from '@services/rotation-engine.service';
 
 interface CategoryOption {
   value: string;
   label: string;
+}
+
+interface CropListItem {
+  crop: Crop;
+  suitabilityScore?: number;
 }
 
 @Component({
@@ -32,6 +42,9 @@ export class CropSelector {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly cropChange = output<Crop>();
+  readonly climate = input<Partial<ClimateSummary> | null>(null);
+  readonly isLoadingClimate = input<boolean>(false);
+  readonly climateError = input<string | null>(null);
 
   protected readonly categories: CategoryOption[] = [
     { value: '', label: 'Todas las categorías' },
@@ -47,11 +60,48 @@ export class CropSelector {
   protected readonly selectedCategory = signal<string>('');
   protected readonly isLoading = signal<boolean>(false);
   protected readonly selectedCrop = signal<Crop | null>(null);
+  protected readonly cropsListType = signal<'all' | 'suggested'>('all');
+  protected readonly strictOptimal = signal<boolean>(false);
   protected readonly currentPage = signal<number>(1);
   /** Escritorio: 3 filas × 3 columnas (9). Teléfono (≤720px): 6 por página. */
   protected readonly pageSize = signal<number>(9);
 
   protected readonly allCrops = this.rotationEngine.catalogSignal;
+  protected readonly hasScoringClimate = computed(() => {
+    const climate = this.climate();
+    return (
+      climate?.meanTempC !== undefined ||
+      climate?.annualizedPrecipitationMm !== undefined ||
+      climate?.totalPrecipitationMm !== undefined
+    );
+  });
+  protected readonly suggestedCrops = computed<ScoredCrop[]>(() => {
+    const climate = this.climate();
+    if (!climate) {
+      return [];
+    }
+
+    const criteria: CropFilterCriteria = {};
+    if (climate.meanTempC !== undefined) {
+      criteria.temperature = climate.meanTempC;
+    }
+    const rainfall = climate.annualizedPrecipitationMm ?? climate.totalPrecipitationMm;
+    if (rainfall !== undefined) {
+      criteria.rainfall = rainfall;
+    }
+    if (climate.minTempC !== undefined) {
+      criteria.minTempObserved = climate.minTempC;
+    }
+    if (climate.elevationM !== undefined) {
+      criteria.altitude = climate.elevationM;
+    }
+    if (climate.analyzedDays !== undefined) {
+      criteria.availableDays = climate.analyzedDays;
+    }
+    criteria.strictOptimal = this.strictOptimal();
+
+    return this.hasScoringClimate() ? this.rotationEngine.findSuitableCrops(criteria) : [];
+  });
 
   protected readonly filteredCrops = computed(() => {
     const query = this.searchQuery().trim().toLowerCase();
@@ -72,8 +122,19 @@ export class CropSelector {
     });
   });
 
+  protected readonly activeCrops = computed<CropListItem[]>(() => {
+    const filteredIds = new Set(this.filteredCrops().map((crop) => crop.id));
+    return this.cropsListType() === 'suggested'
+      ? this.suggestedCrops()
+          .filter(({ crop }) => filteredIds.has(crop.id))
+          .map(({ crop, suitabilityScore }) => ({ crop, suitabilityScore }))
+      : this.filteredCrops().map((crop) => ({ crop }));
+  });
+
+  protected readonly activeCropCount = computed(() => this.activeCrops().length);
+
   protected readonly totalPages = computed(() =>
-    Math.max(1, Math.ceil(this.filteredCrops().length / this.pageSize()))
+    Math.max(1, Math.ceil(this.activeCropCount() / this.pageSize())),
   );
 
   protected readonly page = computed(() => Math.min(this.currentPage(), this.totalPages()));
@@ -81,7 +142,7 @@ export class CropSelector {
   protected readonly visibleCrops = computed(() => {
     const size = this.pageSize();
     const start = (this.page() - 1) * size;
-    return this.filteredCrops().slice(start, start + size);
+    return this.activeCrops().slice(start, start + size);
   });
 
   constructor() {
@@ -128,5 +189,16 @@ export class CropSelector {
 
   protected primaryName(crop: Crop): string {
     return crop.commonNames[0] || crop.scientificName;
+  }
+
+  //SUGGESTED CROPS
+  protected onCropsListTypeChange(value: 'all' | 'suggested'): void {
+    this.cropsListType.set(value);
+    this.currentPage.set(1);
+  }
+
+  protected onStrictOptimalChange(value: boolean): void {
+    this.strictOptimal.set(value);
+    this.currentPage.set(1);
   }
 }
