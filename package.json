@@ -7,9 +7,14 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test",
+    "test": "ng test --include=../scripts/tests --include=**/*.spec.ts",
+    "test:scripts": "ng test --include=../scripts/tests",
     "serve:ssr:agro-nasa": "node dist/agro-nasa/server/server.mjs",
-    "parsecrops:csv": "node --experimental-strip-types scripts/convert-ecocrop.ts"
+    "parsecrops:csv": "node --experimental-strip-types scripts/convert-ecocrop.ts",
+    "test:dataaccuracy": "ng test --include=../scripts/tests/data-accuracy*.spec.ts",
+    "test:nasapower": "ng test --include=../scripts/tests/nasa-power*.spec.ts",
+    "test:openmeteo": "ng test --include=../scripts/tests/open-meteo*.spec.ts",
+    "test:rotationengine": "ng test --include=../scripts/tests/rotation-engine*.spec.ts"
   },
   "prettier": {
     "printWidth": 100,

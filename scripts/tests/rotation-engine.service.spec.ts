@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { Crop, FarmEnvironmentProfile } from '@models/index';
-import { RotationEngineService } from './rotation-engine.service';
+import { RotationEngineService } from '../../src/app/services/rotation-engine.service';
 
 const SAMPLE_CROPS: Crop[] = [
   {
