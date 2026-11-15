@@ -210,6 +210,33 @@
   </section>
 </main>
 
+@if (isConfirmingLocation()) {
+  <div class="modal-backdrop" (click)="cancelLocation()">
+    <div
+      class="modal"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="confirm-location-title"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="modal__pin" aria-hidden="true">
+        <span class="modal__ring"></span>
+        <span class="modal__ring modal__ring--late"></span>
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 22s-7.5-6.9-7.5-12.5a7.5 7.5 0 0 1 15 0C19.5 15.1 12 22 12 22Zm0-9.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
+        </svg>
+      </div>
+
+      <h2 id="confirm-location-title" class="modal__title">¿Confirmas esta ubicación?</h2>
+
+      <div class="modal__actions">
+        <button type="button" class="agro-btn agro-btn--secondary" (click)="cancelLocation()">No</button>
+        <button #confirmButton type="button" class="agro-btn agro-btn--primary" (click)="confirmLocation()">Sí</button>
+      </div>
+    </div>
+  </div>
+}
+
 <footer class="site-footer">
   Datos: NASA POWER · Open-Meteo · FAO EcoCrop. Comprueba siempre las condiciones locales.
 </footer>

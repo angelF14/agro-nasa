@@ -3,10 +3,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  DestroyRef,
+  ElementRef,
   inject,
   PLATFORM_ID,
   signal,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CropSelector } from '@components/crop-selector/crop-selector';
@@ -34,17 +35,21 @@ type RecommendationView = 'recommendations' | 'forecast';
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '(document:keydown.escape)': 'cancelLocation()',
+  },
 })
 export class Dashboard {
   private readonly nasaPowerService = inject(NasaPowerService);
   private readonly rotationEngine = inject(RotationEngineService);
   private readonly climateQuery$ = new Subject<Coordinates>();
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
-  private autoAdvanceTimer: ReturnType<typeof setTimeout> | undefined;
+  private readonly confirmButton = viewChild<ElementRef<HTMLButtonElement>>('confirmButton');
 
   /** Navegación de la interfaz (solo presentación) */
   protected readonly activeTab = signal<DashboardTab>('map');
   protected readonly recommendationView = signal<RecommendationView>('recommendations');
+  protected readonly isConfirmingLocation = signal<boolean>(false);
 
   protected readonly selectedCoordinates = signal<Coordinates | null>(null);
   protected readonly selectedLocationName = signal<string>('');
@@ -129,12 +134,9 @@ export class Dashboard {
         this.climateSummary.set(summary);
         this.isLoadingClimate.set(false);
       });
-
-    inject(DestroyRef).onDestroy(() => clearTimeout(this.autoAdvanceTimer));
   }
 
   protected selectTab(tab: DashboardTab): void {
-    clearTimeout(this.autoAdvanceTimer);
     this.activeTab.set(tab);
 
     if (!this.isBrowser) {
@@ -155,9 +157,19 @@ export class Dashboard {
     this.selectedCoordinates.set(coords);
     this.climateQuery$.next(coords);
 
-    // Breve pausa para que el usuario vea el marcador antes de pasar a Cultivos
-    clearTimeout(this.autoAdvanceTimer);
-    this.autoAdvanceTimer = setTimeout(() => this.selectTab('crops'), 900);
+    this.isConfirmingLocation.set(true);
+    if (this.isBrowser) {
+      setTimeout(() => this.confirmButton()?.nativeElement.focus());
+    }
+  }
+
+  protected confirmLocation(): void {
+    this.isConfirmingLocation.set(false);
+    this.selectTab('crops');
+  }
+
+  protected cancelLocation(): void {
+    this.isConfirmingLocation.set(false);
   }
 
   protected onLocationNameChange(name: string): void {
