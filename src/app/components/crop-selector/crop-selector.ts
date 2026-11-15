@@ -5,17 +5,27 @@ import {
   Component,
   computed,
   inject,
+  input,
   output,
   PLATFORM_ID,
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Crop } from '@models/index';
-import { RotationEngineService } from '@services/rotation-engine.service';
+import { ClimateSummary, Crop } from '@models/index';
+import {
+  CropFilterCriteria,
+  RotationEngineService,
+  ScoredCrop,
+} from '@services/rotation-engine.service';
 
 interface CategoryOption {
   value: string;
   label: string;
+}
+
+interface CropListItem {
+  crop: Crop;
+  suitabilityScore?: number;
 }
 
 @Component({
@@ -30,6 +40,9 @@ export class CropSelector {
   private readonly platformId = inject(PLATFORM_ID);
 
   readonly cropChange = output<Crop>();
+  readonly climate = input<Partial<ClimateSummary> | null>(null);
+  readonly isLoadingClimate = input<boolean>(false);
+  readonly climateError = input<string | null>(null);
 
   protected readonly categories: CategoryOption[] = [
     { value: '', label: 'Todas las categorías' },
@@ -46,8 +59,45 @@ export class CropSelector {
   protected readonly isLoading = signal<boolean>(false);
   protected readonly selectedCrop = signal<Crop | null>(null);
   protected readonly pageSize = signal<number>(24);
+  protected readonly cropsListType = signal<'all' | 'suggested'>('all');
+  protected readonly strictOptimal = signal<boolean>(false);
 
   protected readonly allCrops = this.rotationEngine.catalogSignal;
+  protected readonly hasScoringClimate = computed(() => {
+    const climate = this.climate();
+    return (
+      climate?.meanTempC !== undefined ||
+      climate?.annualizedPrecipitationMm !== undefined ||
+      climate?.totalPrecipitationMm !== undefined
+    );
+  });
+  protected readonly suggestedCrops = computed<ScoredCrop[]>(() => {
+    const climate = this.climate();
+    if (!climate) {
+      return [];
+    }
+
+    const criteria: CropFilterCriteria = {};
+    if (climate.meanTempC !== undefined) {
+      criteria.temperature = climate.meanTempC;
+    }
+    const rainfall = climate.annualizedPrecipitationMm ?? climate.totalPrecipitationMm;
+    if (rainfall !== undefined) {
+      criteria.rainfall = rainfall;
+    }
+    if (climate.minTempC !== undefined) {
+      criteria.minTempObserved = climate.minTempC;
+    }
+    if (climate.elevationM !== undefined) {
+      criteria.altitude = climate.elevationM;
+    }
+    if (climate.analyzedDays !== undefined) {
+      criteria.availableDays = climate.analyzedDays;
+    }
+    criteria.strictOptimal = this.strictOptimal();
+
+    return this.hasScoringClimate() ? this.rotationEngine.findSuitableCrops(criteria) : [];
+  });
 
   protected readonly filteredCrops = computed(() => {
     const query = this.searchQuery().trim().toLowerCase();
@@ -69,7 +119,22 @@ export class CropSelector {
   });
 
   protected readonly visibleCrops = computed(() => {
-    return this.filteredCrops().slice(0, this.pageSize());
+    const filteredIds = new Set(this.filteredCrops().map((crop) => crop.id));
+    const list: CropListItem[] =
+      this.cropsListType() === 'suggested'
+        ? this.suggestedCrops()
+            .filter(({ crop }) => filteredIds.has(crop.id))
+            .map(({ crop, suitabilityScore }) => ({ crop, suitabilityScore }))
+        : this.filteredCrops().map((crop) => ({ crop }));
+    return list.slice(0, this.pageSize());
+  });
+
+  protected readonly activeCropCount = computed(() => {
+    if (this.cropsListType() !== 'suggested') {
+      return this.filteredCrops().length;
+    }
+    const filteredIds = new Set(this.filteredCrops().map((crop) => crop.id));
+    return this.suggestedCrops().filter(({ crop }) => filteredIds.has(crop.id)).length;
   });
 
   constructor() {
@@ -110,5 +175,16 @@ export class CropSelector {
 
   protected primaryName(crop: Crop): string {
     return crop.commonNames[0] || crop.scientificName;
+  }
+
+  //SUGGESTED CROPS
+  protected onCropsListTypeChange(value: 'all' | 'suggested'): void {
+    this.cropsListType.set(value);
+    this.pageSize.set(24);
+  }
+
+  protected onStrictOptimalChange(value: boolean): void {
+    this.strictOptimal.set(value);
+    this.pageSize.set(24);
   }
 }

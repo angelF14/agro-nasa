@@ -110,7 +110,12 @@
     }
 
     <div [hidden]="!selectedCoordinates()">
-      <app-crop-selector (cropChange)="onCropChange($event)" />
+      <app-crop-selector
+        [climate]="climateSummary()"
+        [isLoadingClimate]="isLoadingClimate()"
+        [climateError]="climateError()"
+        (cropChange)="onCropChange($event)"
+      />
     </div>
   </section>
 
