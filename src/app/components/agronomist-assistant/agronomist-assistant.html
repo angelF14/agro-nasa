@@ -1,0 +1,466 @@
+<ng-template #inlineRuns let-runs="runs">
+  @for (run of runs; track $index) {
+    @if (run.bold) {
+      <strong>{{ run.text }}</strong>
+    } @else if (run.italic) {
+      <em>{{ run.text }}</em>
+    } @else if (run.code) {
+      <code class="md-code">{{ run.text }}</code>
+    } @else {
+      <span>{{ run.text }}</span>
+    }
+  }
+</ng-template>
+
+<ng-template #keyConfigBox>
+  <div class="key-card" [class.key-card--ready]="ai.hasActiveApiKey()">
+    <div class="key-card__head">
+      <div class="key-card__status">
+        <span class="key-dot" [class.key-dot--ok]="ai.hasActiveApiKey()" aria-hidden="true"></span>
+        @if (ai.serverConfigured()) {
+          <span>Gemini capa gratuita activo (.env)</span>
+        } @else if (ai.customApiKey()) {
+          <span>API Key de sesión activa</span>
+        } @else {
+          <span>Falta API Key gratuita de Google</span>
+        }
+      </div>
+
+      @if (!ai.serverConfigured()) {
+        <button
+          type="button"
+          class="link-btn"
+          (click)="showKeyEditor.set(!showKeyEditor())"
+        >
+          {{ showKeyEditor() ? 'Ocultar' : (ai.customApiKey() ? 'Cambiar' : 'Configurar') }}
+        </button>
+      }
+    </div>
+
+    @if (!ai.hasActiveApiKey() || showKeyEditor()) {
+      <div class="key-card__body">
+        <p class="key-card__hint">
+          Usa una clave gratuita de
+          <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">Google AI Studio</a>
+          en <code>.env</code> (<code>GEMINI_API_KEY</code>) o pégala aquí para esta sesión.
+        </p>
+        <div class="key-card__row">
+          <label for="gemini-key-input-{{ mode() }}" class="sr-only">API Key gratuita de Google Gemini</label>
+          <input
+            id="gemini-key-input-{{ mode() }}"
+            type="password"
+            class="agro-input key-card__input"
+            [ngModel]="apiKeyInput()"
+            (ngModelChange)="apiKeyInput.set($event)"
+            placeholder="AIza..."
+            autocomplete="off"
+          />
+          <button
+            type="button"
+            class="agro-btn agro-btn--primary agro-btn--sm"
+            (click)="saveApiKey()"
+            [disabled]="!apiKeyInput().trim()"
+          >
+            Usar
+          </button>
+        </div>
+        <div class="key-card__actions">
+          <button type="button" class="link-btn" (click)="ai.loadStatus(true)">
+            Reverificar .env del servidor
+          </button>
+          @if (ai.customApiKey()) {
+            <button type="button" class="link-btn link-btn--danger" (click)="clearCustomApiKey()">
+              Quitar key de sesión
+            </button>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</ng-template>
+
+<div class="agro-ai" [class.agro-ai--drawer]="mode() === 'drawer'" [class.agro-ai--panel]="mode() === 'panel'">
+  @if (mode() === 'panel') {
+    <aside class="ai-sidebar" aria-label="Contexto agronómico de la parcela">
+      <section class="agro-card ai-side-card">
+        <header class="ai-side-card__head">
+          <span class="eyebrow">Contexto en vivo</span>
+          <h3 class="ai-side-title">Datos enviados al Agrónomo IA</h3>
+        </header>
+
+        @if (context().coordinates; as coords) {
+          <div class="ctx-grid">
+            <div class="ctx-item">
+              <span class="ctx-label">Parcela</span>
+              <strong class="ctx-val">{{ context().locationName || 'Ubicación seleccionada' }}</strong>
+              <span class="ctx-sub num-mono">{{ coords.lat }}, {{ coords.lon }}</span>
+            </div>
+
+            @if (context().historicalClimate; as clim) {
+              <div class="ctx-row num-mono">
+                <div class="agro-metric ctx-kpi">
+                  <span class="ctx-label">Temp media</span>
+                  <strong>{{ clim.meanTempC ?? '—' }} °C</strong>
+                </div>
+                <div class="agro-metric ctx-kpi">
+                  <span class="ctx-label">Lluvia anual</span>
+                  <strong>{{ clim.annualizedPrecipitationMm ?? '—' }} mm</strong>
+                </div>
+              </div>
+            }
+
+            @if (context().weatherSummary; as w) {
+              <div class="ctx-row num-mono">
+                <div class="agro-metric ctx-kpi">
+                  <span class="ctx-label">Balance 7d</span>
+                  <strong>{{ w.waterBalance7dMm > 0 ? '+' : '' }}{{ w.waterBalance7dMm }} mm</strong>
+                </div>
+                <div class="agro-metric ctx-kpi">
+                  <span class="ctx-label">ET₀ 7d</span>
+                  <strong>{{ w.et07dMm }} mm</strong>
+                </div>
+              </div>
+            }
+
+            @if (context().selectedCrop; as crop) {
+              <div class="ctx-item ctx-item--highlight">
+                <span class="ctx-label">Cultivo y aptitud</span>
+                <strong class="ctx-val capitalize">{{ crop.commonName }}</strong>
+                @if (context().cropEvaluation; as ev) {
+                  <span class="ctx-sub num-mono">{{ ev.overallScore }}% EcoCrop · {{ ev.isViable ? 'Viable' : 'Con reservas' }}</span>
+                }
+              </div>
+            } @else {
+              <button type="button" class="agro-btn agro-btn--secondary agro-btn--sm" (click)="goToStep.emit('crops')">
+                Elegir cultivo para diagnóstico
+              </button>
+            }
+          </div>
+        } @else {
+          <div class="ctx-empty">
+            <p>Aún no fijas una parcela. Puedes preguntar dudas generales o elegir un punto en el mapa.</p>
+            <button type="button" class="agro-btn agro-btn--secondary agro-btn--sm" (click)="goToStep.emit('map')">
+              Ir al mapa
+            </button>
+          </div>
+        }
+      </section>
+
+      <section class="agro-card ai-side-card">
+        <header class="ai-side-card__head">
+          <span class="eyebrow">Observación local</span>
+          <h3 class="ai-side-title">Suelo y prioridades</h3>
+        </header>
+
+        <div class="chip-group">
+          <span class="chip-group__label">Estado del suelo</span>
+          <div class="chips">
+            @for (opt of soilOptions; track opt.value) {
+              <button
+                type="button"
+                class="ctx-chip"
+                [class.is-selected]="ai.soilObservations().includes(opt.value)"
+                [attr.aria-pressed]="ai.soilObservations().includes(opt.value)"
+                (click)="ai.toggleSoilObservation(opt.value)"
+              >
+                {{ opt.label }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="chip-group">
+          <span class="chip-group__label">Prioridades del ciclo</span>
+          <div class="chips">
+            @for (opt of priorityOptions; track opt.value) {
+              <button
+                type="button"
+                class="ctx-chip"
+                [class.is-selected]="ai.priorities().includes(opt.value)"
+                [attr.aria-pressed]="ai.priorities().includes(opt.value)"
+                (click)="ai.togglePriority(opt.value)"
+              >
+                {{ opt.label }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="chip-group">
+          <label for="field-notes-input" class="chip-group__label">Notas de campo (opcional)</label>
+          <textarea
+            id="field-notes-input"
+            class="agro-input field-notes"
+            rows="2"
+            [ngModel]="ai.customFieldNotes()"
+            (ngModelChange)="ai.setCustomFieldNotes($event)"
+            placeholder="Ej. Riego por goteo, cultivo anterior fue frijol..."
+          ></textarea>
+        </div>
+      </section>
+
+      <ng-container *ngTemplateOutlet="keyConfigBox" />
+    </aside>
+  }
+
+  <section
+    class="ai-chat"
+    [class.agro-card]="mode() === 'panel'"
+    aria-label="Conversación con Asistente Agrónomo IA"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave()"
+    (drop)="onDrop($event)"
+  >
+    <header class="ai-chat__head">
+      <div class="ai-chat__identity">
+        <span class="ai-avatar" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 20V10M12 10c0-4 3.5-7 8-7 0 4.5-3 7-8 7Zm0 0C12 7 8.5 4.5 4 4.5 4 8.5 7 10 12 10Z" />
+          </svg>
+        </span>
+        <div>
+          <div class="ai-chat__title-row">
+            <h3 class="ai-chat__title">Agrónomo IA</h3>
+            <span class="model-pill num-mono">{{ ai.defaultModel() }}</span>
+          </div>
+          <p class="ai-chat__sub">{{ contextBadge() }}</p>
+        </div>
+      </div>
+
+      <div class="ai-chat__controls">
+        @if (ai.messages().length > 1) {
+          <button
+            type="button"
+            class="icon-btn"
+            (click)="ai.clearConversation()"
+            title="Reiniciar conversación"
+            aria-label="Reiniciar conversación"
+          >
+            <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M8 6V4h8v2m-1 0v14a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1V6" />
+            </svg>
+          </button>
+        }
+
+        @if (mode() === 'drawer') {
+          <button
+            type="button"
+            class="icon-btn"
+            (click)="expandToPanel.emit()"
+            title="Abrir vista completa"
+            aria-label="Abrir vista completa del Asistente IA"
+          >
+            <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            class="icon-btn"
+            (click)="closeDrawer.emit()"
+            title="Cerrar panel"
+            aria-label="Cerrar panel del Asistente IA"
+          >
+            <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        }
+      </div>
+    </header>
+
+    @if (mode() === 'drawer' && ai.statusChecked() && !ai.hasActiveApiKey()) {
+      <div class="drawer-key-wrap">
+        <ng-container *ngTemplateOutlet="keyConfigBox" />
+      </div>
+    }
+
+    <div #messagesList class="ai-messages" role="log" aria-live="polite" aria-label="Mensajes del asistente">
+      @for (entry of parsedMessages(); track entry.message.id) {
+        <article
+          class="msg"
+          [class.msg--user]="entry.message.role === 'user'"
+          [class.msg--model]="entry.message.role === 'model'"
+          [class.msg--error]="entry.message.isError"
+        >
+          @if (entry.message.imagePreview; as img) {
+            <figure class="msg__photo">
+              <img [src]="img.dataUrl" [alt]="img.name" />
+            </figure>
+          }
+
+          @if (entry.message.role === 'user') {
+            <p class="msg__text">{{ entry.message.text }}</p>
+          } @else if (entry.message.isError) {
+            <div class="msg__error-body">
+              <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" />
+                <path stroke-linecap="round" d="M12 8v4M12 16h.01" />
+              </svg>
+              <p class="msg__text">{{ entry.message.text }}</p>
+            </div>
+          } @else {
+            <div class="msg__md">
+              @for (block of entry.blocks; track $index) {
+                @switch (block.type) {
+                  @case ('heading') {
+                    @if (block.level === 2) {
+                      <h4 class="md-h2"><ng-container *ngTemplateOutlet="inlineRuns; context: { runs: block.runs }" /></h4>
+                    } @else {
+                      <h5 class="md-h3"><ng-container *ngTemplateOutlet="inlineRuns; context: { runs: block.runs }" /></h5>
+                    }
+                  }
+                  @case ('paragraph') {
+                    <p><ng-container *ngTemplateOutlet="inlineRuns; context: { runs: block.runs }" /></p>
+                  }
+                  @case ('blockquote') {
+                    <blockquote class="md-quote"><ng-container *ngTemplateOutlet="inlineRuns; context: { runs: block.runs }" /></blockquote>
+                  }
+                  @case ('list') {
+                    @if (block.ordered) {
+                      <ol class="md-list">
+                        @for (item of block.items; track $index) {
+                          <li><ng-container *ngTemplateOutlet="inlineRuns; context: { runs: item }" /></li>
+                        }
+                      </ol>
+                    } @else {
+                      <ul class="md-list">
+                        @for (item of block.items; track $index) {
+                          <li><ng-container *ngTemplateOutlet="inlineRuns; context: { runs: item }" /></li>
+                        }
+                      </ul>
+                    }
+                  }
+                }
+              }
+            </div>
+
+            @if (entry.message.id !== 'welcome' && !entry.message.id.startsWith('welcome-')) {
+              <footer class="msg__foot">
+                <span class="msg__meta num-mono">
+                  {{ entry.message.model || ai.defaultModel() }}
+                  @if (entry.message.usedFallback) {
+                    · respaldo
+                  }
+                </span>
+                <button
+                  type="button"
+                  class="copy-btn"
+                  (click)="copyMessage(entry.message)"
+                >
+                  {{ copiedMessageId() === entry.message.id ? 'Copiado' : 'Copiar' }}
+                </button>
+              </footer>
+            }
+          }
+        </article>
+      }
+
+      @if (ai.isSending()) {
+        <div class="msg msg--model msg--typing" aria-label="El asistente está analizando">
+          <span class="typing-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+          <span>Analizando datos de parcela y cultivo...</span>
+        </div>
+      }
+    </div>
+
+    @if (isDragOver()) {
+      <div class="drop-overlay" aria-hidden="true">
+        <p>Suelta aquí la foto de tu cultivo o suelo para analizarla</p>
+      </div>
+    }
+
+    <div class="ai-prompts" aria-label="Consultas rápidas sugeridas">
+      @for (prompt of quickPrompts(); track prompt) {
+        <button
+          type="button"
+          class="prompt-chip"
+          [disabled]="ai.isSending()"
+          (click)="useQuickPrompt(prompt)"
+        >
+          {{ prompt }}
+        </button>
+      }
+    </div>
+
+    <form class="ai-composer" (ngSubmit)="onSubmit()">
+      @if (attachmentError(); as err) {
+        <p class="agro-alert-error composer-alert" role="alert">{{ err }}</p>
+      }
+
+      @if (pendingImage(); as img) {
+        <div class="image-pill">
+          <img [src]="img.dataUrl" [alt]="img.name" />
+          <span class="image-pill__name">{{ img.name }}</span>
+          <button
+            type="button"
+            class="image-pill__remove"
+            (click)="clearPendingImage()"
+            aria-label="Quitar imagen adjunta"
+          >
+            <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      }
+
+      <div class="composer-row">
+        <input
+          #fileInput
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/*"
+          class="sr-only"
+          (change)="onFileSelected($event)"
+        />
+        <button
+          type="button"
+          class="attach-btn"
+          (click)="openFilePicker()"
+          [disabled]="isProcessingImage() || ai.isSending()"
+          title="Adjuntar foto de hoja, plaga o suelo"
+          aria-label="Adjuntar foto de cultivo o suelo"
+        >
+          @if (isProcessingImage()) {
+            <span class="spinner" aria-hidden="true"></span>
+          } @else {
+            <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 7h3l2-2h6l2 2h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z" />
+              <circle cx="12" cy="13" r="3.5" />
+            </svg>
+          }
+        </button>
+
+        <label for="agronomist-prompt-{{ mode() }}" class="sr-only">Escribe tu consulta agronómica</label>
+        <textarea
+          #composerInput
+          id="agronomist-prompt-{{ mode() }}"
+          class="agro-input composer-input"
+          rows="2"
+          name="prompt"
+          [ngModel]="draftText()"
+          (ngModelChange)="draftText.set($event)"
+          (keydown)="onComposerKeydown($event)"
+          (paste)="onPaste($event)"
+          placeholder="Pregunta sobre riego, plagas, suelo o rotación... (o pega una foto)"
+        ></textarea>
+
+        <button
+          type="submit"
+          class="agro-btn agro-btn--primary composer-send"
+          [disabled]="ai.isSending() || (!draftText().trim() && !pendingImage())"
+          aria-label="Enviar consulta al Asistente Agrónomo"
+        >
+          @if (ai.isSending()) {
+            <span class="spinner" aria-hidden="true"></span>
+          } @else {
+            <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7Z" />
+            </svg>
+          }
+          <span class="send-label">Enviar</span>
+        </button>
+      </div>
+    </form>
+  </section>
+</div>

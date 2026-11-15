@@ -8,7 +8,7 @@
           </svg>
         </div>
         <div>
-          <p class="brand__eyebrow">NASA POWER · FAO EcoCrop</p>
+          <p class="brand__eyebrow">NASA POWER · FAO EcoCrop · Gemini IA</p>
           <h1 class="brand__title">AgroNasa</h1>
         </div>
       </div>
@@ -61,6 +61,19 @@
         (click)="selectTab('recommendations')"
       >
         <span class="tab__num num-mono">03</span> Recomendaciones
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="tab"
+        [class.tab--active]="activeTab() === 'assistant'"
+        [attr.aria-selected]="activeTab() === 'assistant'"
+        (click)="selectTab('assistant')"
+      >
+        <span class="tab__num num-mono">04</span> Asistente IA
+        @if (agronomistAi.messages().length > 1) {
+          <span class="tab__done" aria-label="conversación activa"></span>
+        }
       </button>
     </nav>
   </div>
@@ -139,9 +152,21 @@
                 <em>{{ crop.scientificName }}</em> · {{ selectedLocationName() || 'Parcela seleccionada' }}
               </p>
             </div>
-            <button type="button" class="agro-btn agro-btn--secondary agro-btn--sm" (click)="selectTab('crops')">
-              Cambiar cultivo
-            </button>
+            <div class="sheet__actions">
+              <button
+                type="button"
+                class="agro-btn agro-btn--primary agro-btn--sm"
+                (click)="openAssistantDrawer()"
+              >
+                <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z" />
+                </svg>
+                Consultar Agrónomo IA
+              </button>
+              <button type="button" class="agro-btn agro-btn--secondary agro-btn--sm" (click)="selectTab('crops')">
+                Cambiar cultivo
+              </button>
+            </div>
           </header>
 
           <div class="sheet__body">
@@ -208,7 +233,64 @@
       </div>
     }
   </section>
+
+  <!-- 04 · Asistente IA -->
+  <section class="panel" role="tabpanel" aria-label="Asistente IA" [hidden]="activeTab() !== 'assistant'">
+    <header class="panel__head">
+      <span class="eyebrow">Paso 04 / Consultoría agronómica con IA</span>
+      <h2 class="panel__title">Asistente Agrónomo IA</h2>
+      <p class="panel__lead">
+        Conversa sobre aptitud climática, balance hídrico, manejo del suelo o sube una foto de tu cultivo con Gemini.
+      </p>
+    </header>
+
+    <app-agronomist-assistant
+      mode="panel"
+      [context]="agronomistContext()"
+      [active]="activeTab() === 'assistant'"
+      (goToStep)="selectTab($event)"
+    />
+  </section>
 </main>
+
+<!-- Botón flotante de acceso rápido al panel lateral desde cualquier pantalla -->
+@if (activeTab() !== 'assistant' && !agronomistAi.isDrawerOpen()) {
+  <button
+    type="button"
+    class="ai-fab"
+    (click)="openAssistantDrawer()"
+    aria-label="Abrir Asistente Agrónomo IA en panel lateral"
+  >
+    <span class="ai-fab__icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 20V10M12 10c0-4 3.5-7 8-7 0 4.5-3 7-8 7Zm0 0C12 7 8.5 4.5 4 4.5 4 8.5 7 10 12 10Z" />
+      </svg>
+    </span>
+    <span class="ai-fab__label">Agrónomo IA</span>
+  </button>
+}
+
+<!-- Panel lateral rápido (drawer) -->
+@if (agronomistAi.isDrawerOpen()) {
+  <div class="ai-drawer-backdrop" (click)="agronomistAi.closeDrawer()">
+    <aside
+      class="ai-drawer"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Panel rápido del Asistente Agrónomo IA"
+      (click)="$event.stopPropagation()"
+    >
+      <app-agronomist-assistant
+        mode="drawer"
+        [context]="agronomistContext()"
+        [active]="agronomistAi.isDrawerOpen()"
+        (closeDrawer)="agronomistAi.closeDrawer()"
+        (expandToPanel)="expandAssistantToTab()"
+        (goToStep)="agronomistAi.closeDrawer(); selectTab($event)"
+      />
+    </aside>
+  </div>
+}
 
 @if (isConfirmingLocation()) {
   <div class="modal-backdrop" (click)="cancelLocation()">
@@ -238,5 +320,5 @@
 }
 
 <footer class="site-footer">
-  Datos: NASA POWER · Open-Meteo · FAO EcoCrop. Comprueba siempre las condiciones locales.
+  Datos: NASA POWER · Open-Meteo · FAO EcoCrop · Asistente Gemini IA. Comprueba siempre las condiciones locales.
 </footer>

@@ -4,25 +4,59 @@ import {
   isMainModule,
   writeResponseToNodeResponse,
 } from '@angular/ssr/node';
-import express from 'express';
+import express, { type NextFunction, type Request, type Response } from 'express';
 import { join } from 'node:path';
+import type { AgronomistChatRequest } from './app/models/agronomist.model';
+import {
+  AgronomistHttpError,
+  generateAgronomistReply,
+  getAgronomistStatus,
+} from './server/agronomist';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
 const app = express();
 const angularApp = new AngularNodeAppEngine();
 
-/**
- * Example Express Rest API endpoints can be defined here.
- * Uncomment and define endpoints as necessary.
- *
- * Example:
- * ```ts
- * app.get('/api/{*splat}', (req, res) => {
- *   // Handle API request
- * });
- * ```
- */
+app.use('/api', express.json({ limit: '10mb' }));
+
+app.get('/api/agronomist/status', (_req, res) => {
+  res.json(getAgronomistStatus());
+});
+
+app.post('/api/agronomist/chat', async (req, res) => {
+  try {
+    const clientApiKey = req.header('x-gemini-api-key') ?? undefined;
+    const payload = req.body as AgronomistChatRequest;
+    const result = await generateAgronomistReply(payload, clientApiKey);
+    res.json(result);
+  } catch (error) {
+    if (error instanceof AgronomistHttpError) {
+      res.status(error.statusCode).json({ error: error.message });
+      return;
+    }
+    res.status(500).json({
+      error: 'Error interno al procesar la consulta con el Asistente Agrónomo IA.',
+    });
+  }
+});
+
+app.use('/api', (err: unknown, _req: Request, res: Response, next: NextFunction) => {
+  if (typeof err === 'object' && err !== null && 'type' in err) {
+    const errType = (err as { type?: string }).type;
+    if (errType === 'entity.too.large') {
+      res.status(413).json({
+        error: 'La imagen o consulta supera el límite máximo permitido (10 MB).',
+      });
+      return;
+    }
+    if (errType === 'entity.parse.failed') {
+      res.status(400).json({ error: 'Formato JSON inválido en la solicitud.' });
+      return;
+    }
+  }
+  next(err);
+});
 
 /**
  * Serve static files from /browser

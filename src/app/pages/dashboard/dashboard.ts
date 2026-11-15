@@ -10,28 +10,40 @@ import {
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AgronomistAssistantComponent } from '@components/agronomist-assistant/agronomist-assistant';
 import { CropSelector } from '@components/crop-selector/crop-selector';
 import { FarmMap } from '@components/farm-map/farm-map';
 import { RotationTimeline } from '@components/rotation-timeline/rotation-timeline';
 import { WeatherForecastComponent } from '@components/weather-forecast/weather-forecast';
 import {
+  AgronomistParcelContext,
   ClimateSummary,
   Coordinates,
   Crop,
   CropEvaluation,
   FarmEnvironmentProfile,
   RotationPlan,
+  WeatherForecast,
 } from '@models/index';
+import { AgronomistAiService } from '@services/agronomist-ai.service';
 import { NasaPowerService } from '@services/nasa-power.service';
+import { OpenMeteoService } from '@services/open-meteo.service';
 import { RotationEngineService } from '@services/rotation-engine.service';
+import { buildAgronomistContext } from '@utils/agronomist-context.utils';
 import { catchError, of, Subject, switchMap, tap } from 'rxjs';
 
-type DashboardTab = 'map' | 'crops' | 'recommendations';
+type DashboardTab = 'map' | 'crops' | 'recommendations' | 'assistant';
 type RecommendationView = 'recommendations' | 'forecast';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [FarmMap, CropSelector, RotationTimeline, WeatherForecastComponent],
+  imports: [
+    FarmMap,
+    CropSelector,
+    RotationTimeline,
+    WeatherForecastComponent,
+    AgronomistAssistantComponent,
+  ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -40,9 +52,12 @@ type RecommendationView = 'recommendations' | 'forecast';
   },
 })
 export class Dashboard {
+  protected readonly agronomistAi = inject(AgronomistAiService);
   private readonly nasaPowerService = inject(NasaPowerService);
+  private readonly openMeteoService = inject(OpenMeteoService);
   private readonly rotationEngine = inject(RotationEngineService);
   private readonly climateQuery$ = new Subject<Coordinates>();
+  private readonly forecastQuery$ = new Subject<Coordinates>();
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly confirmButton = viewChild<ElementRef<HTMLButtonElement>>('confirmButton');
 
@@ -55,6 +70,7 @@ export class Dashboard {
   protected readonly selectedLocationName = signal<string>('');
   protected readonly selectedCrop = signal<Crop | null>(null);
   protected readonly climateSummary = signal<Partial<ClimateSummary> | null>(null);
+  protected readonly weatherForecast = signal<WeatherForecast | null>(null);
   protected readonly isLoadingClimate = signal<boolean>(false);
   protected readonly climateError = signal<string | null>(null);
 
@@ -80,8 +96,8 @@ export class Dashboard {
       locationName: this.selectedLocationName() || undefined,
       localContext: {
         previousCropId: crop.id,
-        soilObservations: [],
-        priorities: ['soil-regeneration', 'water-conservation'],
+        soilObservations: this.agronomistAi.soilObservations(),
+        priorities: this.agronomistAi.priorities(),
       },
       historicalClimate: {
         meanTempC: climate.meanTempC ?? 0,
@@ -111,6 +127,21 @@ export class Dashboard {
     return this.rotationEngine.generatePlan(profile, crop);
   });
 
+  protected readonly agronomistContext = computed<AgronomistParcelContext>(() =>
+    buildAgronomistContext({
+      coordinates: this.selectedCoordinates(),
+      locationName: this.selectedLocationName(),
+      climateSummary: this.climateSummary(),
+      weatherForecast: this.weatherForecast(),
+      selectedCrop: this.selectedCrop(),
+      cropEvaluation: this.cropEvaluation(),
+      rotationPlan: this.rotationPlan(),
+      soilObservations: this.agronomistAi.soilObservations(),
+      priorities: this.agronomistAi.priorities(),
+      customNotes: this.agronomistAi.customFieldNotes(),
+    })
+  );
+
   constructor() {
     this.climateQuery$
       .pipe(
@@ -134,9 +165,24 @@ export class Dashboard {
         this.climateSummary.set(summary);
         this.isLoadingClimate.set(false);
       });
+
+    this.forecastQuery$
+      .pipe(
+        switchMap((coords) =>
+          this.openMeteoService.getForecast(coords).pipe(catchError(() => of(null)))
+        ),
+        takeUntilDestroyed()
+      )
+      .subscribe((forecast) => {
+        this.weatherForecast.set(forecast);
+      });
   }
 
   protected selectTab(tab: DashboardTab): void {
+    if (tab === 'assistant') {
+      this.agronomistAi.closeDrawer();
+      this.agronomistAi.loadStatus();
+    }
     this.activeTab.set(tab);
 
     if (!this.isBrowser) {
@@ -144,9 +190,17 @@ export class Dashboard {
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
     if (tab === 'map') {
-      // Leaflet recalcula su tamaño al volver a mostrarse el panel
       setTimeout(() => window.dispatchEvent(new Event('resize')));
     }
+  }
+
+  protected openAssistantDrawer(): void {
+    this.agronomistAi.openDrawer();
+  }
+
+  protected expandAssistantToTab(): void {
+    this.agronomistAi.closeDrawer();
+    this.selectTab('assistant');
   }
 
   protected primaryName(crop: Crop): string {
@@ -156,6 +210,7 @@ export class Dashboard {
   protected onCoordinatesChange(coords: Coordinates): void {
     this.selectedCoordinates.set(coords);
     this.climateQuery$.next(coords);
+    this.forecastQuery$.next(coords);
 
     this.isConfirmingLocation.set(true);
     if (this.isBrowser) {

@@ -20,6 +20,7 @@ Con esto, el sistema sugiere **estrategias de rotación de cultivos** adaptadas 
 ## 2. Stack Tecnológico Actual
 - **Frontend:** Angular `^20.3.0` (con `@angular/ssr` y Express `^5.1.0`)
 - **Mapa interactivo:** Leaflet (selección de parcela/coordenadas `lat, lon` y visualización de capas satelitales)
+- **Asistente Agrónomo IA:** Google Gemini API (`@google/genai` en capa gratuita: `gemini-3.6-flash` con respaldo `gemini-3.5-flash-lite`) integrado en el servidor Express (`/api/agronomist/*`) con contexto de parcela y diagnóstico visual de imágenes.
 - **Lenguaje:** TypeScript `~5.9.2`
 
 ---

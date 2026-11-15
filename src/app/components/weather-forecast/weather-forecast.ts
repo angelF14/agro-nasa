@@ -32,7 +32,7 @@ export type WeatherIconKind =
 })
 export class WeatherForecastComponent implements OnChanges {
   private readonly openMeteo = inject(OpenMeteoService);
-  private readonly forecastRequest$ = new Subject<Coordinates>();
+  private readonly forecastRequest$ = new Subject<{ coords: Coordinates; force: boolean }>();
 
   @Input({ required: true }) coords!: Coordinates;
 
@@ -48,8 +48,8 @@ export class WeatherForecastComponent implements OnChanges {
           this.loading.set(true);
           this.error.set(false);
         }),
-        switchMap((coords) =>
-          this.openMeteo.getForecast(coords).pipe(
+        switchMap(({ coords, force }) =>
+          this.openMeteo.getForecast(coords, force).pipe(
             catchError(() => {
               this.error.set(true);
               return of(null);
@@ -71,18 +71,18 @@ export class WeatherForecastComponent implements OnChanges {
    */
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['coords'] && this.coords) {
-      this.loadForecast();
+      this.loadForecast(false);
     }
   }
 
   /**
    * Consulta las condiciones meteorológicas cancelando peticiones previas en curso.
    */
-  loadForecast(): void {
+  loadForecast(force = true): void {
     if (!this.coords) {
       return;
     }
-    this.forecastRequest$.next(this.coords);
+    this.forecastRequest$.next({ coords: this.coords, force });
   }
 
   /**

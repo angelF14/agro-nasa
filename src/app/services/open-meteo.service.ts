@@ -1,7 +1,7 @@
 
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Observable, catchError, map, shareReplay, throwError } from 'rxjs';
 
 import {
   Coordinates,
@@ -42,12 +42,20 @@ export class OpenMeteoService {
 
   private readonly forecastUrl =
     'https://api.open-meteo.com/v1/forecast';
+  private readonly forecastCache = new Map<string, Observable<WeatherForecast>>();
 
   /**
    * Obtiene las condiciones actuales y el pronóstico
-   * meteorológico de hasta 16 días.
+   * meteorológico de hasta 16 días, reutilizando caché en memoria por coordenada.
    */
-  getForecast(coords: Coordinates): Observable<WeatherForecast> {
+  getForecast(coords: Coordinates, forceRefresh = false): Observable<WeatherForecast> {
+    const cacheKey = `${coords.lat.toFixed(4)},${coords.lon.toFixed(4)}`;
+    if (!forceRefresh) {
+      const cached = this.forecastCache.get(cacheKey);
+      if (cached) {
+        return cached;
+      }
+    }
 
     const params = new HttpParams()
       .set('latitude', coords.lat.toString())
@@ -71,7 +79,7 @@ export class OpenMeteoService {
       .set('forecast_days', '16')
       .set('timezone', 'auto');
 
-    return this.http
+    const request$ = this.http
       .get<OpenMeteoResponse>(this.forecastUrl, { params })
       .pipe(
         map(response => ({
@@ -101,7 +109,15 @@ export class OpenMeteoService {
           })),
 
           generatedAt: new Date().toISOString(),
-        }))
+        })),
+        catchError((err) => {
+          this.forecastCache.delete(cacheKey);
+          return throwError(() => err);
+        }),
+        shareReplay(1)
       );
+
+    this.forecastCache.set(cacheKey, request$);
+    return request$;
   }
 }
