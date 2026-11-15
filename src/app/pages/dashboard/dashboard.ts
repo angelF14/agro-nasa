@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  PLATFORM_ID,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CropSelector } from '@components/crop-selector/crop-selector';
 import { FarmMap } from '@components/farm-map/farm-map';
@@ -16,6 +25,9 @@ import { NasaPowerService } from '@services/nasa-power.service';
 import { RotationEngineService } from '@services/rotation-engine.service';
 import { catchError, of, Subject, switchMap, tap } from 'rxjs';
 
+type DashboardTab = 'map' | 'crops' | 'recommendations';
+type RecommendationView = 'recommendations' | 'forecast';
+
 @Component({
   selector: 'app-dashboard',
   imports: [FarmMap, CropSelector, RotationTimeline, WeatherForecastComponent],
@@ -27,6 +39,12 @@ export class Dashboard {
   private readonly nasaPowerService = inject(NasaPowerService);
   private readonly rotationEngine = inject(RotationEngineService);
   private readonly climateQuery$ = new Subject<Coordinates>();
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  private autoAdvanceTimer: ReturnType<typeof setTimeout> | undefined;
+
+  /** Navegación de la interfaz (solo presentación) */
+  protected readonly activeTab = signal<DashboardTab>('map');
+  protected readonly recommendationView = signal<RecommendationView>('recommendations');
 
   protected readonly selectedCoordinates = signal<Coordinates | null>(null);
   protected readonly selectedLocationName = signal<string>('');
@@ -111,11 +129,35 @@ export class Dashboard {
         this.climateSummary.set(summary);
         this.isLoadingClimate.set(false);
       });
+
+    inject(DestroyRef).onDestroy(() => clearTimeout(this.autoAdvanceTimer));
+  }
+
+  protected selectTab(tab: DashboardTab): void {
+    clearTimeout(this.autoAdvanceTimer);
+    this.activeTab.set(tab);
+
+    if (!this.isBrowser) {
+      return;
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (tab === 'map') {
+      // Leaflet recalcula su tamaño al volver a mostrarse el panel
+      setTimeout(() => window.dispatchEvent(new Event('resize')));
+    }
+  }
+
+  protected primaryName(crop: Crop): string {
+    return crop.commonNames[0] || crop.scientificName;
   }
 
   protected onCoordinatesChange(coords: Coordinates): void {
     this.selectedCoordinates.set(coords);
     this.climateQuery$.next(coords);
+
+    // Breve pausa para que el usuario vea el marcador antes de pasar a Cultivos
+    clearTimeout(this.autoAdvanceTimer);
+    this.autoAdvanceTimer = setTimeout(() => this.selectTab('crops'), 900);
   }
 
   protected onLocationNameChange(name: string): void {
@@ -124,5 +166,7 @@ export class Dashboard {
 
   protected onCropChange(crop: Crop): void {
     this.selectedCrop.set(crop);
+    this.recommendationView.set('recommendations');
+    this.selectTab('recommendations');
   }
 }

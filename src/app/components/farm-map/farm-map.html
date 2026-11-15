@@ -1,104 +1,91 @@
-<section class="agro-card farm-map-card" aria-labelledby="farm-map-title">
-  <header>
-    <span class="step-badge">Paso 1 · Parcela</span>
-    <h2 id="farm-map-title" class="agro-title">Selección de Región o Parcela</h2>
-    <p class="agro-subtitle">Busca un país, estado o ciudad, o haz clic directamente sobre el terreno en el mapa.</p>
-  </header>
-
-  <!-- Barra de búsqueda de País / Ciudad / Región -->
-  <form class="search-bar" (ngSubmit)="onSearchSubmit()">
-    <div class="search-input-wrap">
-      <label for="farm-search-input" class="sr-only">Buscar país, región o ciudad</label>
-      <svg class="search-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-        <circle cx="11" cy="11" r="8" />
-        <path stroke-linecap="round" d="M21 21l-4.35-4.35" />
-      </svg>
-      <input
-        id="farm-search-input"
-        type="text"
-        class="agro-input search-input"
-        name="searchQuery"
-        [ngModel]="searchQuery()"
-        (ngModelChange)="searchQuery.set($event)"
-        placeholder="Buscar país, región o ciudad (ej. Sinaloa, México, Iowa, Bogotá)..."
-        autocomplete="off"
-      />
-    </div>
-    <button type="submit" class="agro-btn agro-btn--primary" [disabled]="isSearching()">
-      <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-        <circle cx="11" cy="11" r="8" />
-        <path stroke-linecap="round" d="M21 21l-4.35-4.35" />
-      </svg>
-      {{ isSearching() ? 'Buscando...' : 'Buscar' }}
-      <span class="btn__icon" aria-hidden="true">
-        @if (isSearching()) {
-          <span class="spinner"></span>
-        } @else {
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M7 17 17 7M9 7h8v8" />
-          </svg>
-        }
-      </span>
-    </button>
-    <button type="button" class="agro-btn agro-btn--secondary" (click)="locateUser()" title="Usar mi ubicación actual">
-      <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-        <circle cx="12" cy="12" r="3" />
-        <path stroke-linecap="round" d="M12 2v3m0 14v3M2 12h3m14 0h3" />
-        <circle cx="12" cy="12" r="7" />
-      </svg>
-      Mi ubicación
-      <span class="btn__icon btn__icon--still" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-          <circle cx="12" cy="12" r="4" />
-          <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
-        </svg>
-      </span>
-    </button>
-  </form>
-
-  @if (searchError()) {
-    <p class="agro-alert-error" role="alert">{{ searchError() }}</p>
-  }
-
-  @if (searchResults().length > 1) {
-    <ul class="search-results" aria-label="Resultados de ubicación encontrados">
-      @for (item of searchResults(); track item.place_id) {
-        <li>
-          <button type="button" (click)="selectSearchResult(item, true)">
-            <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z" />
-              <circle cx="12" cy="10" r="3" />
-            </svg>
-            <span>{{ item.display_name }}</span>
-          </button>
-        </li>
-      }
-    </ul>
-  }
-
+<section class="farm-map-card" aria-labelledby="farm-map-title">
   <!-- Contenedor de Leaflet -->
-  <div #mapContainer class="leaflet-map" aria-label="Mapa interactivo de selección de parcela"></div>
+  <div class="map-pane">
+    <div #mapContainer class="leaflet-map" aria-label="Mapa interactivo de selección de parcela"></div>
+  </div>
 
-  <!-- Resumen de coordenadas retornadas -->
-  <footer class="coords-ticket">
-    <div class="location-label">
-      <span class="badge">
-        <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z" />
-          <circle cx="12" cy="10" r="3" />
+  <aside class="side-pane">
+    <span class="side-pane__icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z" />
+        <circle cx="12" cy="10" r="3" />
+      </svg>
+    </span>
+    <header>
+      <h3 id="farm-map-title" class="side-pane__title">Selección de Región o Parcela</h3>
+      <p class="side-pane__text">Busca un país, estado o ciudad, o haz clic directamente sobre el terreno en el mapa.</p>
+    </header>
+
+    <!-- Barra de búsqueda de País / Ciudad / Región -->
+    <form class="search-bar" (ngSubmit)="onSearchSubmit()">
+      <label for="farm-search-input" class="search-bar__label">Buscar ubicación</label>
+      <div class="search-input-wrap">
+        <svg class="search-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="11" cy="11" r="8" />
+          <path stroke-linecap="round" d="M21 21l-4.35-4.35" />
         </svg>
-        Ubicación
-      </span>
-      <span>{{ selectedLocationName() }}</span>
-    </div>
-
-    @if (selectedCoords(); as coords) {
-      <div class="coords-values num-mono">
-        <span><strong>Lat:</strong> {{ coords.lat }}</span>
-        <span><strong>Lon:</strong> {{ coords.lon }}</span>
+        <input
+          id="farm-search-input"
+          type="text"
+          class="agro-input search-input"
+          name="searchQuery"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+          placeholder="Ej. Sinaloa, México, Iowa, Bogotá..."
+          autocomplete="off"
+        />
       </div>
-    } @else {
-      <div class="coords-values muted">Sin coordenadas seleccionadas aún</div>
+      <div class="search-bar__actions">
+        <button type="submit" class="agro-btn agro-btn--primary" [disabled]="isSearching()">
+          @if (isSearching()) {
+            <span class="spinner" aria-hidden="true"></span>
+          }
+          {{ isSearching() ? 'Buscando...' : 'Buscar' }}
+        </button>
+        <button type="button" class="agro-btn agro-btn--secondary" (click)="locateUser()" title="Usar mi ubicación actual">
+          <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="3" />
+            <path stroke-linecap="round" d="M12 2v3m0 14v3M2 12h3m14 0h3" />
+            <circle cx="12" cy="12" r="7" />
+          </svg>
+          Mi ubicación
+        </button>
+      </div>
+    </form>
+
+    @if (searchError()) {
+      <p class="agro-alert-error" role="alert">{{ searchError() }}</p>
     }
-  </footer>
+
+    @if (searchResults().length > 1) {
+      <ul class="search-results" aria-label="Resultados de ubicación encontrados">
+        @for (item of searchResults(); track item.place_id) {
+          <li>
+            <button type="button" (click)="selectSearchResult(item, true)">
+              <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>
+              <span>{{ item.display_name }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+
+    <!-- Resumen de coordenadas retornadas -->
+    <footer class="coords-ticket" [class.coords-ticket--set]="!!selectedCoords()">
+      <span class="coords-ticket__label">Ubicación</span>
+      <span class="coords-ticket__name">{{ selectedLocationName() }}</span>
+
+      @if (selectedCoords(); as coords) {
+        <div class="coords-values num-mono">
+          <span><small>Lat</small> {{ coords.lat }}</span>
+          <span><small>Lon</small> {{ coords.lon }}</span>
+        </div>
+      } @else {
+        <div class="coords-values muted">Sin coordenadas seleccionadas aún</div>
+      }
+    </footer>
+  </aside>
 </section>

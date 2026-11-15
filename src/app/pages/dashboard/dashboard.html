@@ -1,125 +1,215 @@
 <header class="topbar">
   <div class="topbar__inner">
-    <div class="brand">
-      <div class="brand__mark" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 20V10M12 10c0-4 3.5-7 8-7 0 4.5-3 7-8 7Zm0 0C12 7 8.5 4.5 4 4.5 4 8.5 7 10 12 10Z" />
-          <circle cx="19" cy="5" r="2" fill="currentColor" stroke="none" />
-        </svg>
+    <div class="topbar__row">
+      <div class="brand">
+        <div class="brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 20V10M12 10c0-4 3.5-7 8-7 0 4.5-3 7-8 7Zm0 0C12 7 8.5 4.5 4 4.5 4 8.5 7 10 12 10Z" />
+          </svg>
+        </div>
+        <div>
+          <p class="brand__eyebrow">NASA POWER · FAO EcoCrop</p>
+          <h1 class="brand__title">AgroNasa</h1>
+        </div>
       </div>
-      <div>
-        <h1 class="brand__title">AgroNasa</h1>
-        <p class="brand__subtitle">Inteligencia Climática NASA POWER · Catálogo FAO EcoCrop</p>
-      </div>
+
+      @if (selectedCoordinates(); as coords) {
+        <div class="parcel-pill" aria-live="polite">
+          <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z" />
+            <circle cx="12" cy="10" r="3" />
+          </svg>
+          <span class="parcel-pill__name">{{ selectedLocationName() || 'Parcela activa' }}</span>
+          <span class="parcel-pill__coords num-mono">{{ coords.lat }}, {{ coords.lon }}</span>
+        </div>
+      }
     </div>
 
-    @if (selectedCoordinates(); as coords) {
-      <div class="parcel-pill" aria-live="polite">
-        <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z" />
-          <circle cx="12" cy="10" r="3" />
-        </svg>
-        <span class="parcel-pill__name">{{ selectedLocationName() || 'Parcela activa' }}</span>
-        <span class="parcel-pill__coords num-mono">{{ coords.lat }}, {{ coords.lon }}</span>
-      </div>
-    } @else {
-      <span class="parcel-pill parcel-pill--idle">Sin parcela seleccionada</span>
-    }
+    <nav class="tabs" role="tablist" aria-label="Flujo de análisis agronómico">
+      <button
+        type="button"
+        role="tab"
+        class="tab"
+        [class.tab--active]="activeTab() === 'map'"
+        [attr.aria-selected]="activeTab() === 'map'"
+        (click)="selectTab('map')"
+      >
+        <span class="tab__num num-mono">01</span> Mapa
+        @if (selectedCoordinates()) {
+          <span class="tab__done" aria-label="completado"></span>
+        }
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="tab"
+        [class.tab--active]="activeTab() === 'crops'"
+        [attr.aria-selected]="activeTab() === 'crops'"
+        (click)="selectTab('crops')"
+      >
+        <span class="tab__num num-mono">02</span> Cultivos
+        @if (selectedCrop()) {
+          <span class="tab__done" aria-label="completado"></span>
+        }
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="tab"
+        [class.tab--active]="activeTab() === 'recommendations'"
+        [attr.aria-selected]="activeTab() === 'recommendations'"
+        (click)="selectTab('recommendations')"
+      >
+        <span class="tab__num num-mono">03</span> Recomendaciones
+      </button>
+    </nav>
   </div>
 </header>
 
 <main class="dashboard">
-  <nav class="workflow-stepper agro-card" aria-label="Flujo de análisis agronómico">
-    <a class="step-pill" [class.step-pill--done]="!!selectedCoordinates()" href="#step-map">
-      <span class="step-pill__num num-mono">
-        @if (selectedCoordinates()) {
-          <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-          </svg>
-        } @else {
-          1
-        }
-      </span>
-      <span class="step-pill__text">
-        <strong>Ubicación</strong>
-        <small>{{ selectedCoordinates() ? (selectedLocationName() || 'Parcela fijada') : 'Marca en el mapa' }}</small>
-      </span>
-    </a>
+  <!-- 01 · Mapa -->
+  <section class="panel" role="tabpanel" aria-label="Mapa" [hidden]="activeTab() !== 'map'">
+    <header class="panel__head">
+      <span class="eyebrow">Paso 01 / Encuentra tu zona</span>
+      <h2 class="panel__title">¿Dónde quieres cultivar?</h2>
+      <p class="panel__lead">Busca un lugar o haz clic sobre el mapa. Al fijar tu parcela te llevaremos a sus cultivos.</p>
+    </header>
 
-    <a
-      class="step-pill"
-      [class.step-pill--done]="!!climateSummary() && !isLoadingClimate()"
-      [class.step-pill--disabled]="!selectedCoordinates()"
-      [attr.href]="selectedCoordinates() ? '#step-weather' : '#step-map'"
-    >
-      <span class="step-pill__num num-mono">2</span>
-      <span class="step-pill__text">
-        <strong>Pronóstico y Análisis</strong>
-        <small>
-          @if (isLoadingClimate()) {
-            Analizando NASA POWER...
-          } @else if (climateSummary()) {
-            Clima calibrado
-          } @else {
-            Requiere parcela
-          }
-        </small>
-      </span>
-    </a>
-
-    <a class="step-pill" [class.step-pill--done]="!!cropEvaluation()" [attr.href]="cropEvaluation() ? '#step-rotation' : '#step-crops'">
-      <span class="step-pill__num num-mono">3</span>
-      <span class="step-pill__text">
-        <strong>Cultivo y Rotación</strong>
-        <small>
-          @if (cropEvaluation(); as ev) {
-            {{ ev.overallScore }}% aptitud
-          } @else {
-            Elige del catálogo
-          }
-        </small>
-      </span>
-    </a>
-  </nav>
-
-  <div id="step-map">
     <app-farm-map
       (coordinatesChange)="onCoordinatesChange($event)"
       (locationNameChange)="onLocationNameChange($event)"
     />
-  </div>
+  </section>
 
-  @if (climateError(); as err) {
-    <p class="agro-alert-error" role="alert">{{ err }}</p>
-  }
+  <!-- 02 · Cultivos -->
+  <section class="panel" role="tabpanel" aria-label="Cultivos" [hidden]="activeTab() !== 'crops'">
+    <header class="panel__head">
+      <span class="eyebrow">Paso 02 / Explora cultivos</span>
+      <h2 class="panel__title">Cultivos de tu zona</h2>
+      <p class="panel__lead">
+        @if (selectedCoordinates()) {
+          Catálogo disponible para {{ selectedLocationName() || 'tu parcela' }}. Selecciona uno para continuar.
+        } @else {
+          Aún no has seleccionado una ubicación.
+        }
+      </p>
+    </header>
 
-  @if (selectedCoordinates(); as coords) {
-    <div id="step-weather">
-      <app-weather-forecast [coords]="coords" />
-    </div>
-  } @else {
-    <section class="agro-card climate-prompt" aria-label="Instrucción para análisis climático">
-      <svg class="climate-prompt__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z" />
-        <circle cx="12" cy="10" r="3" />
-      </svg>
-      <div>
-        <h2>Selecciona una parcela en el mapa para iniciar</h2>
-        <p>
-          Al elegir o buscar un lugar obtendrás el pronóstico meteorológico y calibraremos automáticamente los datos de NASA POWER para puntuar tus cultivos.
-        </p>
+    @if (!selectedCoordinates()) {
+      <div class="empty-card">
+        <span class="empty-card__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z" />
+            <circle cx="12" cy="10" r="3" />
+          </svg>
+        </span>
+        <h3>Primero elige una ubicación</h3>
+        <p>Selecciona un punto en el mapa para ver los cultivos disponibles.</p>
+        <button type="button" class="agro-btn agro-btn--primary" (click)="selectTab('map')">Ir al mapa</button>
       </div>
-    </section>
-  }
+    }
 
-  <div id="step-crops">
-    <app-crop-selector (cropChange)="onCropChange($event)" />
-  </div>
+    <div [hidden]="!selectedCoordinates()">
+      <app-crop-selector (cropChange)="onCropChange($event)" />
+    </div>
+  </section>
 
-  <div id="step-rotation">
-    <app-rotation-timeline
-      [cropEvaluation]="cropEvaluation()"
-      [rotationPlan]="rotationPlan()"
-    />
-  </div>
+  <!-- 03 · Recomendaciones -->
+  <section class="panel" role="tabpanel" aria-label="Recomendaciones" [hidden]="activeTab() !== 'recommendations'">
+    <header class="panel__head">
+      <span class="eyebrow">Paso 03 / Planifica con información</span>
+      <h2 class="panel__title">Información para tu cultivo</h2>
+      <p class="panel__lead">
+        @if (selectedCrop(); as crop) {
+          <span class="capitalize">{{ primaryName(crop) }}</span> · {{ selectedLocationName() || 'Parcela seleccionada' }}
+        } @else {
+          Aún no has elegido un cultivo.
+        }
+      </p>
+    </header>
+
+    @if (selectedCoordinates(); as coords) {
+      @if (selectedCrop(); as crop) {
+        <article class="sheet">
+          <header class="sheet__head">
+            <div>
+              <span class="eyebrow">Ficha de cultivo</span>
+              <h3 class="sheet__title">{{ primaryName(crop) }}</h3>
+              <p class="sheet__meta">
+                <em>{{ crop.scientificName }}</em> · {{ selectedLocationName() || 'Parcela seleccionada' }}
+              </p>
+            </div>
+            <button type="button" class="agro-btn agro-btn--secondary agro-btn--sm" (click)="selectTab('crops')">
+              Cambiar cultivo
+            </button>
+          </header>
+
+          <div class="sheet__body">
+            <div class="segmented" role="tablist" aria-label="Vista de recomendaciones" [attr.data-active]="recommendationView()">
+              <span class="segmented__thumb" aria-hidden="true"></span>
+              <button
+                type="button"
+                role="tab"
+                [class.is-active]="recommendationView() === 'recommendations'"
+                [attr.aria-selected]="recommendationView() === 'recommendations'"
+                (click)="recommendationView.set('recommendations')"
+              >
+                Recomendaciones
+              </button>
+              <button
+                type="button"
+                role="tab"
+                [class.is-active]="recommendationView() === 'forecast'"
+                [attr.aria-selected]="recommendationView() === 'forecast'"
+                (click)="recommendationView.set('forecast')"
+              >
+                Pronóstico
+              </button>
+            </div>
+
+            <div class="sheet__view" [hidden]="recommendationView() !== 'recommendations'">
+              @if (isLoadingClimate()) {
+                <p class="status-note"><span class="spinner"></span> Analizando datos de NASA POWER...</p>
+              }
+              @if (climateError(); as err) {
+                <p class="agro-alert-error" role="alert">{{ err }}</p>
+              }
+              <app-rotation-timeline [cropEvaluation]="cropEvaluation()" [rotationPlan]="rotationPlan()" />
+            </div>
+
+            <div class="sheet__view" [hidden]="recommendationView() !== 'forecast'">
+              <app-weather-forecast [coords]="coords" />
+            </div>
+          </div>
+        </article>
+      } @else {
+        <div class="empty-card">
+          <span class="empty-card__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 21V11M12 11C12 6.5 16 4 20 4c0 4.5-3 7-8 7Zm0 0C12 7.5 8 5 4 5c0 4.5 3 6 8 6Z" />
+            </svg>
+          </span>
+          <h3>Elige un cultivo</h3>
+          <p>Selecciona o busca un cultivo para ver sus recomendaciones y el pronóstico de tu parcela.</p>
+          <button type="button" class="agro-btn agro-btn--primary" (click)="selectTab('crops')">Ir a cultivos</button>
+        </div>
+      }
+    } @else {
+      <div class="empty-card">
+        <span class="empty-card__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z" />
+            <circle cx="12" cy="10" r="3" />
+          </svg>
+        </span>
+        <h3>Primero elige una ubicación</h3>
+        <p>Necesitamos tu parcela para calcular las recomendaciones con datos de la NASA.</p>
+        <button type="button" class="agro-btn agro-btn--primary" (click)="selectTab('map')">Ir al mapa</button>
+      </div>
+    }
+  </section>
 </main>
+
+<footer class="site-footer">
+  Datos: NASA POWER · Open-Meteo · FAO EcoCrop. Comprueba siempre las condiciones locales.
+</footer>
