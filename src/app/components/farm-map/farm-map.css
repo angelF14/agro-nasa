@@ -198,3 +198,29 @@
   font-family: inherit;
   color: var(--text-muted);
 }
+
+/* Teléfono: búsqueda arriba del mapa, ubicación debajo */
+@media (max-width: 859.98px) {
+  .farm-map-card {
+    gap: 1rem;
+    padding-block: 1.25rem;
+  }
+
+  .side-pane {
+    display: contents;
+  }
+
+  .side-pane > * {
+    margin-inline: 1.25rem;
+  }
+
+  .map-pane {
+    order: 1;
+    border-block: 1px solid var(--line);
+  }
+
+  .coords-ticket {
+    order: 2;
+    margin-top: 0;
+  }
+}
