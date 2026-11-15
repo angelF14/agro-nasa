@@ -179,6 +179,7 @@ export class Dashboard {
         tap(() => {
           this.isLoadingClimate.set(true);
           this.climateError.set(null);
+          this.climateSummary.set(null);
         }),
         switchMap((coords) =>
           this.nasaPowerService.getHistoricalClimate(coords).pipe(

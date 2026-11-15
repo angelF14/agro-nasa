@@ -139,6 +139,18 @@ describe('RotationEngineService', () => {
     expect(evaluation.overallScore).toBeGreaterThanOrEqual(80);
   });
 
+  it('limits suitable crops to optimal temperature and rainfall when strictOptimal is enabled', () => {
+    const standardResults = service.findSuitableCrops({ temperature: 15, rainfall: 500 });
+    const strictResults = service.findSuitableCrops({
+      temperature: 15,
+      rainfall: 500,
+      strictOptimal: true,
+    });
+
+    expect(standardResults.length).toBe(3);
+    expect(strictResults.map(({ crop }) => crop.id)).toEqual(['1990']);
+  });
+
   it('generates a 3-cycle rotation alternating botanical families and including a legume', () => {
     const potato = SAMPLE_CROPS[2];
     const profile: FarmEnvironmentProfile = {

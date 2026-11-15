@@ -157,6 +157,9 @@
     <div [hidden]="!selectedCoordinates()">
       <app-crop-selector
         [externalSelectedCrop]="selectedCrop()"
+        [climate]="climateSummary()"
+        [isLoadingClimate]="isLoadingClimate()"
+        [climateError]="climateError()"
         (cropChange)="onCropChange($event)"
       />
     </div>

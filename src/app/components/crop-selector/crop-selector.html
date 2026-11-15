@@ -1,17 +1,59 @@
 <section class="agro-card crop-selector-card" aria-labelledby="crop-selector-title">
   <header class="agro-header">
     <div>
-      <h2 id="crop-selector-title" class="agro-title">Catálogo de Cultivos FAO EcoCrop ({{ filteredCrops().length }})</h2>
-      <p class="agro-subtitle">Busca por nombre común, científico o familia botánica para evaluar compatibilidad climática y rotación.</p>
+      <h2 id="crop-selector-title" class="agro-title">
+        {{
+          cropsListType() === 'suggested'
+            ? 'Cultivos recomendados'
+            : 'Catálogo de Cultivos FAO EcoCrop'
+        }}
+        ({{ activeCropCount() }})
+      </h2>
+      <p class="agro-subtitle">
+        @if (cropsListType() === 'suggested') {
+          Recomendaciones ordenadas por compatibilidad con el clima histórico de la parcela.
+        } @else {
+          Busca por nombre común, científico o familia botánica para evaluar compatibilidad
+          climática y rotación.
+        }
+      </p>
+    </div>
+    <div class="segmented" role="tablist" [attr.data-active]="cropsListType()">
+      <span class="segmented__thumb" aria-hidden="true"></span>
+      <button
+        type="button"
+        role="tab"
+        [class.is-active]="cropsListType() === 'all'"
+        [attr.aria-selected]="cropsListType() === 'all'"
+        (click)="onCropsListTypeChange('all')"
+      >
+        Todos
+      </button>
+      <button
+        type="button"
+        role="tab"
+        [class.is-active]="cropsListType() === 'suggested'"
+        [attr.aria-selected]="cropsListType() === 'suggested'"
+        (click)="onCropsListTypeChange('suggested')"
+      >
+        Recomendados
+      </button>
     </div>
 
     @if (selectedCrop(); as active) {
       <div class="selected-crop-pill" role="status" aria-live="polite">
         <span class="selected-crop-pill__badge">
-          <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+          <svg
+            class="agro-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            aria-hidden="true"
+          >
             <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
           </svg>
-          Activo
+          Seleeccionado
         </span>
         <strong>{{ primaryName(active) }}</strong>
         <span class="selected-crop-pill__sci">({{ active.scientificName }})</span>
@@ -22,7 +64,14 @@
   <div class="crop-filters">
     <div class="crop-search-wrap">
       <label for="crop-search-input" class="sr-only">Buscar cultivo por nombre o familia</label>
-      <svg class="crop-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <svg
+        class="crop-search-icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        aria-hidden="true"
+      >
         <circle cx="11" cy="11" r="8" />
         <path stroke-linecap="round" d="M21 21l-4.35-4.35" />
       </svg>
@@ -43,7 +92,14 @@
           (click)="onSearchChange('')"
           aria-label="Limpiar búsqueda de cultivos"
         >
-          <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <svg
+            class="agro-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
             <path stroke-linecap="round" d="M18 6L6 18M6 6l12 12" />
           </svg>
         </button>
@@ -66,24 +122,67 @@
     </div>
   </div>
 
+  @if (cropsListType() === 'suggested') {
+    <label class="crop-optimal-filter">
+      <input
+        type="checkbox"
+        [ngModel]="strictOptimal()"
+        (ngModelChange)="onStrictOptimalChange($event)"
+      />
+      Solo rangos óptimos de temperatura y precipitación
+    </label>
+  }
+
   @if (isLoading()) {
     <div class="crop-skeleton-grid" aria-busy="true" aria-label="Cargando catálogo de cultivos">
       @for (item of [1, 2, 3, 4, 5, 6]; track item) {
         <div class="skeleton-box crop-skeleton-item"></div>
       }
     </div>
-  } @else if (filteredCrops().length === 0) {
+  } @else if (cropsListType() === 'suggested' && isLoadingClimate()) {
+    <div class="crop-empty" role="status" aria-live="polite">
+      <p>Obteniendo datos climáticos para preparar las recomendaciones…</p>
+    </div>
+  } @else if (cropsListType() === 'suggested' && climateError(); as error) {
+    <div class="crop-empty" role="alert">
+      <p>{{ error }}</p>
+    </div>
+  } @else if (cropsListType() === 'suggested' && !hasScoringClimate()) {
+    <div class="crop-empty" role="status">
+      <p>No hay datos de temperatura o precipitación disponibles para generar recomendaciones.</p>
+    </div>
+  } @else if (activeCropCount() === 0) {
     <div class="crop-empty">
-      <svg class="crop-empty__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+      <svg
+        class="crop-empty__icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        aria-hidden="true"
+      >
         <circle cx="11" cy="11" r="8" />
         <path stroke-linecap="round" d="M21 21l-4.35-4.35" />
       </svg>
-      <p>No se encontraron cultivos con ese criterio de búsqueda.</p>
-      <button type="button" class="agro-btn agro-btn--secondary agro-btn--sm" (click)="clearFilters()">Restablecer filtros</button>
+      <p>
+        @if (cropsListType() === 'suggested' && !searchQuery() && !selectedCategory()) {
+          No se encontraron cultivos compatibles con los datos climáticos de esta parcela.
+        } @else {
+          No se encontraron cultivos con ese criterio de búsqueda.
+        }
+      </p>
+      <button
+        type="button"
+        class="agro-btn agro-btn--secondary agro-btn--sm"
+        (click)="clearFilters()"
+      >
+        Restablecer filtros
+      </button>
     </div>
   } @else {
     <div class="crop-grid" role="listbox" aria-label="Lista de cultivos disponibles">
-      @for (crop of visibleCrops(); track crop.id) {
+      @for (item of visibleCrops(); track item.crop.id) {
+        @let crop = item.crop;
         <button
           type="button"
           class="crop-item"
@@ -93,27 +192,63 @@
         >
           <div class="crop-item__top">
             <strong class="crop-item__name">{{ primaryName(crop) }}</strong>
-            @if (crop.family) {
-              <span class="crop-item__family">{{ crop.family }}</span>
-            }
+            <span class="crop-item__badges">
+              @if (crop.family) {
+                <span class="crop-item__family">{{ crop.family }}</span>
+              }
+              @if (item.suitabilityScore !== undefined) {
+                <span class="crop-item__score" aria-label="Compatibilidad">
+                  {{ item.suitabilityScore }}% compatible
+                </span>
+              }
+            </span>
           </div>
           <span class="crop-item__sci">{{ crop.scientificName }}</span>
           <div class="crop-item__meta num-mono">
             <span class="meta-chip" title="Rango térmico óptimo">
-              <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0Z" />
+              <svg
+                class="agro-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0Z"
+                />
               </svg>
               {{ crop.temp.optMin }}–{{ crop.temp.optMax }} °C
             </span>
             <span class="meta-chip" title="Precipitación óptima">
-              <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+              <svg
+                class="agro-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"
+                />
               </svg>
               {{ crop.rain.optMin }}–{{ crop.rain.optMax }} mm
             </span>
             @if (crop.agronomy.cycleDays.min) {
               <span class="meta-chip" title="Duración del ciclo">
-                <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <svg
+                  class="agro-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  aria-hidden="true"
+                >
                   <circle cx="12" cy="12" r="9" />
                   <path stroke-linecap="round" d="M12 7v5l3 2" />
                 </svg>
@@ -126,12 +261,28 @@
       }
     </div>
 
-    @if (visibleCrops().length < filteredCrops().length) {
-      <div class="crop-more">
-        <button type="button" class="btn-more" (click)="showMore()">
-          Mostrar más cultivos ({{ visibleCrops().length }} de {{ filteredCrops().length }})
-        </button>
-      </div>
-    }
+    <nav class="list-pagination" aria-label="Paginación de cultivos">
+      <button
+        type="button"
+        class="btn-more"
+        (click)="goToPage(page() - 1)"
+        [disabled]="page() === 1"
+        aria-label="Página anterior"
+      >
+        ‹ Anterior
+      </button>
+      <span class="list-pagination__info num-mono" aria-live="polite"
+        >{{ page() }} / {{ totalPages() }}</span
+      >
+      <button
+        type="button"
+        class="btn-more"
+        (click)="goToPage(page() + 1)"
+        [disabled]="page() === totalPages()"
+        aria-label="Página siguiente"
+      >
+        Siguiente ›
+      </button>
+    </nav>
   }
 </section>

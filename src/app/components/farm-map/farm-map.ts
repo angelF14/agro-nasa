@@ -2,6 +2,7 @@ import {
    afterNextRender,
   ChangeDetectionStrategy,
   Component,
+  computed,
   DestroyRef,
   effect,
   ElementRef,
@@ -62,6 +63,15 @@ export class FarmMap {
 
   protected readonly searchQuery = signal('');
   protected readonly searchResults = signal<NominatimSearchResult[]>([]);
+  protected readonly resultsPage = signal(1);
+  private readonly resultsPerPage = 3;
+  protected readonly resultsTotalPages = computed(() =>
+    Math.max(1, Math.ceil(this.searchResults().length / this.resultsPerPage))
+  );
+  protected readonly visibleResults = computed(() => {
+    const start = (this.resultsPage() - 1) * this.resultsPerPage;
+    return this.searchResults().slice(start, start + this.resultsPerPage);
+  });
   protected readonly isSearching = signal(false);
   protected readonly searchError = signal<string | null>(null);
 
@@ -222,6 +232,7 @@ export class FarmMap {
       )
       .subscribe((results) => {
         this.searchResults.set(results);
+        this.resultsPage.set(1);
         if (results.length === 0 && !this.searchError()) {
           this.searchError.set('No se encontraron resultados para esa búsqueda.');
           return;
@@ -246,6 +257,10 @@ export class FarmMap {
     this.locationNameChange.emit(result.display_name);
 
     this.setSelectionOnMap(coords, true, result.boundingbox);
+  }
+
+  protected goToResultsPage(page: number): void {
+    this.resultsPage.set(Math.min(Math.max(1, page), this.resultsTotalPages()));
   }
 
   protected locateUser(): void {
