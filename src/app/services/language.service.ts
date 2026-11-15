@@ -130,7 +130,74 @@ const ENGLISH_TRANSLATIONS: Record<string, string> = {
   Viable: 'Viable',
   'No recomendado': 'Not recommended',
   'NASA POWER:': 'NASA POWER:',
+  'NASA POWER': 'NASA POWER',
   'Requerido EcoCrop:': 'EcoCrop requirement:',
+  'Requerido EcoCrop': 'EcoCrop requirement',
+  'Detalles del clima y tu terreno': 'Climate and plot details',
+  'Comparamos lo que necesita la planta contra las condiciones reales de tu parcela.':
+    'We compare the crop’s needs with the actual conditions on your plot.',
+  'Ver explicación sencilla': 'Show simple explanation',
+  'Ver datos técnicos (NASA / EcoCrop)': 'View technical data (NASA / EcoCrop)',
+  'Cantidad de lluvia al año': 'Annual rainfall amount',
+  'Nivel de agua': 'Water level',
+  'En tu terreno': 'On your plot',
+  'Ideal para cultivo': 'Ideal for the crop',
+  'La lluvia de tu zona cubre lo que necesita el cultivo.':
+    'Rainfall in your area meets the crop’s needs.',
+  'La lluvia es algo justa; considera riego de apoyo en épocas secas.':
+    'Rainfall is somewhat low; consider supplemental irrigation during dry periods.',
+  'La lluvia está fuera de lo que tolera el cultivo; necesitará riego o manejo del agua.':
+    'Rainfall is outside the crop’s tolerance; irrigation or water management will be needed.',
+  'No hay datos suficientes de lluvia para evaluar.': 'Not enough rainfall data to assess.',
+  'Temperatura del lugar': 'Local temperature',
+  'Adecuación térmica': 'Temperature suitability',
+  'Promedio actual': 'Current average',
+  'La temperatura es ideal para que el cultivo crezca bien.':
+    'The temperature is ideal for healthy crop growth.',
+  'La temperatura no es la ideal; el cultivo crecerá más lento.':
+    'The temperature is not ideal; the crop may grow more slowly.',
+  'La temperatura está fuera del rango que soporta el cultivo.':
+    'The temperature is outside the crop’s tolerance range.',
+  'No hay datos suficientes de temperatura para evaluar.':
+    'Not enough temperature data to assess.',
+  'Frío máximo registrado': 'Lowest recorded temperature',
+  'Tolerancia al frío': 'Cold tolerance',
+  'Mínima en zona': 'Local minimum',
+  'Soporta hasta': 'Tolerance limit',
+  'No hay riesgo de heladas para este cultivo.': 'No frost risk for this crop.',
+  'Las heladas de invierno pueden dañar o secar el cultivo.':
+    'Winter frosts may damage or dry out the crop.',
+  'Las heladas de la zona superan lo que el cultivo puede soportar.':
+    'Frosts in this area exceed the crop’s tolerance.',
+  'No hay datos suficientes de temperatura mínima.':
+    'Not enough minimum-temperature data.',
+  'Altura del terreno': 'Plot elevation',
+  'Tu parcela': 'Your plot',
+  '¡Altura perfecta! El terreno está dentro del rango ideal.':
+    'Ideal elevation: the plot is within the preferred range.',
+  'La altura está cerca del límite que tolera el cultivo.':
+    'The elevation is close to the crop’s tolerance limit.',
+  'La altura del terreno está fuera del rango del cultivo.':
+    'The plot elevation is outside the crop’s range.',
+  'No hay datos de altitud para evaluar.': 'No elevation data to assess.',
+  'Tiempo de crecimiento': 'Growing time',
+  'Días disponibles': 'Days available',
+  'Necesita para crecer': 'Needed to grow',
+  'Tiempo suficiente para que el cultivo complete su ciclo.':
+    'Enough time for the crop to complete its growing cycle.',
+  'El tiempo disponible es justo para completar el ciclo.':
+    'There is just enough time to complete the growing cycle.',
+  'El periodo no alcanza para que el cultivo complete su ciclo.':
+    'The period is too short for the crop to complete its growing cycle.',
+  'No hay datos suficientes del ciclo.': 'Not enough growing-cycle data.',
+  'Sin datos': 'No data',
+  'Riesgo helada': 'Frost risk',
+  Regular: 'Fair',
+  Crítico: 'Critical',
+  Ideal: 'Ideal',
+  Aceptable: 'Acceptable',
+  Bajo: 'Low',
+  'Muy bajo': 'Very low',
   'Alertas climáticas y de manejo': 'Climate and management alerts',
   'Alertas Climáticas y de Manejo': 'Climate and management alerts',
   'Plan de Rotación Recomendado (Ciclo 1 → Ciclo 2 → Ciclo 3)':

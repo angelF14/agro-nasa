@@ -21,6 +21,14 @@ describe('LanguageService', () => {
     expect(languageService.t('Maíz')).toBe('Maíz');
   });
 
+  it('translates the rotation assessment copy', () => {
+    expect(languageService.t('Detalles del clima y tu terreno')).toBe('Climate and plot details');
+    expect(languageService.t('Riesgo helada')).toBe('Frost risk');
+    expect(languageService.t('La lluvia de tu zona cubre lo que necesita el cultivo.')).toBe(
+      'Rainfall in your area meets the crop’s needs.',
+    );
+  });
+
   it('switches languages and persists the selection', () => {
     languageService.toggle();
 
