@@ -638,7 +638,7 @@ const ENGLISH_CROP_NAMES: Record<string, string> = {
   okra: 'okra',
 };
 
-export function getLocalizedCropName(crop: Crop, language: 'en' | 'es'): string {
+export function getLocalizedCropName(crop: Crop, language: 'en' | 'es' = 'es'): string {
   const commonNames = crop.commonNames ?? [];
   const spanishAlias = SPANISH_CROP_ALIASES.find((alias) =>
     alias.scientificTargets.some(
@@ -651,8 +651,8 @@ export function getLocalizedCropName(crop: Crop, language: 'en' | 'es'): string 
     const matchingSpanishName = commonNames.find(
       (name) => normalizeSearchText(name) === normalizedAlias,
     );
-    if (language === 'es' && matchingSpanishName) {
-      return matchingSpanishName;
+    if (language === 'es') {
+      return matchingSpanishName || spanishAlias;
     }
 
     if (language === 'en') {
@@ -671,6 +671,9 @@ export function getLocalizedCropName(crop: Crop, language: 'en' | 'es'): string 
       );
       if (otherCommonName) {
         return otherCommonName;
+      }
+      if (preferredEnglishName) {
+        return preferredEnglishName;
       }
     }
   }
@@ -709,32 +712,6 @@ export function enrichCatalogWithSpanishNames(crops: Crop[]): Crop[] {
       commonNames: [spanishLabel, ...filtered],
     };
   });
-}
-
-/**
- * Returns the primary common name of a crop localized in Spanish or English.
- */
-export function getLocalizedCropName(crop: Crop, lang: 'es' | 'en' = 'es'): string {
-  const sciKey = crop.scientificName.toLowerCase();
-  const alias = SPANISH_CROP_ALIASES.find((a) =>
-    a.scientificTargets.some((s) => s.toLowerCase() === sciKey)
-  );
-
-  if (lang === 'es') {
-    return alias?.spanishLabel || crop.commonNames[0] || crop.scientificName;
-  }
-
-  const spanishNorm = alias ? normalizeSearchText(alias.spanishLabel) : '';
-  const nonSpanishCommon = crop.commonNames.find((n) => {
-    const norm = normalizeSearchText(n);
-    return norm && norm !== spanishNorm;
-  });
-
-  if (nonSpanishCommon) {
-    return nonSpanishCommon;
-  }
-
-  return crop.commonNames[0] || crop.scientificName;
 }
 
 /**
