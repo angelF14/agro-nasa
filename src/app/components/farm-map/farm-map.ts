@@ -18,6 +18,9 @@ import { Coordinates } from '@models/index';
 import type * as L from 'leaflet';
 import { catchError, finalize, of } from 'rxjs';
 
+type LeafletNamespace = typeof L;
+type LeafletModule = LeafletNamespace & { default?: LeafletNamespace };
+
 interface NominatimSearchResult {
   place_id: number;
   display_name: string;
@@ -61,10 +64,12 @@ export class FarmMap {
   protected readonly selectedCoords = signal<Coordinates | null>(null);
   protected readonly selectedLocationName = signal<string>('Haz clic en el mapa o busca un país, región o ciudad');
 
-  private leafletLib: typeof L | null = null;
+  private leafletLib: LeafletNamespace | null = null;
   private map: L.Map | null = null;
   private selectionMarker: L.CircleMarker | null = null;
   private selectionAreaCircle: L.Circle | null = null;
+  private resizeObserver: ResizeObserver | null = null;
+  private isDestroyed = false;
 
   constructor() {
     afterNextRender(() => {
@@ -74,6 +79,9 @@ export class FarmMap {
     });
 
     this.destroyRef.onDestroy(() => {
+      this.isDestroyed = true;
+      this.resizeObserver?.disconnect();
+      this.resizeObserver = null;
       if (this.map) {
         this.map.remove();
         this.map = null;
@@ -82,18 +90,30 @@ export class FarmMap {
   }
 
   private async initMap(): Promise<void> {
-    const L = await import('leaflet');
-    this.leafletLib = L;
+    const leafletModule = (await import('leaflet')) as LeafletModule;
+    if (this.isDestroyed) {
+      return;
+    }
+
+    // In production (esbuild), CommonJS Leaflet resolves under `.default`; in Vite dev, exports sit on the namespace.
+    const leaflet =
+      typeof leafletModule.tileLayer === 'function' ? leafletModule : leafletModule.default;
+
+    if (!leaflet || typeof leaflet.tileLayer !== 'function') {
+      throw new Error('No se pudo inicializar Leaflet.');
+    }
+
+    this.leafletLib = leaflet;
 
     const start = this.initialCoordinates();
     const mapEl = this.mapContainer().nativeElement;
 
-    const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    const osmLayer = leaflet.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; OpenStreetMap contributors',
     });
 
-    const satelliteLayer = L.tileLayer(
+    const satelliteLayer = leaflet.tileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
       {
         maxZoom: 18,
@@ -101,13 +121,13 @@ export class FarmMap {
       }
     );
 
-    this.map = L.map(mapEl, {
+    this.map = leaflet.map(mapEl, {
       center: [start.lat, start.lon],
       zoom: this.initialZoom(),
       layers: [osmLayer],
     });
 
-    L.control
+    leaflet.control
       .layers(
         {
           'Mapa Regional (OSM)': osmLayer,
@@ -117,6 +137,13 @@ export class FarmMap {
         { position: 'topright' }
       )
       .addTo(this.map);
+
+    if (typeof ResizeObserver !== 'undefined') {
+      this.resizeObserver = new ResizeObserver(() => {
+        this.map?.invalidateSize();
+      });
+      this.resizeObserver.observe(mapEl);
+    }
 
     this.map.on('click', (event: L.LeafletMouseEvent) => {
       const wrapped = event.latlng.wrap();
