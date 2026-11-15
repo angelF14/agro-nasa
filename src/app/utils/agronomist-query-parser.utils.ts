@@ -417,7 +417,7 @@ const NON_LOCATION_STOPWORDS = new Set([
   'rotacion',
   'el mapa',
   'agro-nasa',
-  'agronasa',
+  'AgroHelper',
   'nasa power',
   'open-meteo',
   'ecocrop',
@@ -578,6 +578,106 @@ export function normalizeSearchText(value: string): string {
     .trim();
 }
 
+const ENGLISH_CROP_NAMES: Record<string, string> = {
+  'maíz dulce': 'sweet corn',
+  maíz: 'corn',
+  frijol: 'common bean',
+  papa: 'potato',
+  tomate: 'tomato',
+  café: 'coffee',
+  cacao: 'cocoa',
+  trigo: 'wheat',
+  arroz: 'rice',
+  sorgo: 'sorghum',
+  soya: 'soybean',
+  cebada: 'barley',
+  avena: 'oat',
+  garbanzo: 'chickpea',
+  lenteja: 'lentil',
+  haba: 'fava bean',
+  arveja: 'pea',
+  alfalfa: 'alfalfa',
+  aguacate: 'avocado',
+  'chile / pimiento': 'pepper',
+  'plátano / banano': 'banana',
+  yuca: 'cassava',
+  'caña de azúcar': 'sugarcane',
+  algodón: 'cotton',
+  'maní / cacahuate': 'peanut',
+  'ajonjolí / sésamo': 'sesame',
+  cebolla: 'onion',
+  ajo: 'garlic',
+  zanahoria: 'carrot',
+  lechuga: 'lettuce',
+  'repollo / col': 'cabbage',
+  brócoli: 'broccoli',
+  coliflor: 'cauliflower',
+  'calabaza / ayote': 'squash',
+  pepino: 'cucumber',
+  melón: 'melon',
+  sandía: 'watermelon',
+  fresa: 'strawberry',
+  piña: 'pineapple',
+  mango: 'mango',
+  papaya: 'papaya',
+  limón: 'lemon',
+  naranja: 'orange',
+  mandarina: 'mandarin',
+  guayaba: 'guava',
+  maracuyá: 'passion fruit',
+  guanábana: 'soursop',
+  coco: 'coconut',
+  espinaca: 'spinach',
+  'remolacha / betabel': 'beet',
+  berenjena: 'eggplant',
+  espárrago: 'asparagus',
+  apio: 'celery',
+  cilantro: 'cilantro',
+  quinoa: 'quinoa',
+  amaranto: 'amaranth',
+  okra: 'okra',
+};
+
+export function getLocalizedCropName(crop: Crop, language: 'en' | 'es'): string {
+  const commonNames = crop.commonNames ?? [];
+  const spanishAlias = SPANISH_CROP_ALIASES.find((alias) =>
+    alias.scientificTargets.some(
+      (scientificName) => scientificName.toLowerCase() === crop.scientificName.toLowerCase(),
+    ),
+  )?.spanishLabel;
+
+  if (spanishAlias) {
+    const normalizedAlias = normalizeSearchText(spanishAlias);
+    const matchingSpanishName = commonNames.find(
+      (name) => normalizeSearchText(name) === normalizedAlias,
+    );
+    if (language === 'es' && matchingSpanishName) {
+      return matchingSpanishName;
+    }
+
+    if (language === 'en') {
+      const preferredEnglishName = ENGLISH_CROP_NAMES[spanishAlias];
+      const matchingEnglishName = preferredEnglishName
+        ? commonNames.find(
+            (name) => normalizeSearchText(name) === normalizeSearchText(preferredEnglishName),
+          )
+        : undefined;
+      if (matchingEnglishName) {
+        return matchingEnglishName;
+      }
+
+      const otherCommonName = commonNames.find(
+        (name) => normalizeSearchText(name) !== normalizedAlias,
+      );
+      if (otherCommonName) {
+        return otherCommonName;
+      }
+    }
+  }
+
+  return commonNames[0] || crop.scientificName;
+}
+
 /**
  * Enriches FAO EcoCrop catalog entries so Spanish common names appear first in `commonNames`.
  */
@@ -663,7 +763,7 @@ export function searchCatalogWithAliases(query: string, catalog: Crop[]): Crop[]
     ) {
       for (const sciTarget of alias.scientificTargets) {
         const match = catalog.find(
-          (c) => c.scientificName.toLowerCase() === sciTarget.toLowerCase()
+          (c) => c.scientificName.toLowerCase() === sciTarget.toLowerCase(),
         );
         addCrop(match);
       }
@@ -689,7 +789,7 @@ export function searchCatalogWithAliases(query: string, catalog: Crop[]): Crop[]
     ) {
       for (const sciTarget of alias.scientificTargets) {
         const match = catalog.find(
-          (c) => c.scientificName.toLowerCase() === sciTarget.toLowerCase()
+          (c) => c.scientificName.toLowerCase() === sciTarget.toLowerCase(),
         );
         addCrop(match);
       }
@@ -714,7 +814,7 @@ export function searchCatalogWithAliases(query: string, catalog: Crop[]): Crop[]
  */
 export function extractCropsFromPrompt(
   text: string,
-  catalog: Crop[]
+  catalog: Crop[],
 ): { crops: Crop[]; matchedTerms: string[] } {
   const normText = normalizeSearchText(text);
   if (!normText || catalog.length === 0) {
@@ -749,7 +849,7 @@ export function extractCropsFromPrompt(
     if (matchIndex >= 0) {
       for (const sciTarget of candidate.scientificTargets) {
         const found = catalog.find(
-          (c) => c.scientificName.toLowerCase() === sciTarget.toLowerCase()
+          (c) => c.scientificName.toLowerCase() === sciTarget.toLowerCase(),
         );
         if (found) {
           addCrop(found, candidate.term, matchIndex);
@@ -842,7 +942,7 @@ export function extractCropsFromPrompt(
  */
 export function extractLocationFromPrompt(
   text: string,
-  matchedCropTerms: string[] = []
+  matchedCropTerms: string[] = [],
 ): { locationQuery?: string; explicitCoordinates?: Coordinates } {
   const trimmed = text.trim();
   if (!trimmed) {
@@ -856,7 +956,12 @@ export function extractLocationFromPrompt(
   if (coordMatch) {
     const lat = Number(coordMatch[1]);
     const lon = Number(coordMatch[2]);
-    if (Number.isFinite(lat) && Number.isFinite(lon) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180) {
+    if (
+      Number.isFinite(lat) &&
+      Number.isFinite(lon) &&
+      Math.abs(lat) <= 90 &&
+      Math.abs(lon) <= 180
+    ) {
       return {
         explicitCoordinates: {
           lat: Math.round(lat * 100000) / 100000,
@@ -1046,15 +1151,13 @@ function findWholeTermIndex(normalizedHaystack: string, normalizedNeedle: string
 }
 
 function cleanLocationCandidate(raw: string, matchedCropTerms: string[]): string {
-  let cleaned = raw
-    .split(/[?¿!¡;:\n\r()]/)[0]
-    .trim();
+  let cleaned = raw.split(/[?¿!¡;:\n\r()]/)[0].trim();
 
   // Strip leading generic geographic/parcel descriptors so "mi parcela de Comayagua" or "my farm in Texas" -> "Comayagua" / "Texas"
   cleaned = cleaned
     .replace(
       /^(?:(?:mi|la|el|una|un|esta|este|nuestra|nuestro)\s+)?(?:parcela|finca|terreno|lote|huerto|campo|tierra|zona|regi[oó]n|municipio|departamento|estado|provincia|ciudad|comunidad|aldea|pueblo|lugar|ubicaci[oó]n)\s+(?:de|del|en)\s+/i,
-      ''
+      '',
     )
     .replace(
       /^(?:(?:my|the|a|an|this|that|our)\s+)?(?:farm|plot|parcel|field|land|garden|lot|area|region|zone|municipality|county|department|state|province|city|town|village|community|place|location)\s+(?:of|in|at|near)\s+/i,
@@ -1084,7 +1187,7 @@ function cleanLocationCandidate(raw: string, matchedCropTerms: string[]): string
           `(?:,|\\s)+(?:(?:con|para|de|y|o|sembrando|cultivando|semilla\\s+de|cultivo\\s+de|with|for|of|and|or|planting|growing|sowing|cultivating|seed\\s+of|crop\\s+of)\\s+)?${escaped}\\b.*$`,
           'i'
         ),
-        ''
+        '',
       )
       .trim();
   }

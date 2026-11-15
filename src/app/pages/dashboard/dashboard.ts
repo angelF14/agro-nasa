@@ -26,10 +26,12 @@ import {
   WeatherForecast,
 } from '@models/index';
 import { AgronomistAiService } from '@services/agronomist-ai.service';
+import { LanguageService } from '@services/language.service';
 import { NasaPowerService } from '@services/nasa-power.service';
 import { OpenMeteoService } from '@services/open-meteo.service';
 import { RotationEngineService } from '@services/rotation-engine.service';
 import { buildAgronomistContext } from '@utils/agronomist-context.utils';
+import { getLocalizedCropName } from '@utils/agronomist-query-parser.utils';
 import { catchError, of, Subject, switchMap, tap } from 'rxjs';
 
 type DashboardTab = 'map' | 'crops' | 'recommendations' | 'assistant';
@@ -52,6 +54,7 @@ type RecommendationView = 'recommendations' | 'forecast';
   },
 })
 export class Dashboard {
+  protected readonly i18n = inject(LanguageService);
   protected readonly agronomistAi = inject(AgronomistAiService);
   private readonly nasaPowerService = inject(NasaPowerService);
   private readonly openMeteoService = inject(OpenMeteoService);
@@ -236,7 +239,7 @@ export class Dashboard {
   }
 
   protected primaryName(crop: Crop): string {
-    return crop.commonNames[0] || crop.scientificName;
+    return getLocalizedCropName(crop, this.i18n.language());
   }
 
   protected onCoordinatesChange(coords: Coordinates): void {

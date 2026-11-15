@@ -237,7 +237,10 @@ function localizeContextTextForPrompt(text, targetLang = 'es') {
     return text;
   }
   let out = text
-    .replace(/\[Preseleccionada por mayor aptitud clim[aá]tica\]/gi, '[Preselected for highest climate suitability]')
+    .replace(
+      /\[Preseleccionada por mayor aptitud clim[aá]tica\]/gi,
+      '[Preselected for highest climate suitability]',
+    )
     .replace(/Temperatura Media \(T2M\)/gi, 'Mean Temperature (T2M)')
     .replace(/Precipitaci[oó]n Equivalente Anual/gi, 'Annualized Equivalent Precipitation')
     .replace(/Temperatura M[ií]nima \/ Riesgo de Helada/gi, 'Minimum Temperature / Frost Risk')
@@ -246,20 +249,35 @@ function localizeContextTextForPrompt(text, targetLang = 'es') {
     .replace(/Duraci[oó]n del Ciclo \(GMIN[–-]GMAX\)/gi, 'Cycle Duration (GMIN–GMAX)')
     .replace(/Sin restricci[oó]n registrada en EcoCrop/gi, 'No restriction recorded in EcoCrop')
     .replace(/presenta condiciones [oó]ptimas/gi, 'shows optimal conditions')
-    .replace(/en esta ubicaci[oó]n seg[uú]n los registros de NASA POWER/gi, 'at this location according to NASA POWER records')
+    .replace(
+      /en esta ubicaci[oó]n seg[uú]n los registros de NASA POWER/gi,
+      'at this location according to NASA POWER records',
+    )
     .replace(/es viable con reservas/gi, 'is viable with caveats')
-    .replace(/revisa los par[aá]metros en rango aceptable para ajustar riego o manejo/gi, 'review parameters in acceptable range to adjust irrigation or management')
+    .replace(
+      /revisa los par[aá]metros en rango aceptable para ajustar riego o manejo/gi,
+      'review parameters in acceptable range to adjust irrigation or management',
+    )
     .replace(/tiene baja compatibilidad/gi, 'has low compatibility')
-    .replace(/con las condiciones clim[aá]ticas\/altitudinales observadas; revisa el plan de rotaci[oó]n sugerido/gi, 'with observed climate/elevation conditions; review the suggested rotation plan')
+    .replace(
+      /con las condiciones clim[aá]ticas\/altitudinales observadas; revisa el plan de rotaci[oó]n sugerido/gi,
+      'with observed climate/elevation conditions; review the suggested rotation plan',
+    )
     .replace(/Riesgo Alto de Estr[eé]s T[eé]rmico/gi, 'High Heat Stress Risk')
     .replace(/NASA POWER registra picos de hasta/gi, 'NASA POWER records peaks up to')
-    .replace(/Prioriza variedades tolerantes al calor y cobertura vegetal/gi, 'Prioritize heat-tolerant varieties and mulch cover')
+    .replace(
+      /Prioriza variedades tolerantes al calor y cobertura vegetal/gi,
+      'Prioritize heat-tolerant varieties and mulch cover',
+    )
     .replace(/Picos T[eé]rmicos Moderados/gi, 'Moderate Heat Peaks')
     .replace(/Se observaron temperaturas m[aá]ximas de/gi, 'Maximum temperatures observed:')
     .replace(/en el per[ií]odo analizado/gi, 'in the analyzed period')
     .replace(/Baja\s*Disponibilidad H[ií]drica Anualizada/gi, 'Low Annualized Water Availability')
     .replace(/La precipitaci[oó]n anualizada es de/gi, 'Annualized rainfall is')
-    .replace(/Prioriza cultivos de baja demanda h[ií]drica y abonos verdes de cobertura/gi, 'Prioritize low-water-demand crops and green cover crops')
+    .replace(
+      /Prioriza cultivos de baja demanda h[ií]drica y abonos verdes de cobertura/gi,
+      'Prioritize low-water-demand crops and green cover crops',
+    )
     .replace(/Riesgo de Helada \/ Temperatura Letal/gi, 'Frost / Lethal Temperature Risk')
     .replace(/La m[ií]nima registrada/gi, 'Recorded minimum')
     .replace(/alcanza el umbral letal de/gi, 'reaches the lethal threshold of')
@@ -292,7 +310,7 @@ function detectSingleMessageLanguage(text) {
   if (
     /^(?:english|ingles)$/.test(norm) ||
     /\b(?:in\s+english|en\s+ingles|speak\s+(?:in\s+)?english|reply\s+(?:in\s+)?english|respond\s+(?:in\s+)?english|answer\s+(?:in\s+)?english|talk\s+(?:in\s+)?english|write\s+(?:in\s+)?english|switch\s+to\s+english|use\s+english|english\s+please|only\s+english|habla(?:me)?\s+en\s+ingles|responde(?:me)?\s+en\s+ingles|contesta(?:me)?\s+en\s+ingles|escribe(?:me)?\s+en\s+ingles|dime\s+en\s+ingles|explica(?:me)?\s+en\s+ingles|solo\s+ingles)\b/.test(
-      norm
+      norm,
     )
   ) {
     return 'en';
@@ -301,7 +319,7 @@ function detectSingleMessageLanguage(text) {
   if (
     /^(?:spanish|espanol)$/.test(norm) ||
     /\b(?:in\s+spanish|en\s+espanol|speak\s+(?:in\s+)?spanish|reply\s+(?:in\s+)?spanish|respond\s+(?:in\s+)?spanish|answer\s+(?:in\s+)?spanish|talk\s+(?:in\s+)?spanish|write\s+(?:in\s+)?spanish|switch\s+to\s+spanish|use\s+spanish|spanish\s+please|only\s+spanish|habla(?:me)?\s+en\s+espanol|responde(?:me)?\s+en\s+espanol|contesta(?:me)?\s+en\s+espanol|escribe(?:me)?\s+en\s+espanol|dime\s+en\s+espanol|explica(?:me)?\s+en\s+espanol|solo\s+espanol)\b/.test(
-      norm
+      norm,
     )
   ) {
     return 'es';
@@ -318,7 +336,7 @@ function detectSingleMessageLanguage(text) {
     esScore += 2;
   }
   const otherWordMatches = norm.match(
-    /\b(?:bonjour|bonsoir|merci|pourquoi|pouvez|francais|voudrais|aimerais|obrigado|obrigada|voce|portugues|bom\s+dia|boa\s+tarde|hallo|danke|bitte|deutsch|sprechen|warum|welche|guten\s+tag|ciao|grazie|buongiorno|italiano|vorrei)\b/g
+    /\b(?:bonjour|bonsoir|merci|pourquoi|pouvez|francais|voudrais|aimerais|obrigado|obrigada|voce|portugues|bom\s+dia|boa\s+tarde|hallo|danke|bitte|deutsch|sprechen|warum|welche|guten\s+tag|ciao|grazie|buongiorno|italiano|vorrei)\b/g,
   );
   if (otherWordMatches) {
     otherScore += otherWordMatches.length * 2;
@@ -328,7 +346,7 @@ function detectSingleMessageLanguage(text) {
     !otherWordMatches &&
     (/(?:^|[\s¿¡])[a-záéíóúü]*[áéíóúü][a-záéíóúü]*/.test(trimmed) ||
       /^(?:Qué|Cómo|Cuál|Cuáles|Cuándo|Dónde|Quién|Cuánto|Cuánta|Cuántos|Cuántas|Por\s+qué|Sí|Más|Está|Están|Podría|Podrías|Debería|Háblame|Respóndeme|Contéstame|Explícame|Recomiéndame|Muéstrame|Evalúa|Analiza)\b/.test(
-        trimmed
+        trimmed,
       ))
   ) {
     esScore += 2;
@@ -336,35 +354,35 @@ function detectSingleMessageLanguage(text) {
 
   if (
     /\b(?:i'm|i've|i'd|i'll|don't|doesn't|didn't|can't|won't|wouldn't|shouldn't|isn't|aren't|wasn't|weren't|what's|how's|where's|when's|why's|it's|that's|there's|here's|let's|you're|we're|they're)\b/i.test(
-      trimmed
+      trimmed,
     )
   ) {
     enScore += 3;
   }
 
   const esPhrases = norm.match(
-    /\b(?:es\s+viable|son\s+viables|sea\s+viable|no\s+se|no\s+tengo|no\s+puedo|no\s+hay|no\s+me|si\s+por\s+favor|por\s+favor|de\s+acuerdo|esta\s+bien|que\s+tal|como\s+esta|como\s+le\s+va|se\s+da|se\s+puede|me\s+conviene|me\s+sirve|me\s+recomiendas|me\s+dices|me\s+ayudas|voy\s+a|vamos\s+a|a\s+sembrar|a\s+plantar|a\s+cultivar|plan\s+de|control\s+de|balance\s+hidrico|tierra\s+seca|hojas\s+amarillas)\b/g
+    /\b(?:es\s+viable|son\s+viables|sea\s+viable|no\s+se|no\s+tengo|no\s+puedo|no\s+hay|no\s+me|si\s+por\s+favor|por\s+favor|de\s+acuerdo|esta\s+bien|que\s+tal|como\s+esta|como\s+le\s+va|se\s+da|se\s+puede|me\s+conviene|me\s+sirve|me\s+recomiendas|me\s+dices|me\s+ayudas|voy\s+a|vamos\s+a|a\s+sembrar|a\s+plantar|a\s+cultivar|plan\s+de|control\s+de|balance\s+hidrico|tierra\s+seca|hojas\s+amarillas)\b/g,
   );
   if (esPhrases) {
     esScore += esPhrases.length * 2;
   }
 
   const enPhrases = norm.match(
-    /\b(?:is\s+viable|are\s+viable|be\s+viable|viable\s+in|viable\s+for|tell\s+me|give\s+me|show\s+me|help\s+me|let\s+me|a\s+crop|a\s+seed|a\s+farm|a\s+plot|a\s+field|a\s+rotation|a\s+cycle|3\s+cycle|three\s+cycle|more\s+details|explain\s+more|what\s+about|how\s+about|and\s+in|or\s+in)\b/g
+    /\b(?:is\s+viable|are\s+viable|be\s+viable|viable\s+in|viable\s+for|tell\s+me|give\s+me|show\s+me|help\s+me|let\s+me|a\s+crop|a\s+seed|a\s+farm|a\s+plot|a\s+field|a\s+rotation|a\s+cycle|3\s+cycle|three\s+cycle|more\s+details|explain\s+more|what\s+about|how\s+about|and\s+in|or\s+in)\b/g,
   );
   if (enPhrases) {
     enScore += enPhrases.length * 2;
   }
 
   const esMatches = norm.match(
-    /\b(?:hola|buenos|buenas|dias|tardes|noches|gracias|favor|porfavor|saludos|quiero|quieres|quiere|queremos|quisiera|puedo|puedes|puede|podemos|podria|podrias|debo|deberia|tengo|tienes|tiene|tenemos|tienen|necesito|necesita|necesitan|requiere|requieren|hago|hace|hacer|pasa|sirve|sirven|conviene|crece|crecen|sembrar|siembro|siembra|cultivar|cultivo|cultivos|plantar|planto|planta|plantas|plantacion|cosechar|cosecha|regar|riego|abonar|abono|fertilizar|fertilizante|fertilizantes|recomiendas|recomienda|recomiendame|recomendar|recomendacion|ayuda|ayudame|ayudar|habla|hablas|hablame|responde|respondes|respondeme|contesta|contestame|dime|dices|dice|explica|explicame|analiza|analizar|evalua|evaluar|compara|comparar|revisa|muestra|muestrame|dame|da|dan|parcela|finca|terreno|lote|huerto|campo|tierra|suelo|suelos|agua|lluvia|lluvias|sequia|clima|temperatura|calor|frio|helada|humedad|viento|sombra|semilla|semillas|hoja|hojas|tallo|tallos|raiz|raices|fruto|frutos|plaga|plagas|enfermedad|enfermedades|hongo|hongos|insecto|insectos|mancha|manchas|amarilla|amarillas|amarillo|seca|seco|compactado|arenoso|salino|sano|rotacion|ciclo|ciclos|etapa|epoca|temporada|invierno|verano|primavera|otono|rendimiento|produccion|sintoma|sintomas|deficiencia|nitrogeno|fosforo|potasio|hidrico|pronostico|datos|ubicacion|lugar|ciudad|pais|zona|norte|sur|oeste|idioma|lenguaje|espanol|como|donde|cuando|cual|cuales|quien|cuanto|cuanta|cuantos|cuantas|porque|para|con|sin|sobre|entre|hacia|hasta|desde|segun|durante|contra|pero|aunque|tambien|tampoco|solo|aqui|ahi|alli|aca|alla|hoy|ayer|manana|ahora|antes|despues|siempre|nunca|bien|mal|mejor|mejores|peor|mas|menos|muy|mucho|mucha|muchos|muchas|poco|poca|todo|toda|todos|todas|algo|nada|otro|otra|otros|otras|mismo|misma|cada|el|la|los|las|un|una|unos|unas|al|del|de|en|por|que|este|esta|estos|estas|ese|esa|mi|mis|tu|tus|su|sus|nuestro|nuestra|yo|usted|ustedes|nosotros|ellos|se|te|le|les|lo|nos|si|y|o|ni|es|son|soy|eres|somos|era|fue|ser|estan|estoy|estamos|estar|hay|maiz|elote|choclo|frijol|frijoles|poroto|porotos|habichuela|caraota|alubia|papa|papas|patata|patatas|tomate|tomates|jitomate|cafe|cafeto|trigo|arroz|sorgo|maicillo|soya|soja|cebada|avena|garbanzo|garbanzos|lenteja|lentejas|haba|habas|arveja|arvejas|chicharo|guisante|aguacate|aguacates|palta|chile|chiles|pimiento|pimientos|aji|platano|platanos|banano|bananos|guineo|yuca|mandioca|cana|azucar|algodon|mani|cacahuate|ajonjoli|sesamo|cebolla|cebollas|ajo|ajos|zanahoria|zanahorias|lechuga|lechugas|repollo|brocoli|coliflor|calabaza|zapallo|ayote|pepino|pepinos|sandia|sandias|fresa|fresas|frutilla|pina|limon|limones|naranja|naranjas|mandarina|guayaba|maracuya|guanabana|coco|espinaca|espinacas|remolacha|betabel|acelga|berenjena|esparrago|apio|cilantro|quinua|amaranto)\b/g
+    /\b(?:hola|buenos|buenas|dias|tardes|noches|gracias|favor|porfavor|saludos|quiero|quieres|quiere|queremos|quisiera|puedo|puedes|puede|podemos|podria|podrias|debo|deberia|tengo|tienes|tiene|tenemos|tienen|necesito|necesita|necesitan|requiere|requieren|hago|hace|hacer|pasa|sirve|sirven|conviene|crece|crecen|sembrar|siembro|siembra|cultivar|cultivo|cultivos|plantar|planto|planta|plantas|plantacion|cosechar|cosecha|regar|riego|abonar|abono|fertilizar|fertilizante|fertilizantes|recomiendas|recomienda|recomiendame|recomendar|recomendacion|ayuda|ayudame|ayudar|habla|hablas|hablame|responde|respondes|respondeme|contesta|contestame|dime|dices|dice|explica|explicame|analiza|analizar|evalua|evaluar|compara|comparar|revisa|muestra|muestrame|dame|da|dan|parcela|finca|terreno|lote|huerto|campo|tierra|suelo|suelos|agua|lluvia|lluvias|sequia|clima|temperatura|calor|frio|helada|humedad|viento|sombra|semilla|semillas|hoja|hojas|tallo|tallos|raiz|raices|fruto|frutos|plaga|plagas|enfermedad|enfermedades|hongo|hongos|insecto|insectos|mancha|manchas|amarilla|amarillas|amarillo|seca|seco|compactado|arenoso|salino|sano|rotacion|ciclo|ciclos|etapa|epoca|temporada|invierno|verano|primavera|otono|rendimiento|produccion|sintoma|sintomas|deficiencia|nitrogeno|fosforo|potasio|hidrico|pronostico|datos|ubicacion|lugar|ciudad|pais|zona|norte|sur|oeste|idioma|lenguaje|espanol|como|donde|cuando|cual|cuales|quien|cuanto|cuanta|cuantos|cuantas|porque|para|con|sin|sobre|entre|hacia|hasta|desde|segun|durante|contra|pero|aunque|tambien|tampoco|solo|aqui|ahi|alli|aca|alla|hoy|ayer|manana|ahora|antes|despues|siempre|nunca|bien|mal|mejor|mejores|peor|mas|menos|muy|mucho|mucha|muchos|muchas|poco|poca|todo|toda|todos|todas|algo|nada|otro|otra|otros|otras|mismo|misma|cada|el|la|los|las|un|una|unos|unas|al|del|de|en|por|que|este|esta|estos|estas|ese|esa|mi|mis|tu|tus|su|sus|nuestro|nuestra|yo|usted|ustedes|nosotros|ellos|se|te|le|les|lo|nos|si|y|o|ni|es|son|soy|eres|somos|era|fue|ser|estan|estoy|estamos|estar|hay|maiz|elote|choclo|frijol|frijoles|poroto|porotos|habichuela|caraota|alubia|papa|papas|patata|patatas|tomate|tomates|jitomate|cafe|cafeto|trigo|arroz|sorgo|maicillo|soya|soja|cebada|avena|garbanzo|garbanzos|lenteja|lentejas|haba|habas|arveja|arvejas|chicharo|guisante|aguacate|aguacates|palta|chile|chiles|pimiento|pimientos|aji|platano|platanos|banano|bananos|guineo|yuca|mandioca|cana|azucar|algodon|mani|cacahuate|ajonjoli|sesamo|cebolla|cebollas|ajo|ajos|zanahoria|zanahorias|lechuga|lechugas|repollo|brocoli|coliflor|calabaza|zapallo|ayote|pepino|pepinos|sandia|sandias|fresa|fresas|frutilla|pina|limon|limones|naranja|naranjas|mandarina|guayaba|maracuya|guanabana|coco|espinaca|espinacas|remolacha|betabel|acelga|berenjena|esparrago|apio|cilantro|quinua|amaranto)\b/g,
   );
   if (esMatches) {
     esScore += esMatches.length;
   }
 
   const enMatches = norm.match(
-    /\b(?:hello|hi|hey|greetings|morning|afternoon|evening|please|thanks|thank|yes|yeah|yep|nope|sure|great|nice|well|good|bad|better|best|worse|worst|suitable|healthy|compacted|sandy|saline|hot|cold|warm|cool|dry|wet|humid|sunny|cloudy|windy|high|low|long|short|small|large|big|new|old|same|different|other|another|more|most|less|least|much|many|some|any|all|both|each|every|such|very|too|just|only|also|even|still|already|always|never|now|then|here|there|where|when|why|how|what|which|who|whom|whose|up|down|out|off|the|an|in|on|at|to|of|for|with|from|by|about|into|onto|between|through|during|before|after|above|below|under|over|near|around|without|within|and|or|but|if|because|so|than|i|you|we|they|he|she|it|its|us|them|my|your|our|their|his|her|this|that|these|those|is|are|was|were|be|been|being|am|do|does|did|doing|done|have|has|had|having|can|could|will|would|shall|should|may|might|must|im|ive|id|ill|dont|doesnt|didnt|cant|wont|wouldnt|shouldnt|isnt|arent|wasnt|werent|whats|hows|wheres|whens|whys|lets|youre|theyre|want|wants|wanted|like|need|needs|needed|live|lives|living|help|tell|explain|describe|analyze|analyse|evaluate|compare|check|show|give|speak|talk|reply|respond|answer|write|read|recommend|recommends|recommended|recommendation|recommendations|suggest|suggestion|suggestions|advice|advise|guide|details|detail|summary|schedule|calendar|work|works|working|survive|handle|manage|management|improve|protect|prevent|prevention|treatment|plant|plants|planting|planted|grow|grows|growing|grown|sow|sowing|cultivate|cultivating|harvest|harvesting|farm|farms|farming|farmer|plot|plots|field|fields|parcel|land|garden|yard|soil|soils|water|watering|irrigation|irrigating|drip|rain|rains|rainfall|rainy|drought|frost|freeze|heat|heatwave|temperature|temperatures|weather|climate|forecast|humidity|moisture|sunlight|shade|drainage|seed|seeds|crop|crops|rotation|cycle|cycles|sequence|season|spring|summer|autumn|fall|winter|month|months|week|weeks|day|days|year|years|yield|yields|leaf|leaves|stem|stems|root|roots|fruit|fruits|flower|flowers|pest|pests|disease|diseases|fungus|fungi|blight|mildew|rust|wilt|rot|spot|spots|yellow|yellowing|brown|wilting|symptom|symptoms|deficiency|nitrogen|phosphorus|potassium|fertilizer|fertilizers|compost|manure|mulch|amendment|language|english|spanish|corn|maize|sweetcorn|bean|beans|soybean|soybeans|soy|potato|potatoes|tomato|tomatoes|coffee|wheat|rice|sorghum|barley|oat|oats|chickpea|chickpeas|lentil|lentils|pea|peas|lucerne|avocado|avocados|chili|pepper|peppers|plantain|plantains|cassava|manioc|tapioca|sugarcane|cotton|peanut|peanuts|groundnut|groundnuts|sesame|onion|onions|garlic|carrot|carrots|lettuce|cabbage|cabbages|broccoli|cauliflower|pumpkin|pumpkins|squash|zucchini|cucumber|cucumbers|cantaloupe|watermelon|watermelons|strawberry|strawberries|pineapple|pineapples|mangoes|lemon|lemons|lime|limes|orange|oranges|mandarin|mandarins|tangerine|tangerines|guava|guavas|passionfruit|soursop|coconut|coconuts|spinach|beet|beets|beetroot|chard|eggplant|eggplants|aubergine|asparagus|celery|coriander|amaranth)\b/g
+    /\b(?:hello|hi|hey|greetings|morning|afternoon|evening|please|thanks|thank|yes|yeah|yep|nope|sure|great|nice|well|good|bad|better|best|worse|worst|suitable|healthy|compacted|sandy|saline|hot|cold|warm|cool|dry|wet|humid|sunny|cloudy|windy|high|low|long|short|small|large|big|new|old|same|different|other|another|more|most|less|least|much|many|some|any|all|both|each|every|such|very|too|just|only|also|even|still|already|always|never|now|then|here|there|where|when|why|how|what|which|who|whom|whose|up|down|out|off|the|an|in|on|at|to|of|for|with|from|by|about|into|onto|between|through|during|before|after|above|below|under|over|near|around|without|within|and|or|but|if|because|so|than|i|you|we|they|he|she|it|its|us|them|my|your|our|their|his|her|this|that|these|those|is|are|was|were|be|been|being|am|do|does|did|doing|done|have|has|had|having|can|could|will|would|shall|should|may|might|must|im|ive|id|ill|dont|doesnt|didnt|cant|wont|wouldnt|shouldnt|isnt|arent|wasnt|werent|whats|hows|wheres|whens|whys|lets|youre|theyre|want|wants|wanted|like|need|needs|needed|live|lives|living|help|tell|explain|describe|analyze|analyse|evaluate|compare|check|show|give|speak|talk|reply|respond|answer|write|read|recommend|recommends|recommended|recommendation|recommendations|suggest|suggestion|suggestions|advice|advise|guide|details|detail|summary|schedule|calendar|work|works|working|survive|handle|manage|management|improve|protect|prevent|prevention|treatment|plant|plants|planting|planted|grow|grows|growing|grown|sow|sowing|cultivate|cultivating|harvest|harvesting|farm|farms|farming|farmer|plot|plots|field|fields|parcel|land|garden|yard|soil|soils|water|watering|irrigation|irrigating|drip|rain|rains|rainfall|rainy|drought|frost|freeze|heat|heatwave|temperature|temperatures|weather|climate|forecast|humidity|moisture|sunlight|shade|drainage|seed|seeds|crop|crops|rotation|cycle|cycles|sequence|season|spring|summer|autumn|fall|winter|month|months|week|weeks|day|days|year|years|yield|yields|leaf|leaves|stem|stems|root|roots|fruit|fruits|flower|flowers|pest|pests|disease|diseases|fungus|fungi|blight|mildew|rust|wilt|rot|spot|spots|yellow|yellowing|brown|wilting|symptom|symptoms|deficiency|nitrogen|phosphorus|potassium|fertilizer|fertilizers|compost|manure|mulch|amendment|language|english|spanish|corn|maize|sweetcorn|bean|beans|soybean|soybeans|soy|potato|potatoes|tomato|tomatoes|coffee|wheat|rice|sorghum|barley|oat|oats|chickpea|chickpeas|lentil|lentils|pea|peas|lucerne|avocado|avocados|chili|pepper|peppers|plantain|plantains|cassava|manioc|tapioca|sugarcane|cotton|peanut|peanuts|groundnut|groundnuts|sesame|onion|onions|garlic|carrot|carrots|lettuce|cabbage|cabbages|broccoli|cauliflower|pumpkin|pumpkins|squash|zucchini|cucumber|cucumbers|cantaloupe|watermelon|watermelons|strawberry|strawberries|pineapple|pineapples|mangoes|lemon|lemons|lime|limes|orange|oranges|mandarin|mandarins|tangerine|tangerines|guava|guavas|passionfruit|soursop|coconut|coconuts|spinach|beet|beets|beetroot|chard|eggplant|eggplants|aubergine|asparagus|celery|coriander|amaranth)\b/g,
   );
   if (enMatches) {
     enScore += enMatches.length;
@@ -372,7 +390,7 @@ function detectSingleMessageLanguage(text) {
 
   if (
     /[\u0370-\u03FF\u0400-\u04FF\u0590-\u05FF\u0600-\u06FF\u0900-\u097F\u0E00-\u0E7F\u3040-\u30FF\u4E00-\u9FFF\uAC00-\uD7AF]/.test(
-      trimmed
+      trimmed,
     )
   ) {
     otherScore += 3;
@@ -525,7 +543,7 @@ export function buildAgronomistSystemPrompt(context, targetLang = 'es') {
     '1. Identidad: eres AgroNasa Superinteligencia, una Superinteligencia agronómica. Nunca digas que eres una IA ni una inteligencia artificial; si el usuario pregunta qué o quién eres, preséntate siempre como una Superinteligencia agronómica.',
     '2. IDIOMA OBLIGATORIO DE SALIDA (ESPAÑOL): Redacta el 100% de tu respuesta en español claro, empático y práctico, sin mezclar frases en otros idiomas salvo nombres científicos o términos técnicos universales.',
     '3. Fundamenta tus recomendaciones en los datos reales del contexto de la parcela cuando existan, citando valores exactos (temperatura, lluvia anualizada, ET0, balance hídrico, altitud, puntaje EcoCrop).',
-    '4. Si el sistema consultó automáticamente los servicios de AgroNasa a partir del mensaje del usuario (lugar geocodificado o semilla buscada en FAO EcoCrop), confirma al inicio que ya cargaste esos datos en vivo y úsalos para dar un veredicto agronómico completo. Si se evaluaron varias semillas comparadas o se listan las mejores semillas aptas para la región, compáralas claramente con sus puntajes EcoCrop.',
+    '4. Si el sistema consultó automáticamente los servicios de AgroHelper a partir del mensaje del usuario (lugar geocodificado o semilla buscada en FAO EcoCrop), confirma al inicio que ya cargaste esos datos en vivo y úsalos para dar un veredicto agronómico completo. Si se evaluaron varias semillas comparadas o se listan las mejores semillas aptas para la región, compáralas claramente con sus puntajes EcoCrop.',
     '5. Nunca inventes métricas de laboratorio, pH medido o datos satelitales que no estén en el contexto. Si falta información (por ejemplo, si el usuario no ha fijado parcela en el mapa o no ha elegido cultivo), indícalo claramente y guía al usuario o haz preguntas cortas útiles.',
     '6. Cuando el usuario adjunte una imagen (hoja, planta, plaga, fruto o suelo), realiza una observación visual agronómica cuidadosa: describe síntomas o rasgos visibles, plantea 2 o 3 hipótesis ordenadas por probabilidad aclarando que no reemplazan análisis de laboratorio, y entrega acciones concretas de manejo integrado considerando el clima actual de la parcela.',
     '7. Organiza tus respuestas con encabezados cortos, listas con viñetas y negritas en los puntos accionables para facilitar la lectura en campo.',
@@ -559,7 +577,9 @@ export function formatParcelContextForPrompt(context, targetLang = 'es') {
       resolvedParts.push(copy.resolvedCrop(localizeContextTextForPrompt(ar.cropResolved, langKey)));
     }
     if (ar.comparedCrops?.length > 0) {
-      const localizedCompared = ar.comparedCrops.map((c) => localizeContextTextForPrompt(c, langKey));
+      const localizedCompared = ar.comparedCrops.map((c) =>
+        localizeContextTextForPrompt(c, langKey),
+      );
       resolvedParts.push(copy.resolvedCompared(localizedCompared.join(', ')));
     }
     if (resolvedParts.length > 0) {
@@ -575,7 +595,10 @@ export function formatParcelContextForPrompt(context, targetLang = 'es') {
   }
 
   const climate = context.historicalClimate;
-  if (climate && (climate.meanTempC !== undefined || climate.annualizedPrecipitationMm !== undefined)) {
+  if (
+    climate &&
+    (climate.meanTempC !== undefined || climate.annualizedPrecipitationMm !== undefined)
+  ) {
     const parts = [];
     if (climate.meanTempC !== undefined) parts.push(copy.meanTemp(climate.meanTempC));
     if (climate.minTempC !== undefined && climate.maxTempC !== undefined) {
@@ -629,7 +652,7 @@ export function formatParcelContextForPrompt(context, targetLang = 'es') {
       copy.evaluationLine({
         ...ev,
         summary: localizeContextTextForPrompt(ev.summary, langKey),
-      })
+      }),
     );
     if (ev.checks?.length > 0) {
       const checkDetails = ev.checks
@@ -638,8 +661,8 @@ export function formatParcelContextForPrompt(context, targetLang = 'es') {
             localizeContextTextForPrompt(ck.label, langKey),
             localizeContextTextForPrompt(ck.observed, langKey),
             localizeContextTextForPrompt(ck.expected, langKey),
-            ck.status
-          )
+            ck.status,
+          ),
         )
         .join('; ');
       lines.push(copy.evaluationDetails(checkDetails));
@@ -655,7 +678,7 @@ export function formatParcelContextForPrompt(context, targetLang = 'es') {
           localCropName,
           cy.scientificName,
           cy.family ?? localCropName,
-          cy.compatibilityScore
+          cy.compatibilityScore,
         );
       })
       .join(' | ');
@@ -664,7 +687,7 @@ export function formatParcelContextForPrompt(context, targetLang = 'es') {
       const alertsText = context.rotationPlan.alerts
         .map(
           (a) =>
-            `[${a.severity}] ${localizeContextTextForPrompt(a.title, langKey)}: ${localizeContextTextForPrompt(a.message, langKey)}`
+            `[${a.severity}] ${localizeContextTextForPrompt(a.title, langKey)}: ${localizeContextTextForPrompt(a.message, langKey)}`,
         )
         .join(' | ');
       lines.push(copy.alertsLine(alertsText));
@@ -680,7 +703,7 @@ export function formatParcelContextForPrompt(context, targetLang = 'es') {
           summary: localizeContextTextForPrompt(ce.summary, langKey),
           tempOptRangeC: localizeContextTextForPrompt(ce.tempOptRangeC, langKey),
           rainOptRangeMm: localizeContextTextForPrompt(ce.rainOptRangeMm, langKey),
-        })
+        }),
       )
       .join(' || ');
     lines.push(copy.comparedLine(comparedText));
@@ -694,7 +717,7 @@ export function formatParcelContextForPrompt(context, targetLang = 'es') {
           commonName: localizeCropNameForPrompt(sc.commonName, langKey),
           tempOptRangeC: localizeContextTextForPrompt(sc.tempOptRangeC, langKey),
           rainOptRangeMm: localizeContextTextForPrompt(sc.rainOptRangeMm, langKey),
-        })
+        }),
       )
       .join(' | ');
     lines.push(copy.topSuitableLine(topText));
@@ -703,15 +726,11 @@ export function formatParcelContextForPrompt(context, targetLang = 'es') {
   const local = context.localContext;
   if (local) {
     if (local.soilObservations?.length > 0) {
-      const obsLabels = local.soilObservations.map(
-        (o) => SOIL_OBSERVATION_LABELS[langKey][o] ?? o
-      );
+      const obsLabels = local.soilObservations.map((o) => SOIL_OBSERVATION_LABELS[langKey][o] ?? o);
       lines.push(copy.soilLine(obsLabels.join(', ')));
     }
     if (local.priorities?.length > 0) {
-      const prioLabels = local.priorities.map(
-        (p) => FARMER_PRIORITY_LABELS[langKey][p] ?? p
-      );
+      const prioLabels = local.priorities.map((p) => FARMER_PRIORITY_LABELS[langKey][p] ?? p);
       lines.push(copy.prioritiesLine(prioLabels.join(', ')));
     }
     if (local.customNotes?.trim()) {
@@ -747,13 +766,13 @@ export function buildGeminiContents(rawMessages, targetLang = 'es') {
       if (!ALLOWED_IMAGE_MIME_TYPES.has(msg.image.mimeType)) {
         throw new AgronomistHttpError(
           400,
-          'Formato de imagen no compatible. Usa JPEG, PNG o WebP.'
+          'Formato de imagen no compatible. Usa JPEG, PNG o WebP.',
         );
       }
       if (!msg.image.dataBase64 || msg.image.dataBase64.length > MAX_BASE64_LENGTH) {
         throw new AgronomistHttpError(
           413,
-          'La imagen adjunta excede el tamaño máximo permitido (4 MB).'
+          'La imagen adjunta excede el tamaño máximo permitido (4 MB).',
         );
       }
 
@@ -807,7 +826,7 @@ export function buildGeminiContents(rawMessages, targetLang = 'es') {
   if (contents.length === 0 || !contents.some((c) => c.role === 'user')) {
     throw new AgronomistHttpError(
       400,
-      'Escribe una consulta o adjunta una imagen para conversar con la Superinteligencia Agrónoma.'
+      'Escribe una consulta o adjunta una imagen para conversar con la Superinteligencia Agrónoma.',
     );
   }
 
@@ -843,7 +862,7 @@ export async function generateAgronomistReply(payload) {
   if (!effectiveKey) {
     throw new AgronomistHttpError(
       400,
-      'El servicio de Superinteligencia Agrónoma no tiene configurada la variable GEMINI_API_KEY en el servidor.'
+      'El servicio de Superinteligencia Agrónoma no tiene configurada la variable GEMINI_API_KEY en el servidor.',
     );
   }
 
@@ -886,7 +905,7 @@ export async function generateAgronomistReply(payload) {
 
     if (shouldRetryWithFallbackModel(error, primaryModel)) {
       const fallbackCandidates = [FALLBACK_FREE_TIER_MODEL, 'gemini-3.1-flash-lite'].filter(
-        (m, idx, arr) => m !== primaryModel && arr.indexOf(m) === idx
+        (m, idx, arr) => m !== primaryModel && arr.indexOf(m) === idx,
       );
       let lastFallbackError = error;
       for (const fallbackModel of fallbackCandidates) {
@@ -979,7 +998,7 @@ function mapGeminiError(error, lang = 'es') {
       401,
       isEn
         ? 'The Google Gemini API key is invalid or revoked. Please check your key in Google AI Studio (aistudio.google.com/apikey).'
-        : 'La API key de Google Gemini no es válida o fue revocada. Verifica tu clave gratuita en Google AI Studio (aistudio.google.com/apikey).'
+        : 'La API key de Google Gemini no es válida o fue revocada. Verifica tu clave gratuita en Google AI Studio (aistudio.google.com/apikey).',
     );
   }
 
@@ -988,7 +1007,7 @@ function mapGeminiError(error, lang = 'es') {
       429,
       isEn
         ? 'The Google Gemini free-tier request limit (RPM/RPD) was temporarily reached. Please wait a few seconds and try again.'
-        : 'Se alcanzó temporalmente el límite de solicitudes de la capa gratuita de Google Gemini (RPM/RPD). Espera unos segundos e inténtalo de nuevo.'
+        : 'Se alcanzó temporalmente el límite de solicitudes de la capa gratuita de Google Gemini (RPM/RPD). Espera unos segundos e inténtalo de nuevo.',
     );
   }
 
@@ -997,7 +1016,7 @@ function mapGeminiError(error, lang = 'es') {
       400,
       isEn
         ? 'The request could not be processed. Please check the image format or shorten your message.'
-        : 'La solicitud no pudo ser procesada por Gemini. Revisa el formato de la imagen o reduce el texto enviado.'
+        : 'La solicitud no pudo ser procesada por Gemini. Revisa el formato de la imagen o reduce el texto enviado.',
     );
   }
 
@@ -1006,7 +1025,7 @@ function mapGeminiError(error, lang = 'es') {
       503,
       isEn
         ? 'The Agronomic Superintelligence service is temporarily busy. Please try again in a few seconds.'
-        : 'El servicio de Google Gemini está temporalmente saturado. Intenta nuevamente en unos segundos.'
+        : 'El servicio de Google Gemini está temporalmente saturado. Intenta nuevamente en unos segundos.',
     );
   }
 
@@ -1014,6 +1033,6 @@ function mapGeminiError(error, lang = 'es') {
     502,
     isEn
       ? 'Could not connect to the Agronomic Superintelligence right now. Please check your connection and try again.'
-      : 'No se pudo conectar con la Superinteligencia Agrónoma en este momento. Verifica tu conexión e inténtalo nuevamente.'
+      : 'No se pudo conectar con la Superinteligencia Agrónoma en este momento. Verifica tu conexión e inténtalo nuevamente.',
   );
 }

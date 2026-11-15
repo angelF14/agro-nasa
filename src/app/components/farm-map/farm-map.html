@@ -1,7 +1,7 @@
 <section class="farm-map-card" aria-labelledby="farm-map-title">
   <!-- Contenedor de Leaflet -->
   <div class="map-pane">
-    <div #mapContainer class="leaflet-map" aria-label="Mapa interactivo de selección de parcela"></div>
+    <div #mapContainer class="leaflet-map" [attr.aria-label]="i18n.t('Mapa interactivo de selección de parcela')"></div>
   </div>
 
   <aside class="side-pane">
@@ -12,13 +12,13 @@
       </svg>
     </span>
     <header>
-      <h3 id="farm-map-title" class="side-pane__title">Selección de Región o Parcela</h3>
-      <p class="side-pane__text">Busca un país, estado o ciudad, o haz clic directamente sobre el terreno en el mapa.</p>
+      <h3 id="farm-map-title" class="side-pane__title">{{ i18n.t('Selección de Región o Parcela') }}</h3>
+      <p class="side-pane__text">{{ i18n.t('Busca un país, estado o ciudad, o haz clic directamente sobre el terreno en el mapa.') }}</p>
     </header>
 
     <!-- Barra de búsqueda de País / Ciudad / Región -->
     <form class="search-bar" (ngSubmit)="onSearchSubmit()">
-      <label for="farm-search-input" class="search-bar__label">Buscar ubicación</label>
+      <label for="farm-search-input" class="search-bar__label">{{ i18n.t('Buscar ubicación') }}</label>
       <div class="search-input-wrap">
         <svg class="search-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <circle cx="11" cy="11" r="8" />
@@ -31,7 +31,7 @@
           name="searchQuery"
           [ngModel]="searchQuery()"
           (ngModelChange)="searchQuery.set($event)"
-          placeholder="Ej. Sinaloa, México, Iowa, Bogotá..."
+          [placeholder]="i18n.t('Ej. Sinaloa, México, Iowa, Bogotá...')"
           autocomplete="off"
         />
       </div>
@@ -40,25 +40,25 @@
           @if (isSearching()) {
             <span class="spinner" aria-hidden="true"></span>
           }
-          {{ isSearching() ? 'Buscando...' : 'Buscar' }}
+          {{ isSearching() ? i18n.t('Buscando...') : i18n.t('Buscar') }}
         </button>
-        <button type="button" class="agro-btn agro-btn--secondary" (click)="locateUser()" title="Usar mi ubicación actual">
+        <button type="button" class="agro-btn agro-btn--secondary" (click)="locateUser()" [title]="i18n.t('Usar mi ubicación actual')">
           <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <circle cx="12" cy="12" r="3" />
             <path stroke-linecap="round" d="M12 2v3m0 14v3M2 12h3m14 0h3" />
             <circle cx="12" cy="12" r="7" />
           </svg>
-          Mi ubicación
+          {{ i18n.t('Mi ubicación') }}
         </button>
       </div>
     </form>
 
-    @if (searchError()) {
-      <p class="agro-alert-error" role="alert">{{ searchError() }}</p>
+    @if (searchError(); as error) {
+      <p class="agro-alert-error" role="alert">{{ i18n.t(error) }}</p>
     }
 
     @if (searchResults().length > 1) {
-      <ul class="search-results" aria-label="Resultados de ubicación encontrados">
+      <ul class="search-results" [attr.aria-label]="i18n.t('Resultados de ubicación encontrados')">
         @for (item of visibleResults(); track item.place_id) {
           <li>
             <button type="button" (click)="selectSearchResult(item, true)">
@@ -72,26 +72,26 @@
         }
       </ul>
       @if (resultsTotalPages() > 1) {
-        <nav class="results-pagination" aria-label="Paginación de resultados de ubicación">
-          <button type="button" (click)="goToResultsPage(resultsPage() - 1)" [disabled]="resultsPage() === 1" aria-label="Página anterior">‹</button>
+        <nav class="results-pagination" [attr.aria-label]="i18n.t('Paginación de resultados de ubicación')">
+          <button type="button" (click)="goToResultsPage(resultsPage() - 1)" [disabled]="resultsPage() === 1" [attr.aria-label]="i18n.t('Página anterior')">‹</button>
           <span class="num-mono" aria-live="polite">{{ resultsPage() }} / {{ resultsTotalPages() }}</span>
-          <button type="button" (click)="goToResultsPage(resultsPage() + 1)" [disabled]="resultsPage() === resultsTotalPages()" aria-label="Página siguiente">›</button>
+          <button type="button" (click)="goToResultsPage(resultsPage() + 1)" [disabled]="resultsPage() === resultsTotalPages()" [attr.aria-label]="i18n.t('Página siguiente')">›</button>
         </nav>
       }
     }
 
     <!-- Resumen de coordenadas retornadas -->
     <footer class="coords-ticket" [class.coords-ticket--set]="!!selectedCoords()">
-      <span class="coords-ticket__label">Ubicación</span>
-      <span class="coords-ticket__name">{{ selectedLocationName() }}</span>
+      <span class="coords-ticket__label">{{ i18n.t('Ubicación') }}</span>
+      <span class="coords-ticket__name">{{ selectedLocationName() === 'Haz clic en el mapa o busca un país, región o ciudad' ? i18n.t('Haz clic en el mapa o busca un país, región o ciudad') : selectedLocationName() }}</span>
 
       @if (selectedCoords(); as coords) {
         <div class="coords-values num-mono">
-          <span><small>Lat</small> {{ coords.lat }}</span>
-          <span><small>Lon</small> {{ coords.lon }}</span>
+          <span><small>{{ i18n.t('Lat') }}</small> {{ coords.lat }}</span>
+          <span><small>{{ i18n.t('Lon') }}</small> {{ coords.lon }}</span>
         </div>
       } @else {
-        <div class="coords-values muted">Sin coordenadas seleccionadas aún</div>
+        <div class="coords-values muted">{{ i18n.t('Sin coordenadas seleccionadas aún') }}</div>
       }
     </footer>
   </aside>

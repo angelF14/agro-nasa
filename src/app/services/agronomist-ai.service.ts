@@ -43,7 +43,7 @@ const WELCOME_MESSAGE: AgronomistMessage = {
   role: 'model',
   createdAt: new Date().toISOString(),
   text: [
-    'Hola, soy **AgroNasa Superinteligencia**, tu superinteligencia agronómica conectada en vivo con **NASA POWER**, **Open-Meteo** y **FAO EcoCrop**.',
+    'Hola, soy **AgroHelper Superinteligencia**, tu superinteligencia agronómica conectada en vivo con **NASA POWER**, **Open-Meteo** y **FAO EcoCrop**.',
     '',
     '- **Menciona un lugar y una semilla** en **español o inglés** (ej. *"Quiero sembrar maíz en Comayagua, Honduras"* o *"I want to plant corn in Iowa"*) y buscaré automáticamente el clima satelital, pronóstico y plan de rotación.',
     '- Pregúntame en **español o inglés** sobre aptitud climática, riego, balance hídrico (ET₀) o tu secuencia de rotación de 3 ciclos.',
@@ -99,7 +99,7 @@ export class AgronomistAiService {
         catchError(() => {
           this.statusChecked.set(true);
           return of(null);
-        })
+        }),
       )
       .subscribe();
   }
@@ -125,13 +125,13 @@ export class AgronomistAiService {
     this.soilObservations.update((curr) =>
       curr.includes(observation)
         ? curr.filter((item) => item !== observation)
-        : [...curr, observation]
+        : [...curr, observation],
     );
   }
 
   togglePriority(priority: FarmerPriority): void {
     this.priorities.update((curr) =>
-      curr.includes(priority) ? curr.filter((item) => item !== priority) : [...curr, priority]
+      curr.includes(priority) ? curr.filter((item) => item !== priority) : [...curr, priority],
     );
   }
 
@@ -152,7 +152,7 @@ export class AgronomistAiService {
   async sendMessage(
     rawText: string,
     context: AgronomistParcelContext,
-    attachment?: AgronomistImagePayload & { dataUrl: string }
+    attachment?: AgronomistImagePayload & { dataUrl: string },
   ): Promise<void> {
     const text = rawText.trim();
     if ((!text && !attachment) || this.isSending()) {
@@ -219,9 +219,7 @@ export class AgronomistAiService {
     if (text && this.dashboardBridge) {
       try {
         const liveState = this.dashboardBridge.getState();
-        const recentUserTexts = currentHistory
-          .filter((m) => m.role === 'user')
-          .map((m) => m.text);
+        const recentUserTexts = currentHistory.filter((m) => m.role === 'user').map((m) => m.text);
 
         const resolution = await this.queryResolver.resolveFromMessage(
           text,
@@ -233,7 +231,7 @@ export class AgronomistAiService {
           },
           (label) => this.progressLabel.set(label),
           recentUserTexts,
-          (immediateState) => this.dashboardBridge?.applyState(immediateState)
+          (immediateState) => this.dashboardBridge?.applyState(immediateState),
         );
 
         effectiveContext = resolution.context;
@@ -266,12 +264,12 @@ export class AgronomistAiService {
             finalize(() => {
               this.isSending.set(false);
               this.progressLabel.set(null);
-            })
-          )
+            }),
+          ),
       );
 
       const { cleanReply, detectedLocation, detectedSeed } = this.extractDetectedEntitiesTag(
-        response.reply
+        response.reply,
       );
 
       if (this.dashboardBridge && (detectedLocation || detectedSeed)) {

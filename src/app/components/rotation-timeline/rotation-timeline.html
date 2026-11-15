@@ -3,9 +3,9 @@
     <div class="eval-section">
       <header class="eval-header">
         <div>
-          <span class="eval-kicker">Compatibilidad Ecoclimática</span>
+          <span class="eval-kicker">{{ i18n.t('Compatibilidad Ecoclimática') }}</span>
           <h2 id="rotation-section-title">
-            Diagnóstico de Aptitud — {{ primaryName(evalResult.crop) }}
+            {{ i18n.t('Diagnóstico de Aptitud —') }} {{ primaryName(evalResult.crop) }}
             <span class="eval-sci">({{ evalResult.crop.scientificName }})</span>
           </h2>
           <p class="eval-summary">{{ evalResult.summary }}</p>
@@ -23,42 +23,117 @@
               <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
               </svg>
-              Óptimo
+              {{ i18n.t('Óptimo') }}
             } @else if (evalResult.isViable) {
               <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
                 <circle cx="12" cy="12" r="9" />
                 <path stroke-linecap="round" d="M12 8v4M12 16h.01" />
               </svg>
-              Viable
+              {{ i18n.t('Viable') }}
             } @else {
               <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
                 <path stroke-linecap="round" d="M18 6L6 18M6 6l12 12" />
               </svg>
-              No recomendado
+              {{ i18n.t('No recomendado') }}
             }
           </span>
         </div>
       </header>
 
-      <div class="checks-grid">
+      <div class="details-head">
+        <div>
+          <h3>{{ i18n.t('Detalles del clima y tu terreno') }}</h3>
+          <p>
+            {{
+              i18n.t(
+                'Comparamos lo que necesita la planta contra las condiciones reales de tu parcela.'
+              )
+            }}
+          </p>
+        </div>
+        <button
+          type="button"
+          class="tech-toggle"
+          [class.active]="showTechnical()"
+          [attr.aria-pressed]="showTechnical()"
+          (click)="showTechnical.set(!showTechnical())"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" d="M4 6h10m4 0h2M4 12h4m4 0h8M4 18h12m4 0h0" />
+            <circle cx="16" cy="6" r="2" /><circle cx="10" cy="12" r="2" /><circle cx="18" cy="18" r="2" />
+          </svg>
+          {{
+            showTechnical()
+              ? i18n.t('Ver explicación sencilla')
+              : i18n.t('Ver datos técnicos (NASA / EcoCrop)')
+          }}
+        </button>
+      </div>
+
+      <div class="check-cards">
         @for (check of evalResult.checks; track check.label) {
-          <div class="agro-metric check-item" [attr.data-status]="check.status">
-            <div class="check-item__top">
-              <strong>{{ check.label }}</strong>
-              @if (check.score !== null) {
-                <span class="check-item__score num-mono">{{ check.score }}%</span>
-              }
-            </div>
+          @let copy = checkCopy(check);
+          <article class="check-card" [attr.data-status]="check.status">
+            <header class="check-card__head">
+              <span class="check-card__icon" aria-hidden="true">
+                @switch (checkIcon(check.label)) {
+                  @case ('rain') {
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.5 15H7a4 4 0 0 1-.4-7.98A5 5 0 0 1 16.5 6.5 3.5 3.5 0 0 1 17.5 15ZM9 18l-1 3m5-3-1 3m5-3-1 3" /></svg>
+                  }
+                  @case ('frost') {
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2v20M4.2 7l15.6 10M4.2 17 19.8 7M9.5 3.5 12 6l2.5-2.5M9.5 20.5 12 18l2.5 2.5M3 10.5l3.4.9-.9 3.4M21 13.5l-3.4-.9.9-3.4M5.5 9.2l.9 3.4M18.5 14.8l-.9-3.4" /></svg>
+                  }
+                  @case ('altitude') {
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m3 20 6.5-12 4 7 2.5-4L21 20H3Zm6.5-12 1.8 3.3" /></svg>
+                  }
+                  @case ('cycle') {
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5l3 2" /></svg>
+                  }
+                  @default {
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0Z" /></svg>
+                  }
+                }
+              </span>
+              <h4>{{ i18n.t(showTechnical() ? check.label : copy.title) }}</h4>
+              <span class="check-card__chip">{{ i18n.t(statusChip(check)) }}</span>
+            </header>
+
             @if (check.score !== null) {
-              <div class="agro-meter check-bar" aria-hidden="true">
-                <span class="agro-meter__fill check-bar__fill" [style.width.%]="check.score"></span>
+              <div class="check-card__meter">
+                <div class="check-card__meter-labels">
+                  <span>{{ i18n.t(copy.meter) }}</span>
+                  <strong class="num-mono">
+                    {{ i18n.t(scoreLabel(check.score)) }} ({{ check.score }}%)
+                  </strong>
+                </div>
+                <div class="check-bar" aria-hidden="true">
+                  <span class="check-bar__fill" [style.width.%]="check.score"></span>
+                </div>
               </div>
             }
-            <div class="check-item__values">
-              <span><strong>NASA POWER:</strong> <span class="num-mono">{{ check.observed }}</span></span>
-              <span><strong>Requerido EcoCrop:</strong> <span class="num-mono">{{ check.expected }}</span></span>
-            </div>
-          </div>
+
+            <dl class="check-card__values">
+              <div>
+                <dt>{{ i18n.t(showTechnical() ? 'NASA POWER' : copy.observedKey) }}:</dt>
+                <dd class="num-mono">{{ check.observed }}</dd>
+              </div>
+              <div>
+                <dt>{{ i18n.t(showTechnical() ? 'Requerido EcoCrop' : copy.expectedKey) }}:</dt>
+                <dd class="num-mono">{{ i18n.t(check.expected) }}</dd>
+              </div>
+            </dl>
+
+            <p class="check-card__advice">
+              @if (check.status === 'optimal') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path stroke-linecap="round" stroke-linejoin="round" d="m8 12 3 3 5-6" /></svg>
+              } @else if (check.status === 'out-of-range') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" /></svg>
+              } @else {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path stroke-linecap="round" d="M12 8v4m0 4h.01" /></svg>
+              }
+              <span>{{ i18n.t(copy.advice[check.status]) }}</span>
+            </p>
+          </article>
         }
       </div>
     </div>
@@ -66,8 +141,8 @@
 
   @if (rotationPlan(); as plan) {
     @if (plan.alerts.length > 0) {
-      <div class="alerts-section" role="region" aria-label="Alertas climáticas y de manejo">
-        <h3>Alertas Climáticas y de Manejo</h3>
+      <div class="alerts-section" role="region" [attr.aria-label]="i18n.t('Alertas climáticas y de manejo')">
+        <h3>{{ i18n.t('Alertas Climáticas y de Manejo') }}</h3>
         <div class="alerts-list">
           @for (alert of plan.alerts; track alert.id) {
             <div class="agro-alert-item" [attr.data-severity]="alert.severity">
@@ -75,7 +150,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
               </svg>
               <div>
-                <strong>{{ alert.title }}:</strong> {{ alert.message }}
+                <strong>{{ i18n.t(alert.title) }}:</strong> {{ i18n.t(alert.message) }}
               </div>
             </div>
           }
@@ -85,16 +160,16 @@
 
     <div class="timeline-section">
       <header class="timeline-header">
-        <h2 class="agro-title">Plan de Rotación Recomendado (Ciclo 1 → Ciclo 2 → Ciclo 3)</h2>
-        <p class="agro-subtitle">{{ plan.soilHealthImpactSummary }}</p>
+        <h2 class="agro-title">{{ i18n.t('Plan de Rotación Recomendado (Ciclo 1 → Ciclo 2 → Ciclo 3)') }}</h2>
+        <p class="agro-subtitle">{{ i18n.t(plan.soilHealthImpactSummary) }}</p>
       </header>
 
       <div class="cycles-grid">
         @for (cycle of plan.cycles; track cycle.cycleNumber) {
           <article class="cycle-card">
             <div class="cycle-card__header">
-              <span class="cycle-step">Ciclo {{ cycle.cycleNumber }}</span>
-              <span class="cycle-score num-mono">{{ cycle.compatibilityScore }}% aptitud</span>
+              <span class="cycle-step">{{ i18n.t('Ciclo') }} {{ cycle.cycleNumber }}</span>
+              <span class="cycle-score num-mono">{{ cycle.compatibilityScore }}% {{ i18n.t('aptitud') }}</span>
             </div>
 
             <h3 class="cycle-crop-name">{{ primaryName(cycle.crop) }}</h3>
@@ -107,7 +182,7 @@
 
             <ul class="cycle-reasons">
               @for (reason of cycle.reasons; track reason) {
-                <li>{{ reason }}</li>
+                <li>{{ i18n.t(reason) }}</li>
               }
             </ul>
 
@@ -118,7 +193,7 @@
                     <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.74V17h8v-2.26A7 7 0 0 0 12 2z" />
                     </svg>
-                    <span>{{ note }}</span>
+                    <span>{{ i18n.t(note) }}</span>
                   </p>
                 }
               </div>
@@ -135,10 +210,12 @@
         </svg>
       </div>
       <div>
-        <h2 id="rotation-section-title">Recomendación de Rotación y Aptitud</h2>
+        <h2 id="rotation-section-title">{{ i18n.t('Recomendación de Rotación y Aptitud') }}</h2>
         <p>
-          Selecciona primero un <strong>lugar en el mapa</strong> (para obtener datos reales de NASA POWER)
-          y un <strong>cultivo del catálogo</strong> para generar el diagnóstico de aptitud y el plan de rotación de 3 ciclos.
+          {{ i18n.t('Selecciona primero un') }} <strong>{{ i18n.t('lugar en el mapa') }}</strong>
+          {{ i18n.t('(para obtener datos reales de NASA POWER)') }} {{ i18n.t('y un') }}
+          <strong>{{ i18n.t('cultivo del catálogo') }}</strong>
+          {{ i18n.t('para generar el diagnóstico de aptitud y el plan de rotación de 3 ciclos.') }}
         </p>
       </div>
     </div>

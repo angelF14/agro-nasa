@@ -5,12 +5,14 @@ import {
   Input,
   OnChanges,
   SimpleChanges,
+  computed,
   inject,
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Coordinates, WeatherForecast } from '@models/index';
+import { Coordinates, DailyWeatherForecast, WeatherForecast } from '@models/index';
 import { OpenMeteoService } from '@services/open-meteo.service';
+import { LanguageService } from '@services/language.service';
 import { Subject, catchError, of, switchMap, tap } from 'rxjs';
 
 export type WeatherIconKind =
@@ -23,6 +25,14 @@ export type WeatherIconKind =
   | 'storm'
   | 'thermometer';
 
+export type ForecastFilter = 'all' | 'rainy';
+
+export interface ForecastDayView {
+  day: DailyWeatherForecast;
+  /** Posición original dentro del pronóstico (0 = hoy). */
+  index: number;
+}
+
 @Component({
   selector: 'app-weather-forecast',
   imports: [CommonModule],
@@ -31,6 +41,7 @@ export type WeatherIconKind =
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WeatherForecastComponent implements OnChanges {
+  protected readonly i18n = inject(LanguageService);
   private readonly openMeteo = inject(OpenMeteoService);
   private readonly forecastRequest$ = new Subject<{ coords: Coordinates; force: boolean }>();
 
@@ -40,6 +51,85 @@ export class WeatherForecastComponent implements OnChanges {
   readonly loading = signal(true);
   readonly error = signal(false);
   readonly selectedPeriod = signal<7 | 16>(7);
+  readonly dayFilter = signal<ForecastFilter>('all');
+  private readonly selectedDate = signal<string | null>(null);
+
+  /** Umbral (mm) a partir del cual un día se considera lluvioso. */
+  private readonly rainyThresholdMm = 1;
+  /** Referencia (mm/día) para escalar la barra de ET₀. */
+  private readonly et0ScaleMm = 8;
+
+  /** Días visibles según horizonte y filtro, conservando su índice original. */
+  readonly visibleDays = computed<ForecastDayView[]>(() => {
+    const days = (this.forecast()?.daily ?? [])
+      .slice(0, this.selectedPeriod())
+      .map((day, index) => ({ day, index }));
+
+    return this.dayFilter() === 'rainy'
+      ? days.filter(({ day }) => day.precipitationMm >= this.rainyThresholdMm)
+      : days;
+  });
+
+  /** Día seleccionado; si no está visible, se usa el primero de la lista. */
+  readonly selectedDay = computed<ForecastDayView | null>(() => {
+    const days = this.visibleDays();
+    const date = this.selectedDate();
+    return days.find(({ day }) => day.date === date) ?? days[0] ?? null;
+  });
+
+  /** Encabezados del calendario (semana inicia en lunes). */
+  get calendarWeekdays(): string[] {
+    return this.i18n.language() === 'en'
+      ? ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+      : ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+  }
+
+  /**
+   * Celdas del calendario móvil: cubre del primer al último día visible,
+   * con huecos iniciales para alinear al día de la semana.
+   */
+  readonly calendarCells = computed(() => {
+    const days = this.visibleDays();
+    if (!days.length) return [];
+
+    const byDate = new Map(days.map((item) => [item.day.date, item]));
+    const toUtc = (date: string) => {
+      const [y, m, d] = date.split('-').map(Number);
+      return new Date(Date.UTC(y, m - 1, d));
+    };
+
+    const start = toUtc(days[0].day.date);
+    const end = toUtc(days[days.length - 1].day.date);
+    const offset = (start.getUTCDay() + 6) % 7;
+
+    const cells: { key: string; label: string; item: ForecastDayView | null }[] = [];
+    for (let i = 0; i < offset; i++) {
+      cells.push({ key: `pad-${i}`, label: '', item: null });
+    }
+    for (let d = new Date(start); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
+      const key = d.toISOString().slice(0, 10);
+      cells.push({ key, label: String(d.getUTCDate()), item: byDate.get(key) ?? null });
+    }
+    return cells;
+  });
+
+  readonly selectedPosition = computed(() => {
+    const selected = this.selectedDay();
+    return selected ? this.visibleDays().indexOf(selected) : -1;
+  });
+
+  readonly forecastSummary = computed(() => {
+    const days = this.visibleDays().map(({ day }) => day);
+    const maxPrecipitation = Math.max(1, ...days.map((d) => d.precipitationMm));
+    const minTemp = days.length ? Math.min(...days.map((d) => d.temperatureMin)) : 0;
+    const maxTemp = days.length ? Math.max(...days.map((d) => d.temperatureMax)) : 1;
+
+    return {
+      maxPrecipitation,
+      minTemp,
+      tempSpan: Math.max(1, maxTemp - minTemp),
+    };
+  });
 
   constructor() {
     this.forecastRequest$
@@ -85,6 +175,68 @@ export class WeatherForecastComponent implements OnChanges {
     this.forecastRequest$.next({ coords: this.coords, force });
   }
 
+  selectDay(date: string): void {
+    this.selectedDate.set(date);
+  }
+
+  /** Mueve la selección al día anterior (-1) o siguiente (+1) visible. */
+  stepDay(direction: -1 | 1): void {
+    const days = this.visibleDays();
+    const target = days[this.selectedPosition() + direction];
+    if (target) {
+      this.selectedDate.set(target.day.date);
+    }
+  }
+
+  /** Clasificación de la lluvia esperada del día. */
+  getRainLabel(mm: number): string {
+    if (mm < 0.1) return this.i18n.t('Sin lluvia');
+    if (mm < 2.5) return this.i18n.t('Lluvia ligera');
+    if (mm < 7.6) return this.i18n.t('Lluvia moderada');
+    return this.i18n.t('Lluvia fuerte');
+  }
+
+  /** Porcentaje de la barra de lluvia relativo al día más lluvioso visible. */
+  getRainPercent(mm: number): number {
+    return Math.min(100, (mm / this.forecastSummary().maxPrecipitation) * 100);
+  }
+
+  getEt0Percent(mm: number): number {
+    return Math.min(100, (mm / this.et0ScaleMm) * 100);
+  }
+
+  /** Posición de la barra de rango térmico dentro del rango visible. */
+  getTempRange(day: DailyWeatherForecast): { left: number; width: number } {
+    const { minTemp, tempSpan } = this.forecastSummary();
+    const left = ((day.temperatureMin - minTemp) / tempSpan) * 100;
+    const width = ((day.temperatureMax - day.temperatureMin) / tempSpan) * 100;
+    return { left, width: Math.max(4, width) };
+  }
+
+  /** Recomendación de riego comparando lluvia esperada contra ET₀. */
+  getIrrigationAdvice(day: DailyWeatherForecast): string {
+    const rain = day.precipitationMm;
+    const et0 = day.et0Mm;
+    const deficit = Math.max(0, et0 - rain).toFixed(1);
+
+    if (rain >= et0) {
+      if (this.i18n.language() === 'en') {
+        return `Expected rainfall (${rain} mm) exceeds water demand (${et0} mm). Consider pausing scheduled irrigation.`;
+      }
+      return `La lluvia esperada (${rain} mm) supera la demanda hídrica (${et0} mm). Se recomienda suspender el riego programado.`;
+    }
+    if (rain >= et0 / 2) {
+      if (this.i18n.language() === 'en') {
+        return `Rainfall partially meets water demand. Consider supplemental irrigation of about ${deficit} mm.`;
+      }
+      return `La lluvia cubre parcialmente la demanda hídrica. Se recomienda un riego complementario de aprox. ${deficit} mm.`;
+    }
+    if (this.i18n.language() === 'en') {
+      return `Expected rainfall does not meet water demand. Irrigate about ${deficit} mm to compensate for ET₀.`;
+    }
+    return `La lluvia esperada no cubre la demanda hídrica. Se recomienda regar aprox. ${deficit} mm para compensar el ET₀.`;
+  }
+
   /**
    * Devuelve los días según el período seleccionado.
    */
@@ -110,16 +262,16 @@ export class WeatherForecastComponent implements OnChanges {
    * Traduce los códigos meteorológicos WMO.
    */
   getWeatherDescription(code: number): string {
-    if (code === 0) return 'Despejado';
-    if (code <= 3) return 'Parcialmente nublado';
-    if (code <= 48) return 'Nublado o neblina';
-    if (code <= 57) return 'Llovizna';
-    if (code <= 67) return 'Lluvia';
-    if (code <= 77) return 'Nieve';
-    if (code <= 82) return 'Chubascos';
-    if (code <= 86) return 'Nieve intensa';
-    if (code <= 99) return 'Tormenta';
-    return 'Sin descripción';
+    if (code === 0) return this.i18n.t('Despejado');
+    if (code <= 3) return this.i18n.t('Parcialmente nublado');
+    if (code <= 48) return this.i18n.t('Nublado o neblina');
+    if (code <= 57) return this.i18n.t('Llovizna');
+    if (code <= 67) return this.i18n.t('Lluvia');
+    if (code <= 77) return this.i18n.t('Nieve');
+    if (code <= 82) return this.i18n.t('Chubascos');
+    if (code <= 86) return this.i18n.t('Nieve intensa');
+    if (code <= 99) return this.i18n.t('Tormenta');
+    return this.i18n.t('Sin descripción');
   }
 
   /**
@@ -158,7 +310,7 @@ export class WeatherForecastComponent implements OnChanges {
   formatDate(date: string): string {
     const [year, month, day] = date.split('-').map(Number);
 
-    return new Intl.DateTimeFormat('es-HN', {
+    return new Intl.DateTimeFormat(this.i18n.language() === 'en' ? 'en-US' : 'es-HN', {
       weekday: 'short',
       day: 'numeric',
       month: 'short',

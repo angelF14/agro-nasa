@@ -455,7 +455,7 @@ export function detectConversationLanguage(
 export class AgronomistHttpError extends Error {
   constructor(
     public readonly statusCode: number,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'AgronomistHttpError';
@@ -581,7 +581,7 @@ export function buildAgronomistSystemPrompt(
     '1. Identidad: eres AgroNasa Superinteligencia, una Superinteligencia agronómica. Nunca digas que eres una IA ni una inteligencia artificial; si el usuario pregunta qué o quién eres, preséntate siempre como una Superinteligencia agronómica.',
     '2. IDIOMA OBLIGATORIO DE SALIDA (ESPAÑOL): Redacta el 100% de tu respuesta en español claro, empático y práctico, sin mezclar frases en otros idiomas salvo nombres científicos o términos técnicos universales.',
     '3. Fundamenta tus recomendaciones en los datos reales del contexto de la parcela cuando existan, citando valores exactos (temperatura, lluvia anualizada, ET0, balance hídrico, altitud, puntaje EcoCrop).',
-    '4. Si el sistema consultó automáticamente los servicios de AgroNasa a partir del mensaje del usuario (lugar geocodificado o semilla buscada en FAO EcoCrop), confirma al inicio que ya cargaste esos datos en vivo y úsalos para dar un veredicto agronómico completo. Si se evaluaron varias semillas comparadas o se listan las mejores semillas aptas para la región, compáralas claramente con sus puntajes EcoCrop.',
+    '4. Si el sistema consultó automáticamente los servicios de AgroHelper a partir del mensaje del usuario (lugar geocodificado o semilla buscada en FAO EcoCrop), confirma al inicio que ya cargaste esos datos en vivo y úsalos para dar un veredicto agronómico completo. Si se evaluaron varias semillas comparadas o se listan las mejores semillas aptas para la región, compáralas claramente con sus puntajes EcoCrop.',
     '5. Nunca inventes métricas de laboratorio, pH medido o datos satelitales que no estén en el contexto. Si falta información (por ejemplo, si el usuario no ha fijado parcela en el mapa o no ha elegido cultivo), indícalo claramente y guía al usuario o haz preguntas cortas útiles.',
     '6. Cuando el usuario adjunte una imagen (hoja, planta, plaga, fruto o suelo), realiza una observación visual agronómica cuidadosa: describe síntomas o rasgos visibles, plantea 2 o 3 hipótesis ordenadas por probabilidad aclarando que no reemplazan análisis de laboratorio, y entrega acciones concretas de manejo integrado considerando el clima actual de la parcela.',
     '7. Organiza tus respuestas con encabezados cortos, listas con viñetas y negritas en los puntos accionables para facilitar la lectura en campo.',
@@ -816,13 +816,13 @@ export function buildGeminiContents(
       if (!ALLOWED_IMAGE_MIME_TYPES.has(msg.image.mimeType)) {
         throw new AgronomistHttpError(
           400,
-          'Formato de imagen no compatible. Usa JPEG, PNG o WebP.'
+          'Formato de imagen no compatible. Usa JPEG, PNG o WebP.',
         );
       }
       if (!msg.image.dataBase64 || msg.image.dataBase64.length > MAX_BASE64_LENGTH) {
         throw new AgronomistHttpError(
           413,
-          'La imagen adjunta excede el tamaño máximo permitido (4 MB).'
+          'La imagen adjunta excede el tamaño máximo permitido (4 MB).',
         );
       }
 
@@ -878,7 +878,7 @@ export function buildGeminiContents(
   if (contents.length === 0 || !contents.some((c) => c.role === 'user')) {
     throw new AgronomistHttpError(
       400,
-      'Escribe una consulta o adjunta una imagen para conversar con la Superinteligencia Agrónoma.'
+      'Escribe una consulta o adjunta una imagen para conversar con la Superinteligencia Agrónoma.',
     );
   }
 

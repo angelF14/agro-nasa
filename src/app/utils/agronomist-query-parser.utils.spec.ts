@@ -91,6 +91,16 @@ describe('agronomist-query-parser.utils', () => {
     expect(enriched[0].commonNames[0]).toBe('maíz');
     expect(enriched[1].commonNames[0]).toBe('frijol');
     expect(enriched[2].commonNames[0]).toBe('papa');
+    expect(MOCK_CATALOG[0].commonNames[0]).toBe('corn');
+  });
+
+  it('chooses a localized common name without mutating crop data', () => {
+    const crop = { ...MOCK_CATALOG[0], commonNames: ['maíz', 'corn', 'maize'] };
+    const originalNames = [...crop.commonNames];
+
+    expect(getLocalizedCropName(crop, 'en')).toBe('corn');
+    expect(getLocalizedCropName(crop, 'es')).toBe('maíz');
+    expect(crop.commonNames).toEqual(originalNames);
   });
 
   it('searches catalog with Spanish aliases and accent-insensitivity', () => {

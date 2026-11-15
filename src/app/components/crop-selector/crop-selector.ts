@@ -14,12 +14,14 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ClimateSummary, Crop } from '@models/index';
+import { LanguageService } from '@services/language.service';
 import {
   CropFilterCriteria,
   RotationEngineService,
   ScoredCrop,
 } from '@services/rotation-engine.service';
 import {
+  getLocalizedCropName,
   normalizeSearchText,
   searchCatalogWithAliases,
   SPANISH_CROP_ALIASES,
@@ -47,6 +49,7 @@ interface CropListItem {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CropSelector {
+  protected readonly i18n = inject(LanguageService);
   private readonly rotationEngine = inject(RotationEngineService);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly destroyRef = inject(DestroyRef);
@@ -223,7 +226,7 @@ export class CropSelector {
   }
 
   protected primaryName(crop: Crop): string {
-    return crop.commonNames[0] || crop.scientificName;
+    return getLocalizedCropName(crop, this.i18n.language());
   }
 
   //SUGGESTED CROPS

@@ -122,8 +122,8 @@
 <section class="agro-card weather-container" aria-labelledby="weather-forecast-title">
   <header class="agro-header section-header">
     <div>
-      <h2 id="weather-forecast-title" class="agro-title">Condiciones Meteorológicas de la Parcela</h2>
-      <p class="agro-subtitle">Lectura en tiempo real y proyección diaria de precipitación y evapotranspiración (ET₀)</p>
+      <h2 id="weather-forecast-title" class="agro-title">{{ i18n.t('Condiciones Meteorológicas de la Parcela') }}</h2>
+      <p class="agro-subtitle">{{ i18n.t('Lectura en tiempo real y proyección diaria de precipitación y evapotranspiración (ET₀)') }}</p>
     </div>
 
     <button
@@ -135,12 +135,12 @@
       <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6" />
       </svg>
-      {{ loading() ? 'Actualizando...' : 'Actualizar' }}
+      {{ loading() ? i18n.t('Actualizando...') : i18n.t('Actualizar') }}
     </button>
   </header>
 
   @if (loading()) {
-    <div class="weather-skeleton" aria-busy="true" aria-label="Consultando pronóstico meteorológico">
+    <div class="weather-skeleton" aria-busy="true" [attr.aria-label]="i18n.t('Consultando pronóstico meteorológico')">
       <div class="skeleton-box weather-skeleton__hero"></div>
       <div class="forecast-grid">
         @for (item of [1, 2, 3, 4]; track item) {
@@ -152,8 +152,8 @@
 
   @if (error()) {
     <div class="agro-alert-error agro-alert-row" role="alert">
-      <span>No fue posible obtener los datos meteorológicos de Open-Meteo.</span>
-      <button type="button" class="agro-btn agro-btn--secondary agro-btn--sm" (click)="loadForecast()">Reintentar</button>
+      <span>{{ i18n.t('No fue posible obtener los datos meteorológicos de Open-Meteo.') }}</span>
+      <button type="button" class="agro-btn agro-btn--secondary agro-btn--sm" (click)="loadForecast()">{{ i18n.t('Reintentar') }}</button>
     </div>
   }
 
@@ -211,7 +211,7 @@
             <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0Z" />
             </svg>
-            Sensación térmica
+            {{ i18n.t('Sensación térmica') }}
           </span>
           <strong class="num-mono">{{ weather.current.apparentTemperature }} °C</strong>
         </div>
@@ -221,7 +221,7 @@
             <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
             </svg>
-            Humedad relativa
+            {{ i18n.t('Humedad relativa') }}
           </span>
           <strong class="num-mono">{{ weather.current.relativeHumidity }} %</strong>
         </div>
@@ -231,7 +231,7 @@
             <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" d="M17.5 15H7a4 4 0 0 1-.4-7.98A5 5 0 0 1 16.5 6.5 3.5 3.5 0 0 1 17.5 15ZM9 18l-1 3m4-3-1 3" />
             </svg>
-            Precipitación actual
+            {{ i18n.t('Precipitación actual') }}
           </span>
           <strong class="num-mono">{{ weather.current.precipitation }} mm</strong>
         </div>
@@ -241,90 +241,281 @@
             <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" />
             </svg>
-            Velocidad del viento
+            {{ i18n.t('Velocidad del viento') }}
           </span>
           <strong class="num-mono">{{ weather.current.windSpeed }} km/h</strong>
         </div>
       </div>
     </div>
 
+    <div class="forecast-block">
     <div class="forecast-header">
-      <div>
-        <h3>Pronóstico Diario</h3>
-        <p>Temperatura, lluvia esperada y demanda hídrica (ET₀)</p>
+      <div class="forecast-heading">
+        <h3>{{ i18n.t('Pronóstico Diario') }}</h3>
+        <p>{{ i18n.t('Temperatura, lluvia esperada y demanda hídrica (ET₀)') }}</p>
       </div>
 
-      <div class="period-selector" role="group" aria-label="Horizonte de pronóstico">
-        <button
-          type="button"
-          [class.active]="selectedPeriod() === 7"
-          [attr.aria-pressed]="selectedPeriod() === 7"
-          (click)="selectedPeriod.set(7)"
-        >
-          7 días
-        </button>
+      <div class="forecast-controls">
+        <div class="day-filter" role="group" [attr.aria-label]="i18n.t('Filtrar días')">
+          <button
+            type="button"
+            [class.active]="dayFilter() === 'all'"
+            [attr.aria-pressed]="dayFilter() === 'all'"
+            (click)="dayFilter.set('all')"
+          >
+            {{ i18n.t('Todos los días') }}
+          </button>
+          <button
+            type="button"
+            [class.active]="dayFilter() === 'rainy'"
+            [attr.aria-pressed]="dayFilter() === 'rainy'"
+            (click)="dayFilter.set('rainy')"
+          >
+            <span class="day-filter__dot" aria-hidden="true"></span>
+            {{ i18n.t('Días lluviosos') }}
+          </button>
+        </div>
 
-        <button
-          type="button"
-          [class.active]="selectedPeriod() === 16"
-          [attr.aria-pressed]="selectedPeriod() === 16"
-          (click)="selectedPeriod.set(16)"
-        >
-          16 días
-        </button>
+        <div class="period-selector" role="group" [attr.aria-label]="i18n.t('Horizonte de pronóstico')">
+          <button
+            type="button"
+            [class.active]="selectedPeriod() === 7"
+            [attr.aria-pressed]="selectedPeriod() === 7"
+            (click)="selectedPeriod.set(7)"
+          >
+            7 días
+          </button>
+
+          <button
+            type="button"
+            [class.active]="selectedPeriod() === 16"
+            [attr.aria-pressed]="selectedPeriod() === 16"
+            (click)="selectedPeriod.set(16)"
+          >
+            16 días
+          </button>
+        </div>
       </div>
     </div>
 
-    <div class="forecast-grid">
-      @for (day of displayedDays; track day.date; let i = $index) {
-        <article class="forecast-card" [class.extended]="i >= 7">
-          @if (i === 7) {
-            <span class="extended-label">Pronóstico extendido</span>
+    @if (selectedDay(); as sel) {
+      <div class="forecast-layout">
+        <!-- Detalle del día seleccionado -->
+        <article class="day-detail" aria-live="polite">
+          <div class="day-detail__top">
+            <span class="day-detail__badge">
+              {{ getRainLabel(sel.day.precipitationMm) }} · {{ sel.index === 0 ? i18n.t('Hoy') : (i18n.language() === 'en' ? 'Day ' : 'Día ') + (sel.index + 1) }}
+            </span>
+
+            <div class="day-detail__nav">
+              <button
+                type="button"
+                [attr.aria-label]="i18n.t('Día anterior')"
+                [disabled]="selectedPosition() <= 0"
+                (click)="stepDay(-1)"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m15 18-6-6 6-6" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                [attr.aria-label]="i18n.t('Día siguiente')"
+                [disabled]="selectedPosition() >= visibleDays().length - 1"
+                (click)="stepDay(1)"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <h4 class="day-detail__date">{{ formatDate(sel.day.date) }}</h4>
+
+          @if (sel.index >= 7) {
+            <span class="extended-label">{{ i18n.t('Pronóstico extendido') }}</span>
           }
 
-          <span class="forecast-date">{{ formatDate(day.date) }}</span>
+          <div class="day-detail__hero">
+            <div>
+              <div class="day-detail__temps num-mono">
+                <strong>{{ sel.day.temperatureMax }}°</strong>
+                <span>
+                  <small>{{ i18n.t('Mínima') }}</small>
+                  {{ sel.day.temperatureMin }}°
+                </span>
+              </div>
+              <p class="day-detail__desc">{{ getWeatherDescription(sel.day.weatherCode) }}</p>
+            </div>
 
-          <div class="forecast-icon" [attr.data-kind]="getWeatherKind(day.weatherCode)">
-            <ng-container *ngTemplateOutlet="weatherSvg; context: { kind: getWeatherKind(day.weatherCode) }" />
+            <div class="day-detail__art">
+              <ng-container *ngTemplateOutlet="weatherArt; context: { kind: getWeatherKind(sel.day.weatherCode) }" />
+            </div>
           </div>
 
-          <span class="forecast-description">{{ getWeatherDescription(day.weatherCode) }}</span>
+          <div class="day-detail__stats">
+            <div class="detail-stat">
+              <span class="detail-stat__label">
+                {{ i18n.t('Lluvia esperada') }}
+                <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M17.5 15H7a4 4 0 0 1-.4-7.98A5 5 0 0 1 16.5 6.5 3.5 3.5 0 0 1 17.5 15ZM9 18l-1 3m5-3-1 3" />
+                </svg>
+              </span>
+              <strong class="num-mono">{{ sel.day.precipitationMm }} mm</strong>
+              <div class="detail-bar"><span class="detail-bar__fill detail-bar__fill--rain" [style.width.%]="getRainPercent(sel.day.precipitationMm)"></span></div>
+            </div>
 
-          <div class="temperatures num-mono">
-            <strong>{{ day.temperatureMax }}°</strong>
-            <span>{{ day.temperatureMin }}°</span>
+            <div class="detail-stat">
+              <span class="detail-stat__label">
+                {{ i18n.t('Probabilidad') }}
+                <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+                </svg>
+              </span>
+              <strong class="num-mono">{{ sel.day.precipitationProbability === null ? 'N/D' : sel.day.precipitationProbability + '%' }}</strong>
+              <div class="detail-bar"><span class="detail-bar__fill detail-bar__fill--prob" [style.width.%]="sel.day.precipitationProbability ?? 0"></span></div>
+            </div>
           </div>
 
-          <div class="forecast-data num-mono">
-            <span class="forecast-metric">
+          <div class="detail-et0">
+            <div class="detail-et0__head">
+              <span class="detail-et0__label">
+                <span class="detail-et0__icon">
+                  <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 20V10m0 0c0-4 3.5-7 8-7 0 4.5-3 7-8 7Zm0 0c0-3-3.5-5.5-8-5.5 0 4 3 5.5 8 5.5Z" />
+                  </svg>
+                </span>
+                {{ i18n.t('Demanda hídrica (ET₀)') }}
+              </span>
+              <strong class="num-mono">{{ sel.day.et0Mm }} mm</strong>
+            </div>
+            <div class="detail-bar"><span class="detail-bar__fill detail-bar__fill--et0" [style.width.%]="getEt0Percent(sel.day.et0Mm)"></span></div>
+            <p class="detail-et0__advice">
               <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M17.5 15H7a4 4 0 0 1-.4-7.98A5 5 0 0 1 16.5 6.5 3.5 3.5 0 0 1 17.5 15ZM9 18l-1 3m5-3-1 3" />
+                <circle cx="12" cy="12" r="9" />
+                <path stroke-linecap="round" d="M12 11v5m0-8h.01" />
               </svg>
-              {{ day.precipitationMm }} mm
-            </span>
-
-            <span class="forecast-metric">
-              <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
-              </svg>
-              {{ day.precipitationProbability === null ? 'N/D' : day.precipitationProbability + '%' }}
-            </span>
-
-            <span class="forecast-metric">
-              <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 20V10m0 0c0-4 3.5-7 8-7 0 4.5-3 7-8 7Zm0 0c0-3-3.5-5.5-8-5.5 0 4 3 5.5 8 5.5Z" />
-              </svg>
-              ET₀: {{ day.et0Mm }} mm
-            </span>
+              {{ getIrrigationAdvice(sel.day) }}
+            </p>
           </div>
         </article>
-      }
+
+        <!-- Lista de días -->
+        <div class="forecast-side">
+          <div class="day-list-head" aria-hidden="true">
+            <span>{{ i18n.t('Día y condición') }}</span>
+            <span>{{ i18n.t('Lluvia / Prob.') }}</span>
+            <span>ET₀</span>
+            <span>{{ i18n.t('Rango térmico') }}</span>
+          </div>
+
+          <ul class="day-list" role="listbox" [attr.aria-label]="i18n.t('Días del pronóstico')">
+            @for (item of visibleDays(); track item.day.date) {
+              <li
+                class="day-row"
+                role="option"
+                tabindex="0"
+                [class.selected]="item === sel"
+                [class.extended]="item.index >= 7"
+                [attr.aria-selected]="item === sel"
+                (click)="selectDay(item.day.date)"
+                (keydown.enter)="selectDay(item.day.date)"
+                (keydown.space)="$event.preventDefault(); selectDay(item.day.date)"
+              >
+                <div class="day-row__main">
+                  <span class="day-row__icon" [attr.data-kind]="getWeatherKind(item.day.weatherCode)">
+                    <ng-container *ngTemplateOutlet="weatherSvg; context: { kind: getWeatherKind(item.day.weatherCode) }" />
+                  </span>
+                  <div>
+                    <span class="day-row__date">
+                      {{ formatDate(item.day.date) }}
+                      @if (item.index === 0) {
+                        <span class="day-row__tag">{{ i18n.t('Hoy') }}</span>
+                      } @else if (item.index >= 7) {
+                        <span class="day-row__tag day-row__tag--ext">Ext.</span>
+                      }
+                    </span>
+                    <span class="day-row__desc">{{ getWeatherDescription(item.day.weatherCode) }}</span>
+                  </div>
+                </div>
+
+                <div class="day-row__rain num-mono">
+                  <span class="rain-chip">
+                    <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+                    </svg>
+                    {{ item.day.precipitationMm }} mm
+                  </span>
+                  <span class="day-row__prob">{{ item.day.precipitationProbability === null ? 'N/D' : item.day.precipitationProbability + '%' }}</span>
+                </div>
+
+                <span class="et0-chip num-mono"><small>ET₀</small> {{ item.day.et0Mm }}</span>
+
+                <div class="day-row__range num-mono">
+                  <span class="day-row__min">{{ item.day.temperatureMin }}°</span>
+                  <span class="temp-track">
+                    <span
+                      class="temp-track__fill"
+                      [style.left.%]="getTempRange(item.day).left"
+                      [style.width.%]="getTempRange(item.day).width"
+                    ></span>
+                  </span>
+                  <strong>{{ item.day.temperatureMax }}°</strong>
+                </div>
+              </li>
+            }
+          </ul>
+
+          <!-- Vista calendario (solo teléfono) -->
+          <div class="day-calendar" role="grid" [attr.aria-label]="i18n.t('Calendario del pronóstico')">
+            <div class="day-calendar__weekdays" role="row">
+              @for (wd of calendarWeekdays; track $index) {
+                <span role="columnheader">{{ wd }}</span>
+              }
+            </div>
+            <div class="day-calendar__grid" role="row">
+              @for (cell of calendarCells(); track cell.key) {
+                @if (cell.item; as item) {
+                  <button
+                    type="button"
+                    role="gridcell"
+                    class="cal-cell"
+                    [class.selected]="item === sel"
+                    [class.today]="item.index === 0"
+                    [class.extended]="item.index >= 7"
+                    [attr.aria-selected]="item === sel"
+                    [attr.aria-label]="formatDate(item.day.date)"
+                    (click)="selectDay(item.day.date)"
+                  >
+                    <span class="cal-cell__num">{{ cell.label }}</span>
+                    <span class="cal-cell__icon" [attr.data-kind]="getWeatherKind(item.day.weatherCode)">
+                      <ng-container *ngTemplateOutlet="weatherSvg; context: { kind: getWeatherKind(item.day.weatherCode) }" />
+                    </span>
+                    <span class="cal-cell__temp num-mono">{{ item.day.temperatureMax | number:'1.0-0' }}°</span>
+                    @if (item.day.precipitationMm >= 1) {
+                      <span class="cal-cell__rain" aria-hidden="true"></span>
+                    }
+                  </button>
+                } @else {
+                  <span class="cal-cell cal-cell--empty" role="gridcell">{{ cell.label }}</span>
+                }
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    } @else {
+      <div class="forecast-empty">
+        {{ i18n.t('No hay días con lluvia significativa en el horizonte seleccionado.') }}
+      </div>
+    }
     </div>
 
     <div class="water-balance">
       <div>
-        <h3>Balance hídrico estimado</h3>
-        <p>Precipitación acumulada − ET₀ de los próximos 7 días</p>
+        <h3>{{ i18n.t('Balance hídrico estimado') }}</h3>
+        <p>{{ i18n.t('Precipitación acumulada − ET₀ de los próximos 7 días') }}</p>
       </div>
 
       <strong
@@ -338,10 +529,10 @@
 
     <footer class="weather-footer">
       <p class="forecast-disclaimer">
-        Los datos representan pronósticos meteorológicos y pueden variar conforme se actualizan los modelos. La incertidumbre aumenta conforme se amplía el horizonte de predicción.
+        {{ i18n.t('Los datos representan pronósticos meteorológicos y pueden variar conforme se actualizan los modelos. La incertidumbre aumenta conforme se amplía el horizonte de predicción.') }}
       </p>
       <p class="last-update">
-        Última consulta: {{ weather.generatedAt | date:'short' }} · Fuente: Open-Meteo
+        {{ i18n.t('Última consulta:') }} {{ weather.generatedAt | date:'short':undefined:(i18n.language() === 'en' ? 'en-US' : 'es-HN') }} · {{ i18n.t('Fuente:') }} Open-Meteo
       </p>
     </footer>
   }

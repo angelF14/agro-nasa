@@ -30,7 +30,7 @@
             <circle cx="15" cy="12" r="2" fill="currentColor" />
             <circle cx="10" cy="18" r="2" fill="currentColor" />
           </svg>
-          <span>Contexto y suelo</span>
+          <span>{{ i18n.t('Contexto y suelo') }}</span>
         </span>
         <span class="mobile-ctx-toggle__summary">{{ mobileContextSummary() }}</span>
       </span>
@@ -43,30 +43,30 @@
       id="ai-sidebar-panel"
       class="ai-sidebar"
       [class.is-mobile-open]="showMobileContext()"
-      aria-label="Contexto agronómico de la parcela"
+      [attr.aria-label]="i18n.t('Contexto agronómico de la parcela')"
     >
       <section class="agro-card ai-side-card">
         <header class="ai-side-card__head">
-          <span class="eyebrow">Contexto en vivo</span>
-          <h3 class="ai-side-title">Datos enviados a la Superinteligencia</h3>
+          <span class="eyebrow">{{ i18n.t('Contexto en vivo') }}</span>
+          <h3 class="ai-side-title">{{ i18n.t('Datos enviados a la Superinteligencia') }}</h3>
         </header>
 
         @if (context().coordinates; as coords) {
           <div class="ctx-grid">
             <div class="ctx-item">
-              <span class="ctx-label">Parcela</span>
-              <strong class="ctx-val">{{ context().locationName || 'Ubicación seleccionada' }}</strong>
+              <span class="ctx-label">{{ i18n.t('Parcela') }}</span>
+              <strong class="ctx-val">{{ context().locationName || i18n.t('Ubicación seleccionada') }}</strong>
               <span class="ctx-sub num-mono">{{ coords.lat }}, {{ coords.lon }}</span>
             </div>
 
             @if (context().historicalClimate; as clim) {
               <div class="ctx-row num-mono">
                 <div class="agro-metric ctx-kpi">
-                  <span class="ctx-label">Temp media</span>
+                  <span class="ctx-label">{{ i18n.t('Temp media') }}</span>
                   <strong>{{ clim.meanTempC ?? '—' }} °C</strong>
                 </div>
                 <div class="agro-metric ctx-kpi">
-                  <span class="ctx-label">Lluvia anual</span>
+                  <span class="ctx-label">{{ i18n.t('Lluvia anual') }}</span>
                   <strong>{{ clim.annualizedPrecipitationMm ?? '—' }} mm</strong>
                 </div>
               </div>
@@ -75,7 +75,7 @@
             @if (context().weatherSummary; as w) {
               <div class="ctx-row num-mono">
                 <div class="agro-metric ctx-kpi">
-                  <span class="ctx-label">Balance 7d</span>
+                  <span class="ctx-label">{{ i18n.t('Balance 7d') }}</span>
                   <strong>{{ w.waterBalance7dMm > 0 ? '+' : '' }}{{ w.waterBalance7dMm }} mm</strong>
                 </div>
                 <div class="agro-metric ctx-kpi">
@@ -87,23 +87,23 @@
 
             @if (context().selectedCrop; as crop) {
               <div class="ctx-item ctx-item--highlight">
-                <span class="ctx-label">Cultivo y aptitud</span>
+                <span class="ctx-label">{{ i18n.t('Cultivo y aptitud') }}</span>
                 <strong class="ctx-val capitalize">{{ crop.commonName }}</strong>
                 @if (context().cropEvaluation; as ev) {
-                  <span class="ctx-sub num-mono">{{ ev.overallScore }}% EcoCrop · {{ ev.isViable ? 'Viable' : 'Con reservas' }}</span>
+                  <span class="ctx-sub num-mono">{{ ev.overallScore }}% EcoCrop · {{ ev.isViable ? i18n.t('Viable') : i18n.t('Con reservas') }}</span>
                 }
               </div>
             } @else {
               <button type="button" class="agro-btn agro-btn--secondary agro-btn--sm" (click)="goToStep.emit('crops')">
-                Elegir cultivo para diagnóstico
+                {{ i18n.t('Elegir cultivo para diagnóstico') }}
               </button>
             }
           </div>
         } @else {
           <div class="ctx-empty">
-            <p>Aún no fijas una parcela. Puedes preguntar dudas generales o elegir un punto en el mapa.</p>
+            <p>{{ i18n.t('Aún no fijas una parcela. Puedes preguntar dudas generales o elegir un punto en el mapa.') }}</p>
             <button type="button" class="agro-btn agro-btn--secondary agro-btn--sm" (click)="goToStep.emit('map')">
-              Ir al mapa
+              {{ i18n.t('Ir al mapa') }}
             </button>
           </div>
         }
@@ -111,12 +111,12 @@
 
       <section class="agro-card ai-side-card">
         <header class="ai-side-card__head">
-          <span class="eyebrow">Observación local</span>
-          <h3 class="ai-side-title">Suelo y prioridades</h3>
+          <span class="eyebrow">{{ i18n.t('Observación local') }}</span>
+          <h3 class="ai-side-title">{{ i18n.t('Suelo y prioridades') }}</h3>
         </header>
 
         <div class="chip-group">
-          <span class="chip-group__label">Estado del suelo</span>
+          <span class="chip-group__label">{{ i18n.t('Estado del suelo') }}</span>
           <div class="chips">
             @for (opt of soilOptions; track opt.value) {
               <button
@@ -126,14 +126,14 @@
                 [attr.aria-pressed]="ai.soilObservations().includes(opt.value)"
                 (click)="ai.toggleSoilObservation(opt.value)"
               >
-                {{ opt.label }}
+                {{ i18n.t(opt.label) }}
               </button>
             }
           </div>
         </div>
 
         <div class="chip-group">
-          <span class="chip-group__label">Prioridades del ciclo</span>
+          <span class="chip-group__label">{{ i18n.t('Prioridades del ciclo') }}</span>
           <div class="chips">
             @for (opt of priorityOptions; track opt.value) {
               <button
@@ -143,21 +143,21 @@
                 [attr.aria-pressed]="ai.priorities().includes(opt.value)"
                 (click)="ai.togglePriority(opt.value)"
               >
-                {{ opt.label }}
+                {{ i18n.t(opt.label) }}
               </button>
             }
           </div>
         </div>
 
         <div class="chip-group">
-          <label for="field-notes-input" class="chip-group__label">Notas de campo (opcional)</label>
+          <label for="field-notes-input" class="chip-group__label">{{ i18n.t('Notas de campo (opcional)') }}</label>
           <textarea
             id="field-notes-input"
             class="agro-input field-notes"
             rows="2"
             [ngModel]="ai.customFieldNotes()"
             (ngModelChange)="ai.setCustomFieldNotes($event)"
-            placeholder="Ej. Riego por goteo, cultivo anterior fue frijol..."
+            [placeholder]="i18n.t('Ej. Riego por goteo, cultivo anterior fue frijol...')"
           ></textarea>
         </div>
       </section>
@@ -167,7 +167,7 @@
   <section
     class="ai-chat"
     [class.agro-card]="mode() === 'panel'"
-    aria-label="Conversación con la Superinteligencia Agrónoma"
+    [attr.aria-label]="i18n.t('Conversación con la Superinteligencia Agrónoma')"
     (dragover)="onDragOver($event)"
     (dragleave)="onDragLeave()"
     (drop)="onDrop($event)"
@@ -181,7 +181,7 @@
         </span>
         <div class="ai-chat__identity-text">
           <div class="ai-chat__title-row">
-            <h3 class="ai-chat__title">Superinteligencia</h3>
+            <h3 class="ai-chat__title">{{ i18n.t('Superinteligencia') }}</h3>
             <span class="model-pill num-mono">{{ ai.defaultModel() }}</span>
           </div>
           <p class="ai-chat__sub" [title]="contextBadge()">{{ contextBadge() }}</p>
@@ -194,8 +194,8 @@
             type="button"
             class="icon-btn"
             (click)="ai.clearConversation()"
-            title="Reiniciar conversación"
-            aria-label="Reiniciar conversación"
+            [title]="i18n.t('Reiniciar conversación')"
+            [attr.aria-label]="i18n.t('Reiniciar conversación')"
           >
             <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M8 6V4h8v2m-1 0v14a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1V6" />
@@ -208,8 +208,8 @@
             type="button"
             class="icon-btn"
             (click)="expandToPanel.emit()"
-            title="Abrir vista completa"
-            aria-label="Abrir vista completa de la Superinteligencia"
+            [title]="i18n.t('Abrir vista completa')"
+            [attr.aria-label]="i18n.t('Abrir vista completa de la Superinteligencia')"
           >
             <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
@@ -219,8 +219,8 @@
             type="button"
             class="icon-btn"
             (click)="closeDrawer.emit()"
-            title="Cerrar panel"
-            aria-label="Cerrar panel de la Superinteligencia"
+            [title]="i18n.t('Cerrar panel')"
+            [attr.aria-label]="i18n.t('Cerrar panel de la Superinteligencia')"
           >
             <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" d="M18 6L6 18M6 6l12 12" />
@@ -256,9 +256,9 @@
             </div>
           } @else {
             @if (entry.message.resolvedCard; as card) {
-              <aside class="msg-service-card" aria-label="Datos consultados y sincronizados en la aplicación">
+              <aside class="msg-service-card" [attr.aria-label]="i18n.t('Datos consultados y sincronizados en la aplicación')">
                 <div class="msg-service-card__top">
-                  <span class="msg-service-card__eyebrow">Sincronizado en la App · NASA POWER · FAO EcoCrop</span>
+                  <span class="msg-service-card__eyebrow">{{ i18n.t('Sincronizado en la App · NASA POWER · FAO EcoCrop') }}</span>
                   @if (card.overallScore !== undefined) {
                     <span
                       class="msg-service-card__score num-mono"
@@ -273,7 +273,7 @@
                 <div class="msg-service-card__main">
                   @if (card.cropName) {
                     <div class="msg-service-card__row">
-                      <span class="msg-service-card__label">Semilla activa:</span>
+                      <span class="msg-service-card__label">{{ i18n.t('Semilla activa:') }}</span>
                       <strong class="capitalize">{{ card.cropName }}</strong>
                       @if (card.scientificName) {
                         <em class="msg-service-card__sci">({{ card.scientificName }})</em>
@@ -282,7 +282,7 @@
                   }
                   @if (card.locationName) {
                     <div class="msg-service-card__row">
-                      <span class="msg-service-card__label">Parcela activa:</span>
+                      <span class="msg-service-card__label">{{ i18n.t('Parcela activa:') }}</span>
                       <strong>{{ card.locationName }}</strong>
                     </div>
                   }
@@ -294,17 +294,17 @@
                       <span>Temp: {{ card.meanTempC }} °C</span>
                     }
                     @if (card.annualRainMm !== undefined) {
-                      <span>Lluvia: {{ card.annualRainMm }} mm/año</span>
+                      <span>{{ i18n.t('Lluvia:') }} {{ card.annualRainMm }} mm/año</span>
                     }
                     @if (card.waterBalance7dMm !== undefined) {
-                      <span>Balance 7d: {{ card.waterBalance7dMm > 0 ? '+' : '' }}{{ card.waterBalance7dMm }} mm</span>
+                      <span>{{ i18n.t('Balance 7d') }}: {{ card.waterBalance7dMm > 0 ? '+' : '' }}{{ card.waterBalance7dMm }} mm</span>
                     }
                   </div>
                 }
 
                 @if (card.rotationSummary) {
                   <p class="msg-service-card__rotation">
-                    <strong>Rotación 3 ciclos:</strong> {{ card.rotationSummary }}
+                    <strong>{{ i18n.t('Rotación 3 ciclos:') }}</strong> {{ card.rotationSummary }}
                   </p>
                 }
 
@@ -315,7 +315,7 @@
                       class="agro-btn agro-btn--primary agro-btn--sm"
                       (click)="goToStep.emit('recommendations')"
                     >
-                      Ver Ficha y Rotación (Paso 03)
+                      {{ i18n.t('Ver Ficha y Rotación (Paso 03)') }}
                     </button>
                   }
                   @if (card.coordinates) {
@@ -324,7 +324,7 @@
                       class="agro-btn agro-btn--secondary agro-btn--sm"
                       (click)="goToStep.emit('map')"
                     >
-                      Ver en Mapa (01)
+                      {{ i18n.t('Ver en Mapa (01)') }}
                     </button>
                   }
                   @if (card.cropName) {
@@ -333,7 +333,7 @@
                       class="agro-btn agro-btn--secondary agro-btn--sm"
                       (click)="goToStep.emit('crops')"
                     >
-                      Ver Cultivo (02)
+                      {{ i18n.t('Ver Cultivo (02)') }}
                     </button>
                   }
                 </div>
@@ -380,7 +380,7 @@
                 <span class="msg__meta num-mono">
                   {{ entry.message.model || ai.defaultModel() }}
                   @if (entry.message.usedFallback) {
-                    · respaldo
+                    · {{ i18n.t('respaldo') }}
                   }
                 </span>
                 <button
@@ -388,7 +388,7 @@
                   class="copy-btn"
                   (click)="copyMessage(entry.message)"
                 >
-                  {{ copiedMessageId() === entry.message.id ? 'Copiado' : 'Copiar' }}
+                  {{ copiedMessageId() === entry.message.id ? i18n.t('Copiado') : i18n.t('Copiar') }}
                 </button>
               </footer>
             }
@@ -397,20 +397,20 @@
       }
 
       @if (ai.isSending()) {
-        <div class="msg msg--model msg--typing" aria-label="La Superinteligencia está analizando">
+        <div class="msg msg--model msg--typing" [attr.aria-label]="i18n.t('La Superinteligencia está analizando')">
           <span class="typing-dots" aria-hidden="true"><span></span><span></span><span></span></span>
-          <span>{{ ai.progressLabel() || 'Analizando datos de parcela y cultivo...' }}</span>
+          <span>{{ i18n.t(ai.progressLabel() || 'Analizando datos de parcela y cultivo...') }}</span>
         </div>
       }
     </div>
 
     @if (isDragOver()) {
       <div class="drop-overlay" aria-hidden="true">
-        <p>Suelta aquí la foto de tu cultivo o suelo para analizarla</p>
+        <p>{{ i18n.t('Suelta aquí la foto de tu cultivo o suelo para analizarla') }}</p>
       </div>
     }
 
-    <div class="ai-prompts" aria-label="Consultas rápidas sugeridas">
+    <div class="ai-prompts" [attr.aria-label]="i18n.t('Consultas rápidas sugeridas')">
       @for (prompt of quickPrompts(); track prompt) {
         <button
           type="button"
@@ -419,14 +419,14 @@
           [disabled]="ai.isSending()"
           (click)="useQuickPrompt(prompt)"
         >
-          {{ prompt }}
+          {{ i18n.t(prompt) }}
         </button>
       }
     </div>
 
     <form class="ai-composer" (ngSubmit)="onSubmit()">
       @if (attachmentError(); as err) {
-        <p class="agro-alert-error composer-alert" role="alert">{{ err }}</p>
+        <p class="agro-alert-error composer-alert" role="alert">{{ i18n.t(err) }}</p>
       }
 
       @if (pendingImage(); as img) {
@@ -437,7 +437,7 @@
             type="button"
             class="image-pill__remove"
             (click)="clearPendingImage()"
-            aria-label="Quitar imagen adjunta"
+            [attr.aria-label]="i18n.t('Quitar imagen adjunta')"
           >
             <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path stroke-linecap="round" d="M18 6L6 18M6 6l12 12" />
@@ -459,8 +459,8 @@
           class="attach-btn"
           (click)="openFilePicker()"
           [disabled]="isProcessingImage() || ai.isSending()"
-          title="Adjuntar foto de hoja, plaga o suelo"
-          aria-label="Adjuntar foto de cultivo o suelo"
+          [title]="i18n.t('Adjuntar foto de hoja, plaga o suelo')"
+          [attr.aria-label]="i18n.t('Adjuntar foto de cultivo o suelo')"
         >
           @if (isProcessingImage()) {
             <span class="spinner" aria-hidden="true"></span>
@@ -472,7 +472,7 @@
           }
         </button>
 
-        <label for="agronomist-prompt-{{ mode() }}" class="sr-only">Escribe tu consulta agronómica</label>
+        <label for="agronomist-prompt-{{ mode() }}" class="sr-only">{{ i18n.t('Escribe tu consulta agronómica') }}</label>
         <textarea
           #composerInput
           id="agronomist-prompt-{{ mode() }}"
@@ -492,7 +492,7 @@
           type="submit"
           class="agro-btn agro-btn--primary composer-send"
           [disabled]="ai.isSending() || (!draftText().trim() && !pendingImage())"
-          aria-label="Enviar consulta a la Superinteligencia Agrónoma"
+          [attr.aria-label]="i18n.t('Enviar consulta a la Superinteligencia Agrónoma')"
         >
           @if (ai.isSending()) {
             <span class="spinner" aria-hidden="true"></span>
@@ -501,7 +501,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7Z" />
             </svg>
           }
-          <span class="send-label">Enviar</span>
+          <span class="send-label">{{ i18n.t('Enviar') }}</span>
         </button>
       </div>
     </form>

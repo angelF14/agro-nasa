@@ -17,6 +17,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { Coordinates } from '@models/index';
+import { LanguageService } from '@services/language.service';
 import type * as L from 'leaflet';
 import { catchError, finalize, of } from 'rxjs';
 
@@ -43,6 +44,7 @@ interface NominatimReverseResult {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FarmMap {
+  protected readonly i18n = inject(LanguageService);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly http = inject(HttpClient);
   private readonly destroyRef = inject(DestroyRef);
@@ -80,12 +82,20 @@ export class FarmMap {
 
   private leafletLib: LeafletNamespace | null = null;
   private map: L.Map | null = null;
+  private layerControl: L.Control.Layers | null = null;
+  private osmLayer: L.TileLayer | null = null;
+  private satelliteLayer: L.TileLayer | null = null;
   private selectionMarker: L.CircleMarker | null = null;
   private selectionAreaCircle: L.Circle | null = null;
   private resizeObserver: ResizeObserver | null = null;
   private isDestroyed = false;
 
   constructor() {
+    effect(() => {
+      this.i18n.language();
+      this.refreshLayerControl();
+    });
+
     effect(() => {
       const extCoords = this.externalCoordinates();
       const extName = this.externalLocationName();
@@ -167,6 +177,8 @@ export class FarmMap {
         attribution: 'Tiles &copy; Esri',
       }
     );
+    this.osmLayer = osmLayer;
+    this.satelliteLayer = satelliteLayer;
 
     this.map = leaflet.map(mapEl, {
       center: [start.lat, start.lon],
@@ -174,16 +186,7 @@ export class FarmMap {
       layers: [osmLayer],
     });
 
-    leaflet.control
-      .layers(
-        {
-          'Mapa Regional (OSM)': osmLayer,
-          'Vista Satelital (Esri)': satelliteLayer,
-        },
-        {},
-        { position: 'topright' }
-      )
-      .addTo(this.map);
+    this.refreshLayerControl();
 
     if (typeof ResizeObserver !== 'undefined') {
       this.resizeObserver = new ResizeObserver(() => {
@@ -208,6 +211,23 @@ export class FarmMap {
     }
   }
 
+  private refreshLayerControl(): void {
+    if (!this.map || !this.leafletLib || !this.osmLayer || !this.satelliteLayer) {
+      return;
+    }
+
+    this.layerControl?.remove();
+    this.layerControl = this.leafletLib.control.layers(
+      {
+        [this.i18n.t('Mapa Regional (OSM)')]: this.osmLayer,
+        [this.i18n.t('Vista Satelital (Esri)')]: this.satelliteLayer,
+      },
+      {},
+      { position: 'topright' }
+    );
+    this.layerControl.addTo(this.map);
+  }
+
   protected onSearchSubmit(): void {
     const query = this.searchQuery().trim();
     if (!query) {
@@ -221,7 +241,7 @@ export class FarmMap {
 
     this.http
       .get<NominatimSearchResult[]>(url, {
-        headers: { 'Accept-Language': 'es' },
+        headers: { 'Accept-Language': this.i18n.language() },
       })
       .pipe(
         catchError(() => {
@@ -355,7 +375,7 @@ export class FarmMap {
 
     this.http
       .get<NominatimReverseResult>(url, {
-        headers: { 'Accept-Language': 'es' },
+        headers: { 'Accept-Language': this.i18n.language() },
       })
       .pipe(catchError(() => of(null)))
       .subscribe((res) => {
