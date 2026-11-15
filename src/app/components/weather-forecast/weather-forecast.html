@@ -401,23 +401,8 @@
           </div>
         </article>
 
-        <!-- Resumen y lista de días -->
+        <!-- Lista de días -->
         <div class="forecast-side">
-          <div class="forecast-summary">
-            <div class="summary-tile">
-              <span>Temp. media máx</span>
-              <strong class="num-mono">{{ forecastSummary().avgMax | number:'1.1-1' }}°C</strong>
-            </div>
-            <div class="summary-tile summary-tile--rain">
-              <span>Lluvia acumulada</span>
-              <strong class="num-mono">{{ forecastSummary().totalPrecipitation | number:'1.1-1' }} mm</strong>
-            </div>
-            <div class="summary-tile">
-              <span>ET₀ promedio</span>
-              <strong class="num-mono">{{ forecastSummary().avgEt0 | number:'1.2-2' }} mm</strong>
-            </div>
-          </div>
-
           <div class="day-list-head" aria-hidden="true">
             <span>Día y condición</span>
             <span>Lluvia / Prob.</span>

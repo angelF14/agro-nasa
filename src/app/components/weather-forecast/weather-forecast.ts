@@ -114,15 +114,11 @@ export class WeatherForecastComponent implements OnChanges {
 
   readonly forecastSummary = computed(() => {
     const days = this.visibleDays().map(({ day }) => day);
-    const count = days.length || 1;
     const maxPrecipitation = Math.max(1, ...days.map((d) => d.precipitationMm));
     const minTemp = days.length ? Math.min(...days.map((d) => d.temperatureMin)) : 0;
     const maxTemp = days.length ? Math.max(...days.map((d) => d.temperatureMax)) : 1;
 
     return {
-      avgMax: days.reduce((sum, d) => sum + d.temperatureMax, 0) / count,
-      totalPrecipitation: days.reduce((sum, d) => sum + d.precipitationMm, 0),
-      avgEt0: days.reduce((sum, d) => sum + d.et0Mm, 0) / count,
       maxPrecipitation,
       minTemp,
       tempSpan: Math.max(1, maxTemp - minTemp),
