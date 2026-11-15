@@ -3,9 +3,9 @@
     <div class="eval-section">
       <header class="eval-header">
         <div>
-          <span class="eval-kicker">Compatibilidad Ecoclimática</span>
+          <span class="eval-kicker">{{ i18n.t('Compatibilidad Ecoclimática') }}</span>
           <h2 id="rotation-section-title">
-            Diagnóstico de Aptitud — {{ primaryName(evalResult.crop) }}
+            {{ i18n.t('Diagnóstico de Aptitud —') }} {{ primaryName(evalResult.crop) }}
             <span class="eval-sci">({{ evalResult.crop.scientificName }})</span>
           </h2>
           <p class="eval-summary">{{ evalResult.summary }}</p>
@@ -23,18 +23,18 @@
               <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
               </svg>
-              Óptimo
+              {{ i18n.t('Óptimo') }}
             } @else if (evalResult.isViable) {
               <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
                 <circle cx="12" cy="12" r="9" />
                 <path stroke-linecap="round" d="M12 8v4M12 16h.01" />
               </svg>
-              Viable
+              {{ i18n.t('Viable') }}
             } @else {
               <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
                 <path stroke-linecap="round" d="M18 6L6 18M6 6l12 12" />
               </svg>
-              No recomendado
+              {{ i18n.t('No recomendado') }}
             }
           </span>
         </div>
@@ -44,7 +44,7 @@
         @for (check of evalResult.checks; track check.label) {
           <div class="agro-metric check-item" [attr.data-status]="check.status">
             <div class="check-item__top">
-              <strong>{{ check.label }}</strong>
+              <strong>{{ i18n.t(check.label) }}</strong>
               @if (check.score !== null) {
                 <span class="check-item__score num-mono">{{ check.score }}%</span>
               }
@@ -55,8 +55,8 @@
               </div>
             }
             <div class="check-item__values">
-              <span><strong>NASA POWER:</strong> <span class="num-mono">{{ check.observed }}</span></span>
-              <span><strong>Requerido EcoCrop:</strong> <span class="num-mono">{{ check.expected }}</span></span>
+              <span><strong>{{ i18n.t('NASA POWER:') }}</strong> <span class="num-mono">{{ check.observed }}</span></span>
+              <span><strong>{{ i18n.t('Requerido EcoCrop:') }}</strong> <span class="num-mono">{{ i18n.t(check.expected) }}</span></span>
             </div>
           </div>
         }
@@ -66,8 +66,8 @@
 
   @if (rotationPlan(); as plan) {
     @if (plan.alerts.length > 0) {
-      <div class="alerts-section" role="region" aria-label="Alertas climáticas y de manejo">
-        <h3>Alertas Climáticas y de Manejo</h3>
+      <div class="alerts-section" role="region" [attr.aria-label]="i18n.t('Alertas climáticas y de manejo')">
+        <h3>{{ i18n.t('Alertas Climáticas y de Manejo') }}</h3>
         <div class="alerts-list">
           @for (alert of plan.alerts; track alert.id) {
             <div class="agro-alert-item" [attr.data-severity]="alert.severity">
@@ -75,7 +75,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
               </svg>
               <div>
-                <strong>{{ alert.title }}:</strong> {{ alert.message }}
+                <strong>{{ i18n.t(alert.title) }}:</strong> {{ i18n.t(alert.message) }}
               </div>
             </div>
           }
@@ -85,16 +85,16 @@
 
     <div class="timeline-section">
       <header class="timeline-header">
-        <h2 class="agro-title">Plan de Rotación Recomendado (Ciclo 1 → Ciclo 2 → Ciclo 3)</h2>
-        <p class="agro-subtitle">{{ plan.soilHealthImpactSummary }}</p>
+        <h2 class="agro-title">{{ i18n.t('Plan de Rotación Recomendado (Ciclo 1 → Ciclo 2 → Ciclo 3)') }}</h2>
+        <p class="agro-subtitle">{{ i18n.t(plan.soilHealthImpactSummary) }}</p>
       </header>
 
       <div class="cycles-grid">
         @for (cycle of plan.cycles; track cycle.cycleNumber) {
           <article class="cycle-card">
             <div class="cycle-card__header">
-              <span class="cycle-step">Ciclo {{ cycle.cycleNumber }}</span>
-              <span class="cycle-score num-mono">{{ cycle.compatibilityScore }}% aptitud</span>
+              <span class="cycle-step">{{ i18n.t('Ciclo') }} {{ cycle.cycleNumber }}</span>
+              <span class="cycle-score num-mono">{{ cycle.compatibilityScore }}% {{ i18n.t('aptitud') }}</span>
             </div>
 
             <h3 class="cycle-crop-name">{{ primaryName(cycle.crop) }}</h3>
@@ -107,7 +107,7 @@
 
             <ul class="cycle-reasons">
               @for (reason of cycle.reasons; track reason) {
-                <li>{{ reason }}</li>
+                <li>{{ i18n.t(reason) }}</li>
               }
             </ul>
 
@@ -118,7 +118,7 @@
                     <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.74V17h8v-2.26A7 7 0 0 0 12 2z" />
                     </svg>
-                    <span>{{ note }}</span>
+                    <span>{{ i18n.t(note) }}</span>
                   </p>
                 }
               </div>
@@ -135,10 +135,12 @@
         </svg>
       </div>
       <div>
-        <h2 id="rotation-section-title">Recomendación de Rotación y Aptitud</h2>
+        <h2 id="rotation-section-title">{{ i18n.t('Recomendación de Rotación y Aptitud') }}</h2>
         <p>
-          Selecciona primero un <strong>lugar en el mapa</strong> (para obtener datos reales de NASA POWER)
-          y un <strong>cultivo del catálogo</strong> para generar el diagnóstico de aptitud y el plan de rotación de 3 ciclos.
+          {{ i18n.t('Selecciona primero un') }} <strong>{{ i18n.t('lugar en el mapa') }}</strong>
+          {{ i18n.t('(para obtener datos reales de NASA POWER)') }} {{ i18n.t('y un') }}
+          <strong>{{ i18n.t('cultivo del catálogo') }}</strong>
+          {{ i18n.t('para generar el diagnóstico de aptitud y el plan de rotación de 3 ciclos.') }}
         </p>
       </div>
     </div>

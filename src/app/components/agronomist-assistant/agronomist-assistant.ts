@@ -20,6 +20,7 @@ import {
   SoilObservation,
 } from '@models/index';
 import { AgronomistAiService } from '@services/agronomist-ai.service';
+import { LanguageService } from '@services/language.service';
 import { compressAgronomistImage, CompressedAgronomistImage } from '@utils/image-compress.utils';
 import { MarkdownBlock, parseMarkdownBlocks } from '@utils/markdown-blocks.utils';
 
@@ -56,7 +57,15 @@ const PRIORITY_OPTIONS: OptionChip<FarmerPriority>[] = [
   },
 })
 export class AgronomistAssistantComponent {
+  protected readonly i18n = inject(LanguageService);
   protected readonly ai = inject(AgronomistAiService);
+  private readonly englishWelcomeMessage = [
+    'Hello, I’m **AgroNasa Superintelligence**, your agronomic assistant connected live to **NASA POWER**, **Open-Meteo**, and **FAO EcoCrop**.',
+    '',
+    '- **Mention a place and a crop** (e.g. *"I want to grow corn in Comayagua, Honduras"* or *"Which crop do you recommend in Sinaloa?"*) and I’ll automatically look up satellite climate, forecasts, and a rotation plan.',
+    '- Ask me about climate suitability, irrigation, water balance (ET₀), or your 3-cycle rotation sequence.',
+    '- Attach a photo of **leaves, stems, pests, or soil** for a preliminary visual assessment.',
+  ].join('\n');
   private readonly platformId = inject(PLATFORM_ID);
   private readonly isBrowser = isPlatformBrowser(this.platformId);
 
@@ -90,22 +99,22 @@ export class AgronomistAssistantComponent {
     const parts: string[] = [];
 
     if (ctx.coordinates) {
-      const location = ctx.locationName?.split(',')[0]?.trim() || 'Parcela activa';
+      const location = ctx.locationName?.split(',')[0]?.trim() || this.i18n.t('Parcela activa');
       parts.push(ctx.selectedCrop ? `${location} · ${ctx.selectedCrop.commonName}` : location);
     } else {
-      parts.push('Sin parcela');
+      parts.push(this.i18n.t('Sin parcela'));
     }
 
     const soilCount = this.ai.soilObservations().length;
     const priorityCount = this.ai.priorities().length;
     if (soilCount > 0) {
-      parts.push(`${soilCount} suelo`);
+      parts.push(`${soilCount} ${this.i18n.language() === 'en' ? 'soil' : 'suelo'}`);
     }
     if (priorityCount > 0) {
-      parts.push(`${priorityCount} prior.`);
+      parts.push(`${priorityCount} ${this.i18n.language() === 'en' ? 'priorities' : 'prior.'}`);
     }
     if (this.ai.statusChecked() && !this.ai.hasActiveApiKey()) {
-      parts.push('Falta API Key');
+      parts.push(this.i18n.t('Falta API Key'));
     }
 
     return parts.join(' · ');
@@ -113,12 +122,22 @@ export class AgronomistAssistantComponent {
 
   protected readonly parsedMessages = computed<
     { message: AgronomistMessage; blocks: MarkdownBlock[] }[]
-  >(() =>
-    this.ai.messages().map((message) => ({
-      message,
-      blocks: message.role === 'model' ? parseMarkdownBlocks(message.text) : [],
-    }))
-  );
+  >(() => {
+    const language = this.i18n.language();
+    return this.ai.messages().map((message) => {
+      const text =
+        language === 'en' && (message.id === 'welcome' || message.id.startsWith('welcome-'))
+          ? this.englishWelcomeMessage
+          : language === 'en' && message.isError
+            ? this.i18n.t(message.text)
+            : message.text;
+      const localizedMessage = text === message.text ? message : { ...message, text };
+      return {
+        message: localizedMessage,
+        blocks: message.role === 'model' ? parseMarkdownBlocks(text) : [],
+      };
+    });
+  });
 
   protected readonly quickPrompts = computed<string[]>(() => {
     const ctx = this.context();
@@ -160,7 +179,7 @@ export class AgronomistAssistantComponent {
   protected readonly contextBadge = computed<string>(() => {
     const ctx = this.context();
     if (!ctx.coordinates) {
-      return 'Consulta general (sin parcela fijada)';
+      return this.i18n.t('Consulta general (sin parcela fijada)');
     }
     const location = ctx.locationName?.split(',')[0]?.trim() || `${ctx.coordinates.lat}, ${ctx.coordinates.lon}`;
     if (ctx.selectedCrop && ctx.cropEvaluation) {

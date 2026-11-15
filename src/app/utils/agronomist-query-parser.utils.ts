@@ -392,6 +392,106 @@ export function normalizeSearchText(value: string): string {
     .trim();
 }
 
+const ENGLISH_CROP_NAMES: Record<string, string> = {
+  'maíz dulce': 'sweet corn',
+  maíz: 'corn',
+  frijol: 'common bean',
+  papa: 'potato',
+  tomate: 'tomato',
+  café: 'coffee',
+  cacao: 'cocoa',
+  trigo: 'wheat',
+  arroz: 'rice',
+  sorgo: 'sorghum',
+  soya: 'soybean',
+  cebada: 'barley',
+  avena: 'oat',
+  garbanzo: 'chickpea',
+  lenteja: 'lentil',
+  haba: 'fava bean',
+  arveja: 'pea',
+  alfalfa: 'alfalfa',
+  aguacate: 'avocado',
+  'chile / pimiento': 'pepper',
+  'plátano / banano': 'banana',
+  yuca: 'cassava',
+  'caña de azúcar': 'sugarcane',
+  algodón: 'cotton',
+  'maní / cacahuate': 'peanut',
+  'ajonjolí / sésamo': 'sesame',
+  cebolla: 'onion',
+  ajo: 'garlic',
+  zanahoria: 'carrot',
+  lechuga: 'lettuce',
+  'repollo / col': 'cabbage',
+  brócoli: 'broccoli',
+  coliflor: 'cauliflower',
+  'calabaza / ayote': 'squash',
+  pepino: 'cucumber',
+  melón: 'melon',
+  sandía: 'watermelon',
+  fresa: 'strawberry',
+  piña: 'pineapple',
+  mango: 'mango',
+  papaya: 'papaya',
+  limón: 'lemon',
+  naranja: 'orange',
+  mandarina: 'mandarin',
+  guayaba: 'guava',
+  maracuyá: 'passion fruit',
+  guanábana: 'soursop',
+  coco: 'coconut',
+  espinaca: 'spinach',
+  'remolacha / betabel': 'beet',
+  berenjena: 'eggplant',
+  espárrago: 'asparagus',
+  apio: 'celery',
+  cilantro: 'cilantro',
+  quinoa: 'quinoa',
+  amaranto: 'amaranth',
+  okra: 'okra',
+};
+
+export function getLocalizedCropName(crop: Crop, language: 'en' | 'es'): string {
+  const commonNames = crop.commonNames ?? [];
+  const spanishAlias = SPANISH_CROP_ALIASES.find((alias) =>
+    alias.scientificTargets.some(
+      (scientificName) => scientificName.toLowerCase() === crop.scientificName.toLowerCase()
+    )
+  )?.spanishLabel;
+
+  if (spanishAlias) {
+    const normalizedAlias = normalizeSearchText(spanishAlias);
+    const matchingSpanishName = commonNames.find(
+      (name) => normalizeSearchText(name) === normalizedAlias
+    );
+    if (language === 'es' && matchingSpanishName) {
+      return matchingSpanishName;
+    }
+
+    if (language === 'en') {
+      const preferredEnglishName = ENGLISH_CROP_NAMES[spanishAlias];
+      const matchingEnglishName = preferredEnglishName
+        ? commonNames.find(
+            (name) => normalizeSearchText(name) === normalizeSearchText(preferredEnglishName)
+          )
+        : undefined;
+      if (matchingEnglishName) {
+        return matchingEnglishName;
+      }
+
+      const otherCommonName = commonNames.find(
+        (name) => normalizeSearchText(name) !== normalizedAlias
+      );
+      if (otherCommonName) {
+        return otherCommonName;
+      }
+    }
+  }
+
+  return commonNames[0] || crop.scientificName;
+}
+
 /**
  * Enriches FAO EcoCrop catalog entries so Spanish common names appear first in `commonNames`.
  */

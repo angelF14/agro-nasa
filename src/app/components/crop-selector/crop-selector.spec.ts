@@ -94,13 +94,13 @@ describe('CropSelector pagination', () => {
       ).map((element) => element.textContent?.trim() ?? '');
 
     expect(cropNames().length).toBe(9);
-    clickButton('Siguiente');
+    clickButton('Next');
     expect(fixture.nativeElement.textContent).toContain('2 / 3');
     expect(cropNames()[0]).toBe('Crop 10');
 
-    clickButton('Recomendados');
+    clickButton('Recommended');
     expect(fixture.nativeElement.textContent).toContain('1 / 3');
-    clickButton('Siguiente');
+    clickButton('Next');
     expect(fixture.nativeElement.textContent).toContain('2 / 3');
 
     const strictToggle = fixture.nativeElement.querySelector(
@@ -109,7 +109,7 @@ describe('CropSelector pagination', () => {
     strictToggle.click();
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain('Cultivos recomendados (5)');
+    expect(fixture.nativeElement.textContent).toContain('Recommended crops (5)');
     expect(cropNames()).toEqual(['Crop 1', 'Crop 2', 'Crop 3', 'Crop 4', 'Crop 5']);
     expect(fixture.nativeElement.textContent).toContain('1 / 1');
     expect(
