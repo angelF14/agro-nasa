@@ -75,6 +75,38 @@ export class WeatherForecastComponent implements OnChanges {
     return days.find(({ day }) => day.date === date) ?? days[0] ?? null;
   });
 
+  /** Encabezados del calendario (semana inicia en lunes). */
+  readonly calendarWeekdays = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+
+  /**
+   * Celdas del calendario móvil: cubre del primer al último día visible,
+   * con huecos iniciales para alinear al día de la semana.
+   */
+  readonly calendarCells = computed(() => {
+    const days = this.visibleDays();
+    if (!days.length) return [];
+
+    const byDate = new Map(days.map((item) => [item.day.date, item]));
+    const toUtc = (date: string) => {
+      const [y, m, d] = date.split('-').map(Number);
+      return new Date(Date.UTC(y, m - 1, d));
+    };
+
+    const start = toUtc(days[0].day.date);
+    const end = toUtc(days[days.length - 1].day.date);
+    const offset = (start.getUTCDay() + 6) % 7;
+
+    const cells: { key: string; label: string; item: ForecastDayView | null }[] = [];
+    for (let i = 0; i < offset; i++) {
+      cells.push({ key: `pad-${i}`, label: '', item: null });
+    }
+    for (let d = new Date(start); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
+      const key = d.toISOString().slice(0, 10);
+      cells.push({ key, label: String(d.getUTCDate()), item: byDate.get(key) ?? null });
+    }
+    return cells;
+  });
+
   readonly selectedPosition = computed(() => {
     const selected = this.selectedDay();
     return selected ? this.visibleDays().indexOf(selected) : -1;

@@ -91,8 +91,9 @@
 .day-list-head { padding: 0 1rem; font-size: 0.66rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-muted); }
 .day-list-head span:nth-child(2), .day-list-head span:nth-child(3) { text-align: center; }
 .day-list-head span:last-child { text-align: right; }
-.day-list { display: flex; flex-direction: column; gap: 0.5rem; max-height: 470px; margin: 0; padding: 2px 4px 2px 0; list-style: none; overflow-y: auto; scrollbar-width: thin; }
-.day-row { padding: 0.7rem 1rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); cursor: pointer; transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s, transform 0.3s var(--spring); }
+/* Altura de fila fija para que se vean exactamente 5 filas; el resto con scroll */
+.day-list { --row-h: 4.5rem; --row-gap: 0.5rem; display: flex; flex-direction: column; gap: var(--row-gap); max-height: calc(5 * var(--row-h) + 4 * var(--row-gap) + 4px); margin: 0; padding: 2px 4px 2px 0; list-style: none; overflow-y: auto; scrollbar-width: thin; }
+.day-row { flex-shrink: 0; height: var(--row-h); padding: 0.7rem 1rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); cursor: pointer; transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s, transform 0.3s var(--spring); }
 .day-row:hover { border-color: var(--line-strong); box-shadow: var(--shadow); }
 .day-row:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 .day-row.extended { border-style: dashed; }
@@ -129,6 +130,25 @@
 .forecast-disclaimer, .last-update { margin: 0; font-size: 0.78rem; color: var(--amber-text); }
 .last-update { margin-top: 0.35rem; font-weight: 600; }
 
+/* Mobile calendar (hidden on desktop) */
+.day-calendar { display: none; padding: 0.75rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.day-calendar__weekdays, .day-calendar__grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.3rem; }
+.day-calendar__weekdays { margin-bottom: 0.4rem; font-size: 0.68rem; font-weight: 700; color: var(--text-muted); text-align: center; }
+.cal-cell { position: relative; display: flex; flex-direction: column; align-items: center; gap: 0.1rem; min-width: 0; padding: 0.35rem 0.1rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--heading); font: inherit; cursor: pointer; transition: background-color 0.2s, border-color 0.2s, transform 0.3s var(--spring); }
+.cal-cell:active { transform: scale(0.94); }
+.cal-cell.extended { border-style: dashed; }
+.cal-cell.today { border-color: var(--ink); }
+.cal-cell.selected { border-color: var(--ink); background: var(--ink); color: #fff; }
+.cal-cell--empty { border-color: transparent; background: transparent; color: var(--line-strong); font-size: 0.78rem; justify-content: center; cursor: default; }
+.cal-cell__num { font-size: 0.78rem; font-weight: 700; }
+.cal-cell__icon { width: 1.15rem; height: 1.15rem; color: var(--ink); }
+.cal-cell__icon svg { width: 100%; height: 100%; }
+.cal-cell__icon[data-kind='sun'], .cal-cell__icon[data-kind='partly-cloudy'] { color: #e0a120; }
+.cal-cell__icon[data-kind='rain'], .cal-cell__icon[data-kind='drizzle'], .cal-cell__icon[data-kind='storm'] { color: var(--sky-text); }
+.cal-cell.selected .cal-cell__icon { color: #fff; }
+.cal-cell__temp { font-size: 0.68rem; font-weight: 600; }
+.cal-cell__rain { position: absolute; top: 4px; right: 4px; width: 5px; height: 5px; border-radius: 50%; background: #2f86e0; }
+
 @keyframes float { 50% { translate: 0 -4px; } }
 @keyframes pop { from { opacity: 0; transform: translateY(8px) scale(0.98); } }
 @media (max-width: 900px) { .forecast-grid, .current-details { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -148,9 +168,10 @@
   .forecast-controls { width: 100%; justify-content: space-between; }
   .forecast-summary { grid-template-columns: 1fr 1fr; }
   .forecast-summary .summary-tile:last-child { grid-column: 1 / -1; }
-  .day-list-head { display: none; }
+  .day-list-head, .day-list { display: none; }
+  .day-calendar { display: block; }
   .day-list { max-height: none; overflow: visible; padding: 0; }
-  .day-row { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'main range' 'rain et0'; row-gap: 0.55rem; padding: 0.7rem 0.8rem; }
+  .day-row { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'main range' 'rain et0'; row-gap: 0.55rem; height: auto; padding: 0.7rem 0.8rem; }
   .day-row__main { grid-area: main; }
   .day-row__range { grid-area: range; }
   .day-row__rain { grid-area: rain; justify-content: flex-start; }

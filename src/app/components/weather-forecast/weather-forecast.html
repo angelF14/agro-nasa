@@ -481,6 +481,43 @@
               </li>
             }
           </ul>
+
+          <!-- Vista calendario (solo teléfono) -->
+          <div class="day-calendar" role="grid" aria-label="Calendario del pronóstico">
+            <div class="day-calendar__weekdays" role="row">
+              @for (wd of calendarWeekdays; track $index) {
+                <span role="columnheader">{{ wd }}</span>
+              }
+            </div>
+            <div class="day-calendar__grid" role="row">
+              @for (cell of calendarCells(); track cell.key) {
+                @if (cell.item; as item) {
+                  <button
+                    type="button"
+                    role="gridcell"
+                    class="cal-cell"
+                    [class.selected]="item === sel"
+                    [class.today]="item.index === 0"
+                    [class.extended]="item.index >= 7"
+                    [attr.aria-selected]="item === sel"
+                    [attr.aria-label]="formatDate(item.day.date)"
+                    (click)="selectDay(item.day.date)"
+                  >
+                    <span class="cal-cell__num">{{ cell.label }}</span>
+                    <span class="cal-cell__icon" [attr.data-kind]="getWeatherKind(item.day.weatherCode)">
+                      <ng-container *ngTemplateOutlet="weatherSvg; context: { kind: getWeatherKind(item.day.weatherCode) }" />
+                    </span>
+                    <span class="cal-cell__temp num-mono">{{ item.day.temperatureMax | number:'1.0-0' }}°</span>
+                    @if (item.day.precipitationMm >= 1) {
+                      <span class="cal-cell__rain" aria-hidden="true"></span>
+                    }
+                  </button>
+                } @else {
+                  <span class="cal-cell cal-cell--empty" role="gridcell">{{ cell.label }}</span>
+                }
+              }
+            </div>
+          </div>
         </div>
       </div>
     } @else {
