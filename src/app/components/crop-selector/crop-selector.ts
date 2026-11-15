@@ -45,7 +45,9 @@ export class CropSelector {
   protected readonly selectedCategory = signal<string>('');
   protected readonly isLoading = signal<boolean>(false);
   protected readonly selectedCrop = signal<Crop | null>(null);
-  protected readonly pageSize = signal<number>(24);
+  protected readonly currentPage = signal<number>(1);
+  /** 3 filas × 3 columnas por página */
+  protected readonly pageSize = signal<number>(9);
 
   protected readonly allCrops = this.rotationEngine.catalogSignal;
 
@@ -68,8 +70,16 @@ export class CropSelector {
     });
   });
 
+  protected readonly totalPages = computed(() =>
+    Math.max(1, Math.ceil(this.filteredCrops().length / this.pageSize()))
+  );
+
+  protected readonly page = computed(() => Math.min(this.currentPage(), this.totalPages()));
+
   protected readonly visibleCrops = computed(() => {
-    return this.filteredCrops().slice(0, this.pageSize());
+    const size = this.pageSize();
+    const start = (this.page() - 1) * size;
+    return this.filteredCrops().slice(start, start + size);
   });
 
   constructor() {
@@ -85,18 +95,18 @@ export class CropSelector {
 
   protected onSearchChange(value: string): void {
     this.searchQuery.set(value);
-    this.pageSize.set(24);
+    this.currentPage.set(1);
   }
 
   protected onCategoryChange(value: string): void {
     this.selectedCategory.set(value);
-    this.pageSize.set(24);
+    this.currentPage.set(1);
   }
 
   protected clearFilters(): void {
     this.searchQuery.set('');
     this.selectedCategory.set('');
-    this.pageSize.set(24);
+    this.currentPage.set(1);
   }
 
   protected selectCrop(crop: Crop): void {
@@ -104,8 +114,8 @@ export class CropSelector {
     this.cropChange.emit(crop);
   }
 
-  protected showMore(): void {
-    this.pageSize.update((curr) => curr + 24);
+  protected goToPage(page: number): void {
+    this.currentPage.set(Math.min(Math.max(1, page), this.totalPages()));
   }
 
   protected primaryName(crop: Crop): string {

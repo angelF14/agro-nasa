@@ -126,12 +126,16 @@
       }
     </div>
 
-    @if (visibleCrops().length < filteredCrops().length) {
-      <div class="crop-more">
-        <button type="button" class="btn-more" (click)="showMore()">
-          Mostrar más cultivos ({{ visibleCrops().length }} de {{ filteredCrops().length }})
+    @if (totalPages() > 1) {
+      <nav class="list-pagination" aria-label="Paginación de cultivos">
+        <button type="button" class="btn-more" (click)="goToPage(page() - 1)" [disabled]="page() === 1" aria-label="Página anterior">
+          ‹ Anterior
         </button>
-      </div>
+        <span class="list-pagination__info num-mono" aria-live="polite">{{ page() }} / {{ totalPages() }}</span>
+        <button type="button" class="btn-more" (click)="goToPage(page() + 1)" [disabled]="page() === totalPages()" aria-label="Página siguiente">
+          Siguiente ›
+        </button>
+      </nav>
     }
   }
 </section>
