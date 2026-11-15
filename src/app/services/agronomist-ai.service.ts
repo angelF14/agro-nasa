@@ -1,6 +1,6 @@
 import { isPlatformBrowser } from '@angular/common';
-import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { computed, inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
 import {
   AgronomistChatMessageDto,
   AgronomistChatRequest,
@@ -17,6 +17,7 @@ import {
   SoilObservation,
   WeatherForecast,
 } from '@models/index';
+import { detectQueryLanguage } from '@utils/agronomist-query-parser.utils';
 import { catchError, finalize, firstValueFrom, of, tap } from 'rxjs';
 import { AgronomistQueryResolverService } from './agronomist-query-resolver.service';
 
@@ -37,8 +38,6 @@ export interface DashboardStateBridge {
   }) => void;
 }
 
-const SESSION_KEY_STORAGE = 'agronasa.gemini_api_key';
-
 const WELCOME_MESSAGE: AgronomistMessage = {
   id: 'welcome',
   role: 'model',
@@ -46,8 +45,8 @@ const WELCOME_MESSAGE: AgronomistMessage = {
   text: [
     'Hola, soy **AgroNasa Superinteligencia**, tu superinteligencia agronómica conectada en vivo con **NASA POWER**, **Open-Meteo** y **FAO EcoCrop**.',
     '',
-    '- **Menciona un lugar y una semilla** (ej. *"Quiero sembrar maíz en Comayagua, Honduras"* o *"¿Qué semilla recomiendas en Sinaloa?"*) y buscaré automáticamente el clima satelital, pronóstico y plan de rotación.',
-    '- Pregúntame sobre aptitud climática, riego, balance hídrico (ET₀) o tu secuencia de rotación de 3 ciclos.',
+    '- **Menciona un lugar y una semilla** en **español o inglés** (ej. *"Quiero sembrar maíz en Comayagua, Honduras"* o *"I want to plant corn in Iowa"*) y buscaré automáticamente el clima satelital, pronóstico y plan de rotación.',
+    '- Pregúntame en **español o inglés** sobre aptitud climática, riego, balance hídrico (ET₀) o tu secuencia de rotación de 3 ciclos.',
     '- Adjunta una foto de **hojas, tallos, plagas o suelo** para obtener un diagnóstico visual preliminar.',
   ].join('\n'),
 };
@@ -73,15 +72,10 @@ export class AgronomistAiService {
   readonly statusChecked = signal<boolean>(false);
   readonly defaultModel = signal<string>('gemini-3.6-flash');
   readonly fallbackModel = signal<string>('gemini-3.5-flash-lite');
-  readonly customApiKey = signal<string>(this.readStoredApiKey());
 
   readonly soilObservations = signal<SoilObservation[]>([]);
   readonly priorities = signal<FarmerPriority[]>(['soil-regeneration', 'water-conservation']);
   readonly customFieldNotes = signal<string>('');
-
-  readonly hasActiveApiKey = computed(
-    () => this.serverConfigured() || this.customApiKey().trim().length > 0
-  );
 
   registerDashboardBridge(bridge: DashboardStateBridge): void {
     this.dashboardBridge = bridge;
@@ -127,23 +121,6 @@ export class AgronomistAiService {
     }
   }
 
-  setCustomApiKey(rawKey: string): void {
-    const trimmed = rawKey.trim();
-    this.customApiKey.set(trimmed);
-    if (!this.isBrowser) {
-      return;
-    }
-    try {
-      if (trimmed) {
-        sessionStorage.setItem(SESSION_KEY_STORAGE, trimmed);
-      } else {
-        sessionStorage.removeItem(SESSION_KEY_STORAGE);
-      }
-    } catch {
-      // Ignore storage access failures in private browsing contexts.
-    }
-  }
-
   toggleSoilObservation(observation: SoilObservation): void {
     this.soilObservations.update((curr) =>
       curr.includes(observation)
@@ -182,10 +159,26 @@ export class AgronomistAiService {
       return;
     }
 
+    const currentHistory = this.messages().filter(
+      (m) => !m.isError && m.id !== 'welcome' && !m.id.startsWith('welcome-')
+    );
+    let historyLanguage: 'es' | 'en' = 'es';
+    for (let i = 0; i < currentHistory.length; i++) {
+      const prev = currentHistory[i];
+      if (prev.role === 'user' && prev.text) {
+        historyLanguage = detectQueryLanguage(prev.text, historyLanguage);
+      }
+    }
+    const activeLanguage = detectQueryLanguage(text, historyLanguage);
+
     const userMessage: AgronomistMessage = {
       id: `user-${Date.now()}`,
       role: 'user',
-      text: text || 'Analiza esta imagen agrícola considerando el contexto de mi parcela.',
+      text:
+        text ||
+        (activeLanguage === 'en'
+          ? 'Analyze this agricultural image considering my parcel context.'
+          : 'Analiza esta imagen agrícola considerando el contexto de mi parcela.'),
       createdAt: new Date().toISOString(),
       imagePreview: attachment
         ? {
@@ -196,7 +189,6 @@ export class AgronomistAiService {
         : undefined,
     };
 
-    const currentHistory = this.messages().filter((m) => !m.isError && m.id !== 'welcome');
     const dtoMessages: AgronomistChatMessageDto[] = [
       ...currentHistory.map((m) => ({
         role: m.role,
@@ -217,7 +209,9 @@ export class AgronomistAiService {
 
     this.messages.update((curr) => [...curr, userMessage]);
     this.isSending.set(true);
-    this.progressLabel.set('Analizando consulta...');
+    this.progressLabel.set(
+      activeLanguage === 'en' ? 'Analyzing query...' : 'Analizando consulta...'
+    );
 
     let effectiveContext = context;
     let resolvedCard: AgronomistResolvedServiceCard | undefined;
@@ -253,23 +247,21 @@ export class AgronomistAiService {
       }
     }
 
-    this.progressLabel.set('Generando recomendación con Superinteligencia Gemini...');
+    this.progressLabel.set(
+      activeLanguage === 'en'
+        ? 'Generating recommendation with AgroNasa Superintelligence...'
+        : 'Generando recomendación con Superinteligencia Gemini...'
+    );
 
     const requestBody: AgronomistChatRequest = {
       messages: dtoMessages,
       context: effectiveContext,
     };
 
-    let headers = new HttpHeaders();
-    const key = this.customApiKey().trim();
-    if (key) {
-      headers = headers.set('x-gemini-api-key', key);
-    }
-
     try {
       const response = await firstValueFrom(
         this.http
-          .post<AgronomistChatResponse>('/api/agronomist/chat', requestBody, { headers })
+          .post<AgronomistChatResponse>('/api/agronomist/chat', requestBody)
           .pipe(
             finalize(() => {
               this.isSending.set(false);
@@ -293,7 +285,8 @@ export class AgronomistAiService {
               soilObservations: this.soilObservations(),
               priorities: this.priorities(),
               customNotes: this.customFieldNotes(),
-            }
+            },
+            activeLanguage
           );
           if (postResolution && postResolution.stateChanged) {
             this.dashboardBridge.applyState(postResolution.updatedState);
@@ -320,7 +313,7 @@ export class AgronomistAiService {
       const errorMessage: AgronomistMessage = {
         id: `err-${Date.now()}`,
         role: 'model',
-        text: this.extractErrorMessage(error),
+        text: this.extractErrorMessage(error, activeLanguage),
         createdAt: new Date().toISOString(),
         isError: true,
       };
@@ -334,7 +327,7 @@ export class AgronomistAiService {
     detectedSeed?: string;
   } {
     const tagRegex =
-      /\[\[AGRONASA_DETECTED:\s*lugar="([^"]*)"\s*\|\s*semilla="([^"]*)"\s*\]\]/gi;
+      /\[\[AGRONASA_DETECTED:\s*(?:lugar|location|place)="([^"]*)"\s*\|\s*(?:semilla|seed|crop)="([^"]*)"\s*\]\]/gi;
     let detectedLocation: string | undefined;
     let detectedSeed: string | undefined;
 
@@ -348,11 +341,14 @@ export class AgronomistAiService {
       }
     }
 
-    const cleanReply = rawReply.replace(tagRegex, '').trim();
+    const cleanReply = rawReply
+      .replace(tagRegex, '')
+      .replace(/\[\[AGRONASA_DETECTED:[^\]]*\]\]/gi, '')
+      .trim();
     return { cleanReply, detectedLocation, detectedSeed };
   }
 
-  private extractErrorMessage(error: unknown): string {
+  private extractErrorMessage(error: unknown, lang: 'es' | 'en' = 'es'): string {
     if (error instanceof HttpErrorResponse) {
       const apiError = error.error as { error?: string } | string | null;
       if (typeof apiError === 'object' && apiError?.error) {
@@ -362,20 +358,13 @@ export class AgronomistAiService {
         return apiError;
       }
       if (error.status === 0) {
-        return 'No se pudo contactar al servidor de AgroNasa para consultar a Gemini. Verifica que el servidor SSR esté activo.';
+        return lang === 'en'
+          ? 'Could not reach the AgroNasa server to query the Agronomic Superintelligence. Please verify the server is running.'
+          : 'No se pudo contactar al servidor de AgroNasa para consultar a la Superinteligencia. Verifica que el servidor SSR esté activo.';
       }
     }
-    return 'Ocurrió un error al consultar a la Superinteligencia Agrónoma. Intenta de nuevo en unos segundos.';
-  }
-
-  private readStoredApiKey(): string {
-    if (!this.isBrowser) {
-      return '';
-    }
-    try {
-      return sessionStorage.getItem(SESSION_KEY_STORAGE) ?? '';
-    } catch {
-      return '';
-    }
+    return lang === 'en'
+      ? 'An error occurred while querying the Agronomic Superintelligence. Please try again in a few seconds.'
+      : 'Ocurrió un error al consultar a la Superinteligencia Agrónoma. Intenta de nuevo en unos segundos.';
   }
 }

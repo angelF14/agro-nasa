@@ -7,10 +7,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    const headerVal = req.headers?.['x-gemini-api-key'];
-    const clientApiKey = Array.isArray(headerVal) ? headerVal[0] : headerVal;
     const payload = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body;
-    const result = await generateAgronomistReply(payload, clientApiKey);
+    const result = await generateAgronomistReply(payload);
     res.status(200).json(result);
   } catch (error) {
     if (error instanceof AgronomistHttpError) {

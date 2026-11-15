@@ -12,73 +12,6 @@
   }
 </ng-template>
 
-<ng-template #keyConfigBox let-suffix="suffix">
-  <div class="key-card" [class.key-card--ready]="ai.hasActiveApiKey()">
-    <div class="key-card__head">
-      <div class="key-card__status">
-        <span class="key-dot" [class.key-dot--ok]="ai.hasActiveApiKey()" aria-hidden="true"></span>
-        @if (ai.serverConfigured()) {
-          <span>Gemini capa gratuita activo (.env)</span>
-        } @else if (ai.customApiKey()) {
-          <span>API Key de sesión activa</span>
-        } @else {
-          <span>Falta API Key gratuita de Google</span>
-        }
-      </div>
-
-      @if (!ai.serverConfigured()) {
-        <button
-          type="button"
-          class="link-btn"
-          (click)="showKeyEditor.set(!showKeyEditor())"
-        >
-          {{ showKeyEditor() ? 'Ocultar' : (ai.customApiKey() ? 'Cambiar' : 'Configurar') }}
-        </button>
-      }
-    </div>
-
-    @if (!ai.hasActiveApiKey() || showKeyEditor()) {
-      <div class="key-card__body">
-        <p class="key-card__hint">
-          Usa una clave gratuita de
-          <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">Google AI Studio</a>
-          en <code>.env</code> (<code>GEMINI_API_KEY</code>) o pégala aquí para esta sesión.
-        </p>
-        <div class="key-card__row">
-          <label for="gemini-key-input-{{ mode() }}-{{ suffix }}" class="sr-only">API Key gratuita de Google Gemini</label>
-          <input
-            id="gemini-key-input-{{ mode() }}-{{ suffix }}"
-            type="password"
-            class="agro-input key-card__input"
-            [ngModel]="apiKeyInput()"
-            (ngModelChange)="apiKeyInput.set($event)"
-            placeholder="AIza..."
-            autocomplete="off"
-          />
-          <button
-            type="button"
-            class="agro-btn agro-btn--primary agro-btn--sm"
-            (click)="saveApiKey()"
-            [disabled]="!apiKeyInput().trim()"
-          >
-            Usar
-          </button>
-        </div>
-        <div class="key-card__actions">
-          <button type="button" class="link-btn" (click)="ai.loadStatus(true)">
-            Reverificar .env del servidor
-          </button>
-          @if (ai.customApiKey()) {
-            <button type="button" class="link-btn link-btn--danger" (click)="clearCustomApiKey()">
-              Quitar key de sesión
-            </button>
-          }
-        </div>
-      </div>
-    }
-  </div>
-</ng-template>
-
 <div class="agro-ai" [class.agro-ai--drawer]="mode() === 'drawer'" [class.agro-ai--panel]="mode() === 'panel'">
   @if (mode() === 'panel') {
     <button
@@ -228,8 +161,6 @@
           ></textarea>
         </div>
       </section>
-
-      <ng-container *ngTemplateOutlet="keyConfigBox; context: { suffix: 'sidebar' }" />
     </aside>
   }
 
@@ -298,12 +229,6 @@
         }
       </div>
     </header>
-
-    @if (ai.statusChecked() && !ai.hasActiveApiKey() && (mode() === 'drawer' || !showMobileContext())) {
-      <div class="chat-key-wrap" [class.chat-key-wrap--panel]="mode() === 'panel'">
-        <ng-container *ngTemplateOutlet="keyConfigBox; context: { suffix: 'chat' }" />
-      </div>
-    }
 
     <div #messagesList class="ai-messages" role="log" aria-live="polite" aria-label="Mensajes de la Superinteligencia">
       @for (entry of parsedMessages(); track entry.message.id) {
@@ -560,7 +485,7 @@
           (input)="onComposerInput()"
           (keydown)="onComposerKeydown($event)"
           (paste)="onPaste($event)"
-          placeholder="Escribe un lugar y una semilla (ej. maíz en Comayagua), pregunta sobre riego o pega una foto..."
+          placeholder="Pregunta en español o inglés (ej. maíz en Comayagua / corn in Iowa) o pega una foto..."
         ></textarea>
 
         <button

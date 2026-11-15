@@ -80,8 +80,6 @@ export class AgronomistAssistantComponent {
   protected readonly attachmentError = signal<string | null>(null);
   protected readonly isProcessingImage = signal<boolean>(false);
   protected readonly isDragOver = signal<boolean>(false);
-  protected readonly showKeyEditor = signal<boolean>(false);
-  protected readonly apiKeyInput = signal<string>('');
   protected readonly copiedMessageId = signal<string | null>(null);
   protected readonly showMobileContext = signal<boolean>(false);
 
@@ -103,9 +101,6 @@ export class AgronomistAssistantComponent {
     }
     if (priorityCount > 0) {
       parts.push(`${priorityCount} prior.`);
-    }
-    if (this.ai.statusChecked() && !this.ai.hasActiveApiKey()) {
-      parts.push('Falta API Key');
     }
 
     return parts.join(' · ');
@@ -277,11 +272,6 @@ export class AgronomistAssistantComponent {
 
   protected useQuickPrompt(prompt: string): void {
     if (this.ai.isSending()) return;
-    if (!this.ai.hasActiveApiKey()) {
-      this.draftText.set(prompt);
-      this.showKeyEditor.set(true);
-      return;
-    }
     void this.submitMessage(prompt);
   }
 
@@ -294,19 +284,6 @@ export class AgronomistAssistantComponent {
       event.preventDefault();
       void this.onSubmit();
     }
-  }
-
-  protected saveApiKey(): void {
-    const val = this.apiKeyInput().trim();
-    if (!val) return;
-    this.ai.setCustomApiKey(val);
-    this.apiKeyInput.set('');
-    this.showKeyEditor.set(false);
-  }
-
-  protected clearCustomApiKey(): void {
-    this.ai.setCustomApiKey('');
-    this.apiKeyInput.set('');
   }
 
   protected async copyMessage(message: AgronomistMessage): Promise<void> {

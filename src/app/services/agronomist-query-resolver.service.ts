@@ -18,6 +18,9 @@ import {
 } from '@models/index';
 import { buildAgronomistContext } from '@utils/agronomist-context.utils';
 import {
+  detectQueryLanguage,
+  getLocalizedCropName,
+  isValidLocationCandidate,
   normalizeSearchText,
   parseAgronomistQuery,
   searchCatalogWithAliases,
@@ -109,13 +112,21 @@ export class AgronomistQueryResolverService {
     }
 
     const catalog = await firstValueFrom(this.rotationEngine.loadCatalog());
-    const parsed = parseAgronomistQuery(rawText, catalog);
+    let fallbackLanguage: 'es' | 'en' = 'es';
+    for (const msg of recentUserMessages) {
+      if (msg?.trim()) {
+        fallbackLanguage = detectQueryLanguage(msg, fallbackLanguage);
+      }
+    }
+    const parsed = parseAgronomistQuery(rawText, catalog, fallbackLanguage);
+    const isEn = parsed.language === 'en';
+    const acceptLanguage = isEn ? 'en,es' : 'es';
 
     // Multi-turn memory: if the user gave the place in an earlier message and the seed now (or vice versa),
     // and the dashboard state does not yet have one of them, check recent user messages.
     if (!parsed.locationQuery && !parsed.explicitCoordinates && !coordinates) {
       for (let i = recentUserMessages.length - 1; i >= 0; i--) {
-        const prevParsed = parseAgronomistQuery(recentUserMessages[i], catalog);
+        const prevParsed = parseAgronomistQuery(recentUserMessages[i], catalog, fallbackLanguage);
         if (prevParsed.explicitCoordinates) {
           parsed.explicitCoordinates = prevParsed.explicitCoordinates;
           break;
@@ -129,7 +140,7 @@ export class AgronomistQueryResolverService {
 
     if (parsed.matchedCrops.length === 0 && !selectedCrop) {
       for (let i = recentUserMessages.length - 1; i >= 0; i--) {
-        const prevParsed = parseAgronomistQuery(recentUserMessages[i], catalog);
+        const prevParsed = parseAgronomistQuery(recentUserMessages[i], catalog, fallbackLanguage);
         if (prevParsed.matchedCrops.length > 0) {
           parsed.matchedCrops = prevParsed.matchedCrops;
           parsed.matchedCropTerms = prevParsed.matchedCropTerms;
@@ -151,10 +162,14 @@ export class AgronomistQueryResolverService {
         Math.abs(coordinates.lon - coords.lon) > 0.001;
 
       if (isDifferentCoords || !climateSummary) {
-        onProgress?.(`Consultando ubicación (${coords.lat}, ${coords.lon})...`);
-        const revName = await this.reverseGeocode(coords);
+        onProgress?.(
+          isEn
+            ? `Looking up coordinates (${coords.lat}, ${coords.lon})...`
+            : `Consultando ubicación (${coords.lat}, ${coords.lon})...`
+        );
+        const revName = await this.reverseGeocode(coords, acceptLanguage);
         coordinates = coords;
-        locationName = revName || `Parcela (${coords.lat}, ${coords.lon})`;
+        locationName = revName || (isEn ? `Parcel (${coords.lat}, ${coords.lon})` : `Parcela (${coords.lat}, ${coords.lon})`);
         locationResolvedLabel = `${locationName} (${coords.lat}, ${coords.lon})`;
         stateChanged = true;
 
@@ -166,7 +181,11 @@ export class AgronomistQueryResolverService {
           selectedCrop,
         });
 
-        onProgress?.('Consultando clima satelital NASA POWER y pronóstico Open-Meteo...');
+        onProgress?.(
+          isEn
+            ? 'Querying NASA POWER satellite climate & Open-Meteo forecast...'
+            : 'Consultando clima satelital NASA POWER y pronóstico Open-Meteo...'
+        );
         const envData = await this.fetchClimateAndForecast(coords);
         climateSummary = envData.climate;
         weatherForecast = envData.forecast;
@@ -178,8 +197,12 @@ export class AgronomistQueryResolverService {
         normalizeSearchText(locationName).includes(normalizeSearchText(parsed.locationQuery));
 
       if (!alreadyLoadedLocation) {
-        onProgress?.(`Buscando ubicación "${parsed.locationQuery}" en el mapa...`);
-        const geo = await this.geocodePlace(parsed.locationQuery);
+        onProgress?.(
+          isEn
+            ? `Searching location "${parsed.locationQuery}" on map...`
+            : `Buscando ubicación "${parsed.locationQuery}" en el mapa...`
+        );
+        const geo = await this.geocodePlace(parsed.locationQuery, acceptLanguage);
         if (geo) {
           coordinates = geo.coords;
           locationName = geo.displayName;
@@ -196,7 +219,9 @@ export class AgronomistQueryResolverService {
           });
 
           onProgress?.(
-            `Consultando NASA POWER y Open-Meteo para ${shortPlace}...`
+            isEn
+              ? `Querying NASA POWER & Open-Meteo for ${shortPlace}...`
+              : `Consultando NASA POWER y Open-Meteo para ${shortPlace}...`
           );
           const envData = await this.fetchClimateAndForecast(geo.coords);
           climateSummary = envData.climate;
@@ -214,8 +239,12 @@ export class AgronomistQueryResolverService {
 
     if (parsed.matchedCrops.length > 0) {
       const chosen = parsed.matchedCrops[0];
-      const displayName = this.primaryCropName(chosen);
-      onProgress?.(`Evaluando semilla "${displayName}" en catálogo FAO EcoCrop...`);
+      const displayName = this.primaryCropName(chosen, parsed.language);
+      onProgress?.(
+        isEn
+          ? `Evaluating crop "${displayName}" in FAO EcoCrop catalog...`
+          : `Evaluando semilla "${displayName}" en catálogo FAO EcoCrop...`
+      );
       if (!selectedCrop || selectedCrop.id !== chosen.id) {
         stateChanged = true;
       }
@@ -227,14 +256,20 @@ export class AgronomistQueryResolverService {
       (Boolean(locationResolvedLabel) || parsed.asksForSeedRecommendation) &&
       (!selectedCrop || parsed.asksForSeedRecommendation)
     ) {
-      onProgress?.('Seleccionando las mejores semillas en FAO EcoCrop para este clima...');
+      onProgress?.(
+        isEn
+          ? 'Selecting best-suited crops in FAO EcoCrop for this climate...'
+          : 'Seleccionando las mejores semillas en FAO EcoCrop para este clima...'
+      );
       const topSeed = suitableCandidates[0].crop;
-      const displayName = this.primaryCropName(topSeed);
+      const displayName = this.primaryCropName(topSeed, parsed.language);
       if (!selectedCrop || selectedCrop.id !== topSeed.id) {
         stateChanged = true;
       }
       selectedCrop = topSeed;
-      cropResolvedLabel = `${displayName} (${topSeed.scientificName}) [Preseleccionada por mayor aptitud climática]`;
+      cropResolvedLabel = isEn
+        ? `${displayName} (${topSeed.scientificName}) [Preselected for highest climate suitability]`
+        : `${displayName} (${topSeed.scientificName}) [Preseleccionada por mayor aptitud climática]`;
     }
 
     if (stateChanged) {
@@ -274,13 +309,15 @@ export class AgronomistQueryResolverService {
       comparedEvaluations = parsed.matchedCrops.map((crop) => {
         const ev = this.rotationEngine.evaluateCrop(crop, climateSummary!);
         return {
-          commonName: this.primaryCropName(crop),
+          commonName: this.primaryCropName(crop, parsed.language),
           scientificName: crop.scientificName,
           overallScore: ev.overallScore,
           isViable: ev.isViable,
           summary: ev.summary,
           tempOptRangeC: `${crop.temp.optMin}–${crop.temp.optMax} °C`,
-          rainOptRangeMm: `${crop.rain.optMin}–${crop.rain.optMax} mm/año`,
+          rainOptRangeMm: isEn
+            ? `${crop.rain.optMin}–${crop.rain.optMax} mm/year`
+            : `${crop.rain.optMin}–${crop.rain.optMax} mm/año`,
         };
       });
     }
@@ -288,16 +325,20 @@ export class AgronomistQueryResolverService {
     const topSuitableCrops: AgronomistSuitableSeedSummary[] | undefined =
       suitableCandidates.length > 0
         ? suitableCandidates.slice(0, 6).map((item) => ({
-            commonName: this.primaryCropName(item.crop),
+            commonName: this.primaryCropName(item.crop, parsed.language),
             scientificName: item.crop.scientificName,
             family: item.crop.family,
             category: item.crop.category,
             suitabilityScore: item.suitabilityScore,
             tempOptRangeC: `${item.crop.temp.optMin}–${item.crop.temp.optMax} °C`,
-            rainOptRangeMm: `${item.crop.rain.optMin}–${item.crop.rain.optMax} mm/año`,
+            rainOptRangeMm: isEn
+              ? `${item.crop.rain.optMin}–${item.crop.rain.optMax} mm/year`
+              : `${item.crop.rain.optMin}–${item.crop.rain.optMax} mm/año`,
             cycleDaysRange:
               item.crop.agronomy.cycleDays.min && item.crop.agronomy.cycleDays.max
-                ? `${item.crop.agronomy.cycleDays.min}–${item.crop.agronomy.cycleDays.max} días`
+                ? isEn
+                  ? `${item.crop.agronomy.cycleDays.min}–${item.crop.agronomy.cycleDays.max} days`
+                  : `${item.crop.agronomy.cycleDays.min}–${item.crop.agronomy.cycleDays.max} días`
                 : null,
           }))
         : undefined;
@@ -324,7 +365,9 @@ export class AgronomistQueryResolverService {
               cropResolved: cropResolvedLabel,
               comparedCrops:
                 parsed.matchedCrops.length > 1
-                  ? parsed.matchedCrops.map((c) => `${this.primaryCropName(c)} (${c.scientificName})`)
+                  ? parsed.matchedCrops.map(
+                      (c) => `${this.primaryCropName(c, parsed.language)} (${c.scientificName})`
+                    )
                   : undefined,
             }
           : undefined,
@@ -340,8 +383,9 @@ export class AgronomistQueryResolverService {
             selectedCrop,
             cropEvaluation,
             climateSummary,
-             enrichedContext,
+            enrichedContext,
             rotationPlan,
+            language: parsed.language,
           })
         : undefined;
 
@@ -362,7 +406,8 @@ export class AgronomistQueryResolverService {
   async resolveExplicitEntities(
     detectedLocation: string | undefined,
     detectedSeed: string | undefined,
-    currentState: AgronomistDashboardLiveState
+    currentState: AgronomistDashboardLiveState,
+    preferredLanguage: 'es' | 'en' = 'es'
   ): Promise<AgronomistResolutionResult | null> {
     if (!this.isBrowser || (!detectedLocation?.trim() && !detectedSeed?.trim())) {
       return null;
@@ -376,16 +421,21 @@ export class AgronomistQueryResolverService {
     let stateChanged = false;
 
     const catalog = await firstValueFrom(this.rotationEngine.loadCatalog());
+    const acceptLanguage = preferredLanguage === 'en' ? 'en,es' : 'es';
 
-    if (detectedLocation?.trim()) {
-      const locNorm = normalizeSearchText(detectedLocation);
+    const trimmedLocation = detectedLocation?.trim();
+    if (
+      trimmedLocation &&
+      isValidLocationCandidate(trimmedLocation, detectedSeed?.trim() ? [detectedSeed.trim()] : [])
+    ) {
+      const locNorm = normalizeSearchText(trimmedLocation);
       const alreadySame =
         Boolean(locationName) &&
         Boolean(climateSummary) &&
         normalizeSearchText(locationName).includes(locNorm);
 
       if (!alreadySame) {
-        const geo = await this.geocodePlace(detectedLocation.trim());
+        const geo = await this.geocodePlace(trimmedLocation, acceptLanguage);
         if (geo) {
           coordinates = geo.coords;
           locationName = geo.displayName;
@@ -459,6 +509,7 @@ export class AgronomistQueryResolverService {
       climateSummary,
       enrichedContext,
       rotationPlan,
+      language: preferredLanguage,
     });
 
     return {
@@ -476,7 +527,8 @@ export class AgronomistQueryResolverService {
   }
 
   private async geocodePlace(
-    query: string
+    query: string,
+    acceptLanguage = 'es'
   ): Promise<{ coords: Coordinates; displayName: string } | null> {
     const candidates = [query.trim()];
     if (query.includes(',')) {
@@ -507,7 +559,7 @@ export class AgronomistQueryResolverService {
       const results = await firstValueFrom(
         this.http
           .get<NominatimSearchItem[]>(url, {
-            headers: { 'Accept-Language': 'es' },
+            headers: { 'Accept-Language': acceptLanguage },
           })
           .pipe(catchError(() => of([])))
       );
@@ -528,12 +580,12 @@ export class AgronomistQueryResolverService {
     return null;
   }
 
-  private async reverseGeocode(coords: Coordinates): Promise<string | null> {
+  private async reverseGeocode(coords: Coordinates, acceptLanguage = 'es'): Promise<string | null> {
     const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords.lat}&lon=${coords.lon}&zoom=10`;
     const res = await firstValueFrom(
       this.http
         .get<NominatimReverseItem>(url, {
-          headers: { 'Accept-Language': 'es' },
+          headers: { 'Accept-Language': acceptLanguage },
         })
         .pipe(catchError(() => of(null)))
     );
@@ -674,11 +726,13 @@ export class AgronomistQueryResolverService {
     climateSummary: Partial<ClimateSummary> | null;
     enrichedContext: AgronomistParcelContext;
     rotationPlan: RotationPlan | null;
+    language?: 'es' | 'en';
   }): AgronomistResolvedServiceCard | undefined {
     if (!params.coordinates && !params.selectedCrop) {
       return undefined;
     }
 
+    const lang = params.language ?? 'es';
     const shortLocation = params.locationName
       ? params.locationName.split(',').slice(0, 2).join(',').trim()
       : undefined;
@@ -686,14 +740,14 @@ export class AgronomistQueryResolverService {
     const rotationSummary =
       params.rotationPlan && params.rotationPlan.cycles.length > 0
         ? params.rotationPlan.cycles
-            .map((c) => `C${c.cycleNumber}: ${this.primaryCropName(c.crop)}`)
+            .map((c) => `C${c.cycleNumber}: ${this.primaryCropName(c.crop, lang)}`)
             .join(' → ')
         : undefined;
 
     return {
       locationName: shortLocation,
       coordinates: params.coordinates ?? undefined,
-      cropName: params.selectedCrop ? this.primaryCropName(params.selectedCrop) : undefined,
+      cropName: params.selectedCrop ? this.primaryCropName(params.selectedCrop, lang) : undefined,
       scientificName: params.selectedCrop?.scientificName,
       overallScore: params.cropEvaluation?.overallScore,
       isViable: params.cropEvaluation?.isViable,
@@ -706,7 +760,7 @@ export class AgronomistQueryResolverService {
     };
   }
 
-  private primaryCropName(crop: Crop): string {
-    return crop.commonNames[0] || crop.scientificName;
+  private primaryCropName(crop: Crop, lang: 'es' | 'en' = 'es'): string {
+    return getLocalizedCropName(crop, lang);
   }
 }

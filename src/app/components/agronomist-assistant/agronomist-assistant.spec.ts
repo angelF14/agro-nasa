@@ -66,12 +66,10 @@ describe('AgronomistAssistantComponent', () => {
     expect(sidebar.classList.contains('is-mobile-open')).toBeTrue();
   });
 
-  it('keeps unique API key input ids between panel and drawer modes', () => {
+  it('does not render any API key input in the chat UI', () => {
     const el = fixture.nativeElement as HTMLElement;
-    const inputs = el.querySelectorAll('input[id^="gemini-key-input-"]');
-    const ids = Array.from(inputs).map((input) => input.id);
 
-    expect(ids.length).toBe(2);
-    expect(new Set(ids).size).toBe(2);
+    expect(el.querySelector('input[id^="gemini-key-input-"]')).toBeNull();
+    expect(el.querySelector('.key-card')).toBeNull();
   });
 });

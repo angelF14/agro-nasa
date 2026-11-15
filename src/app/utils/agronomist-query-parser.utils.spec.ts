@@ -1,8 +1,11 @@
 import { Crop } from '@models/index';
 import {
+  detectQueryLanguage,
   enrichCatalogWithSpanishNames,
   extractCropsFromPrompt,
   extractLocationFromPrompt,
+  getLocalizedCropName,
+  isValidLocationCandidate,
   parseAgronomistQuery,
   searchCatalogWithAliases,
 } from './agronomist-query-parser.utils';
@@ -160,5 +163,100 @@ describe('agronomist-query-parser.utils', () => {
     );
     expect(case4.locationQuery).toBe('Danlí');
     expect(case4.matchedCrops[0]?.scientificName).toBe('Phaseolus vulgaris');
+  });
+
+  it('extracts crops, locations, recommendation intent, and language from English prompts', () => {
+    const enriched = enrichCatalogWithSpanishNames(MOCK_CATALOG);
+
+    const case1 = parseAgronomistQuery('I want to plant corn in Iowa, is it viable?', enriched);
+    expect(case1.language).toBe('en');
+    expect(case1.locationQuery).toBe('Iowa');
+    expect(case1.matchedCrops.map((c) => c.scientificName)).toEqual(['Zea mays ssp. mays']);
+
+    const case2 = parseAgronomistQuery(
+      'I live in Austin, Texas and want to grow beans and potatoes',
+      enriched
+    );
+    expect(case2.language).toBe('en');
+    expect(case2.locationQuery).toBe('Austin, Texas');
+    expect(case2.matchedCrops.map((c) => c.scientificName)).toEqual([
+      'Phaseolus vulgaris',
+      'Solanum tuberosum',
+    ]);
+
+    const case3 = parseAgronomistQuery(
+      'What crops do you recommend for Sinaloa, Mexico?',
+      enriched
+    );
+    expect(case3.language).toBe('en');
+    expect(case3.locationQuery).toBe('Sinaloa, Mexico');
+    expect(case3.asksForSeedRecommendation).toBeTrue();
+
+    const case4 = parseAgronomistQuery('Iowa, corn', enriched);
+    expect(case4.language).toBe('en');
+    expect(case4.locationQuery).toBe('Iowa');
+    expect(case4.matchedCrops[0]?.scientificName).toBe('Zea mays ssp. mays');
+
+    const case5 = parseAgronomistQuery('Compare corn and beans', enriched);
+    expect(case5.locationQuery).toBeUndefined();
+    expect(case5.matchedCrops.length).toBe(2);
+
+    const stopwordCase = parseAgronomistQuery(
+      'How do I improve nitrogen in my soil and what symptoms in leaves indicate water stress?',
+      enriched
+    );
+    expect(stopwordCase.language).toBe('en');
+    expect(stopwordCase.locationQuery).toBeUndefined();
+
+    expect(detectQueryLanguage('Quiero sembrar maíz en Comayagua')).toBe('es');
+    expect(detectQueryLanguage('What planting date is best for corn in Kansas?')).toBe('en');
+    expect(detectQueryLanguage('Speak in English')).toBe('en');
+    expect(detectQueryLanguage('Responde en inglés')).toBe('en');
+    expect(detectQueryLanguage('What about onion?')).toBe('en');
+    expect(detectQueryLanguage('In Spanish please')).toBe('es');
+
+    expect(isValidLocationCandidate('Ingles', [])).toBeFalse();
+    expect(isValidLocationCandidate('English', [])).toBeFalse();
+    expect(isValidLocationCandidate('Español', [])).toBeFalse();
+    expect(isValidLocationCandidate('Comayagua', [])).toBeTrue();
+
+    const languageSwitchCase = parseAgronomistQuery('Responde en ingles por favor', enriched);
+    expect(languageSwitchCase.language).toBe('en');
+    expect(languageSwitchCase.locationQuery).toBeUndefined();
+  });
+
+  it('accurately detects Spanish vs English across unaccented, shared-word, and accented-place-name queries', () => {
+    const enriched = enrichCatalogWithSpanishNames(MOCK_CATALOG);
+
+    // Spanish queries without accents or with shared words ("viable", "banana", "ok", "plan")
+    expect(detectQueryLanguage('Es viable la soya en Sinaloa?', 'en')).toBe('es');
+    expect(detectQueryLanguage('Que tal se da la banana en Ecuador?', 'en')).toBe('es');
+    expect(detectQueryLanguage('Ok dame el plan de rotacion', 'en')).toBe('es');
+    expect(detectQueryLanguage('Si por favor explicame mas', 'en')).toBe('es');
+    expect(detectQueryLanguage('Y en Chiapas?', 'en')).toBe('es');
+    expect(detectQueryLanguage('Maiz en Sinaloa', 'en')).toBe('es');
+    expect(detectQueryLanguage('Que me dices del sorgo?', 'en')).toBe('es');
+    expect(detectQueryLanguage('La tierra esta muy seca', 'en')).toBe('es');
+    expect(detectQueryLanguage('Cuales son los tres ciclos?', 'en')).toBe('es');
+    expect(detectQueryLanguage('Se puede plantar cacao en Tabasco?', 'en')).toBe('es');
+
+    // English queries including accented Latin American place names
+    expect(detectQueryLanguage('Corn in León', 'es')).toBe('en');
+    expect(detectQueryLanguage('Planting corn in Panamá', 'es')).toBe('en');
+    expect(detectQueryLanguage('Growing coffee in Bogotá', 'es')).toBe('en');
+    expect(detectQueryLanguage('I live in Cancún, what can I plant?', 'es')).toBe('en');
+    expect(detectQueryLanguage('Is sorghum viable in Córdoba?', 'es')).toBe('en');
+    expect(detectQueryLanguage('Soybeans in Iowa', 'es')).toBe('en');
+    expect(detectQueryLanguage('Strawberries in California', 'es')).toBe('en');
+    expect(detectQueryLanguage('And in Texas?', 'es')).toBe('en');
+    expect(detectQueryLanguage('Give me a 3 cycle rotation', 'es')).toBe('en');
+    expect(detectQueryLanguage('More details please', 'es')).toBe('en');
+    expect(detectQueryLanguage("I'm in Kansas", 'es')).toBe('en');
+
+    // Localized crop name helper returns Spanish for 'es' and English for 'en'
+    expect(getLocalizedCropName(enriched[0], 'es')).toBe('maíz');
+    expect(getLocalizedCropName(enriched[0], 'en')).toBe('corn');
+    expect(getLocalizedCropName(enriched[1], 'es')).toBe('frijol');
+    expect(getLocalizedCropName(enriched[1], 'en')).toBe('common bean');
   });
 });

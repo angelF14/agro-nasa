@@ -44,9 +44,8 @@ app.get(['/api/agronomist/status', '/agronomist/status'], (_req, res) => {
 
 app.post(['/api/agronomist/chat', '/agronomist/chat'], async (req, res) => {
   try {
-    const clientApiKey = req.header('x-gemini-api-key') ?? undefined;
     const payload = req.body as AgronomistChatRequest;
-    const result = await generateAgronomistReply(payload, clientApiKey);
+    const result = await generateAgronomistReply(payload);
     res.json(result);
   } catch (error) {
     if (error instanceof AgronomistHttpError) {

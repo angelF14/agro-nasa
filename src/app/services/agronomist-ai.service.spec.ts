@@ -196,4 +196,54 @@ describe('AgronomistAiService & Agronomist Utils', () => {
     expect(ctx.weatherSummary?.waterBalance7dMm).toBe(-14);
     expect(ctx.localContext.customNotes).toBe('Lote norte');
   });
+
+  it('keeps English language context when sending an image-only follow-up after an English turn', async () => {
+    const context: AgronomistParcelContext = {
+      localContext: {
+        soilObservations: [],
+        priorities: ['water-conservation'],
+      },
+    };
+
+    const firstTurn = service.sendMessage('What crops grow best in Iowa?', context);
+    const req1 = httpMock.expectOne('/api/agronomist/chat');
+    req1.flush({ reply: 'In Iowa, corn and soybeans fit well.', model: 'gemini-3.6-flash' });
+    await firstTurn;
+
+    const imageTurn = service.sendMessage('', context, {
+      name: 'leaf.jpg',
+      mimeType: 'image/jpeg',
+      dataBase64: 'AAAA',
+      dataUrl: 'data:image/jpeg;base64,AAAA',
+    });
+
+    const req2 = httpMock.expectOne('/api/agronomist/chat');
+    expect(req2.request.body.messages[req2.request.body.messages.length - 1].text).toBe(
+      'Analyze this agricultural image considering my parcel context.'
+    );
+    req2.flush({ reply: 'The leaf shows signs of nitrogen deficiency.', model: 'gemini-3.6-flash' });
+    await imageTurn;
+  });
+
+  it('ignores non-geographic language names like "Ingles" or "English" in resolveExplicitEntities', async () => {
+    const resolver = TestBed.inject(AgronomistQueryResolverService);
+    const emptyState = {
+      coordinates: null,
+      locationName: '',
+      climateSummary: null,
+      weatherForecast: null,
+      selectedCrop: null,
+      soilObservations: [],
+      priorities: [],
+      customNotes: '',
+    };
+
+    const resultPromise = resolver.resolveExplicitEntities('Ingles', undefined, emptyState, 'en');
+    const catalogReq = httpMock.expectOne((req) => req.url.includes('crops.json'));
+    catalogReq.flush([]);
+
+    const resolved = await resultPromise;
+    expect(resolved).toBeNull();
+    expect(httpMock.match((req) => req.url.includes('nominatim')).length).toBe(0);
+  });
 });
