@@ -105,23 +105,23 @@ export function getAgronomistStatus() {
 
 export function buildAgronomistSystemPrompt(context) {
   const baseInstructions = [
-    'Eres AgroNasa Superinteligencia, una Superinteligencia agronómica especialista en agricultura climáticamente inteligente, rotación de cultivos, manejo de agua, salud del suelo y manejo integrado de plagas (MIP).',
-    'Estás integrada en la plataforma AgroNasa (geocodificación Nominatim, datos satelitales NASA POWER, pronóstico meteorológico Open-Meteo y catálogo agronómico FAO EcoCrop).',
+    'Eres AgroHelper Superinteligencia, una Superinteligencia agronómica especialista en agricultura climáticamente inteligente, rotación de cultivos, manejo de agua, salud del suelo y manejo integrado de plagas (MIP).',
+    'Estás integrada en la plataforma AgroHelper (geocodificación Nominatim, datos satelitales NASA POWER, pronóstico meteorológico Open-Meteo y catálogo agronómico FAO EcoCrop).',
     '',
     'Reglas de respuesta:',
-    '1. Identidad: eres AgroNasa Superinteligencia, una Superinteligencia agronómica. Nunca digas que eres una IA ni una inteligencia artificial; si el usuario pregunta qué o quién eres, preséntate siempre como una Superinteligencia agronómica.',
+    '1. Identidad: eres AgroHelper Superinteligencia, una Superinteligencia agronómica. Nunca digas que eres una IA ni una inteligencia artificial; si el usuario pregunta qué o quién eres, preséntate siempre como una Superinteligencia agronómica.',
     '2. Responde siempre en español claro, empático y práctico (a menos que el usuario escriba explícitamente en otro idioma).',
     '3. Fundamenta tus recomendaciones en los datos reales del contexto de la parcela cuando existan, citando valores exactos (temperatura, lluvia anualizada, ET0, balance hídrico, altitud, puntaje EcoCrop).',
-    '4. Si el sistema consultó automáticamente los servicios de AgroNasa a partir del mensaje del usuario (lugar geocodificado o semilla buscada en FAO EcoCrop), confirma al inicio que ya cargaste esos datos en vivo y úsalos para dar un veredicto agronómico completo. Si se evaluaron varias semillas comparadas o se listan las mejores semillas aptas para la región, compáralas claramente con sus puntajes EcoCrop.',
+    '4. Si el sistema consultó automáticamente los servicios de AgroHelper a partir del mensaje del usuario (lugar geocodificado o semilla buscada en FAO EcoCrop), confirma al inicio que ya cargaste esos datos en vivo y úsalos para dar un veredicto agronómico completo. Si se evaluaron varias semillas comparadas o se listan las mejores semillas aptas para la región, compáralas claramente con sus puntajes EcoCrop.',
     '5. Nunca inventes métricas de laboratorio, pH medido o datos satelitales que no estén en el contexto. Si falta información (por ejemplo, si el usuario no ha fijado parcela en el mapa o no ha elegido cultivo), indícalo claramente y guía al usuario o haz preguntas cortas útiles.',
     '6. Cuando el usuario adjunte una imagen (hoja, planta, plaga, fruto o suelo), realiza una observación visual agronómica cuidadosa: describe síntomas o rasgos visibles, plantea 2 o 3 hipótesis ordenadas por probabilidad aclarando que no reemplazan análisis de laboratorio, y entrega acciones concretas de manejo integrado considerando el clima actual de la parcela.',
     '7. Organiza tus respuestas con encabezados cortos, listas con viñetas y negritas en los puntos accionables para facilitar la lectura en campo.',
     '8. Incluye una nota breve de precaución cuando recomiendes fertilizantes, enmiendas o control fitosanitario (verificar dosis según análisis de suelo y etiqueta local).',
-    '9. Si el usuario menciona en su consulta una ciudad, región, departamento o país y/o una semilla o cultivo, incluye siempre al final de tu respuesta en una línea separada la etiqueta exacta: [[AGRONASA_DETECTED: lugar="Nombre del lugar" | semilla="Nombre del cultivo"]] (deja comillas vacías "" si alguno no fue mencionado).',
+    '9. Si el usuario menciona en su consulta una ciudad, región, departamento o país y/o una semilla o cultivo, incluye siempre al final de tu respuesta en una línea separada la etiqueta exacta: [[AgroHelper_DETECTED: lugar="Nombre del lugar" | semilla="Nombre del cultivo"]] (deja comillas vacías "" si alguno no fue mencionado).',
   ].join('\n');
 
   const contextSection = formatParcelContextForPrompt(context);
-  return `${baseInstructions}\n\n=== CONTEXTO ACTUAL DE LA PARCELA EN AGRONASA ===\n${contextSection}`;
+  return `${baseInstructions}\n\n=== CONTEXTO ACTUAL DE LA PARCELA EN AgroHelper ===\n${contextSection}`;
 }
 
 export function formatParcelContextForPrompt(context) {
@@ -151,14 +151,17 @@ export function formatParcelContextForPrompt(context) {
   if (context.coordinates) {
     const locLabel = context.locationName ? `${context.locationName} ` : '';
     lines.push(
-      `Ubicación: ${locLabel}(Lat ${context.coordinates.lat}, Lon ${context.coordinates.lon})`
+      `Ubicación: ${locLabel}(Lat ${context.coordinates.lat}, Lon ${context.coordinates.lon})`,
     );
   } else {
     lines.push('Ubicación: No seleccionada en el mapa todavía.');
   }
 
   const climate = context.historicalClimate;
-  if (climate && (climate.meanTempC !== undefined || climate.annualizedPrecipitationMm !== undefined)) {
+  if (
+    climate &&
+    (climate.meanTempC !== undefined || climate.annualizedPrecipitationMm !== undefined)
+  ) {
     const parts = [];
     if (climate.meanTempC !== undefined) parts.push(`Temp media ${climate.meanTempC} °C`);
     if (climate.minTempC !== undefined && climate.maxTempC !== undefined) {
@@ -169,10 +172,11 @@ export function formatParcelContextForPrompt(context) {
     }
     if (climate.totalPrecipitationMm !== undefined) {
       parts.push(
-        `Lluvia acumulada período ${climate.totalPrecipitationMm} mm (${climate.analyzedDays ?? '?'} días)`
+        `Lluvia acumulada período ${climate.totalPrecipitationMm} mm (${climate.analyzedDays ?? '?'} días)`,
       );
     }
-    if (climate.elevationM !== undefined) parts.push(`Altitud NASA DEM ${climate.elevationM} m s.n.m.`);
+    if (climate.elevationM !== undefined)
+      parts.push(`Altitud NASA DEM ${climate.elevationM} m s.n.m.`);
     if (climate.solarRadiationMjM2Day !== undefined) {
       parts.push(`Radiación solar media ${climate.solarRadiationMjM2Day} MJ/m²/día`);
     }
@@ -192,7 +196,7 @@ export function formatParcelContextForPrompt(context) {
         `Temp actual ${weather.currentTempC} °C, HR ${weather.humidityPct}%, viento ${weather.windSpeedKmh} km/h | ` +
         `Rango 7d ${weather.minTemp7dC}–${weather.maxTemp7dC} °C | ` +
         `Lluvia esperada 7d: ${weather.precipitation7dMm} mm | ET0 7d: ${weather.et07dMm} mm | ` +
-        `Balance hídrico 7d (Lluvia - ET0): ${weather.waterBalance7dMm} mm.`
+        `Balance hídrico 7d (Lluvia - ET0): ${weather.waterBalance7dMm} mm.`,
     );
   }
 
@@ -204,7 +208,7 @@ export function formatParcelContextForPrompt(context) {
         `Óptimos EcoCrop: Temp ${c.tempOptRangeC}, Lluvia ${c.rainOptRangeMm}` +
         (c.phOptRange ? `, pH ${c.phOptRange}` : '') +
         (c.cycleDaysRange ? `, Ciclo ${c.cycleDaysRange}` : '') +
-        '.'
+        '.',
     );
   } else {
     lines.push('Cultivo seleccionado: Ninguno todavía.');
@@ -213,11 +217,13 @@ export function formatParcelContextForPrompt(context) {
   if (context.cropEvaluation) {
     const ev = context.cropEvaluation;
     lines.push(
-      `Evaluación de aptitud EcoCrop: ${ev.overallScore}% (${ev.isViable ? 'Viable' : 'No recomendado'}). ${ev.summary}`
+      `Evaluación de aptitud EcoCrop: ${ev.overallScore}% (${ev.isViable ? 'Viable' : 'No recomendado'}). ${ev.summary}`,
     );
     if (ev.checks?.length > 0) {
       const checkDetails = ev.checks
-        .map((ck) => `${ck.label}: observado ${ck.observed} vs esperado ${ck.expected} [${ck.status}]`)
+        .map(
+          (ck) => `${ck.label}: observado ${ck.observed} vs esperado ${ck.expected} [${ck.status}]`,
+        )
         .join('; ');
       lines.push(`Detalle de parámetros: ${checkDetails}.`);
     }
@@ -227,7 +233,7 @@ export function formatParcelContextForPrompt(context) {
     const cyclesText = context.rotationPlan.cycles
       .map(
         (cy) =>
-          `Ciclo ${cy.cycleNumber}: ${cy.cropName} (${cy.scientificName}, ${cy.family ?? cy.cropName}) — ${cy.compatibilityScore}% aptitud`
+          `Ciclo ${cy.cycleNumber}: ${cy.cropName} (${cy.scientificName}, ${cy.family ?? cy.cropName}) — ${cy.compatibilityScore}% aptitud`,
       )
       .join(' | ');
     lines.push(`Plan de rotación sugerido (3 ciclos): ${cyclesText}.`);
@@ -243,7 +249,7 @@ export function formatParcelContextForPrompt(context) {
     const comparedText = context.comparedEvaluations
       .map(
         (ce) =>
-          `${ce.commonName} (${ce.scientificName}): ${ce.overallScore}% (${ce.isViable ? 'Viable' : 'No recomendado'}, Temp ópt ${ce.tempOptRangeC}, Lluvia ópt ${ce.rainOptRangeMm}) — ${ce.summary}`
+          `${ce.commonName} (${ce.scientificName}): ${ce.overallScore}% (${ce.isViable ? 'Viable' : 'No recomendado'}, Temp ópt ${ce.tempOptRangeC}, Lluvia ópt ${ce.rainOptRangeMm}) — ${ce.summary}`,
       )
       .join(' || ');
     lines.push(`Comparativa de semillas mencionadas en la consulta: ${comparedText}`);
@@ -253,17 +259,21 @@ export function formatParcelContextForPrompt(context) {
     const topText = context.topSuitableCrops
       .map(
         (sc, idx) =>
-          `#${idx + 1} ${sc.commonName} (${sc.scientificName}, ${sc.family ?? sc.category}): ${sc.suitabilityScore}% aptitud (Temp ópt ${sc.tempOptRangeC}, Lluvia ópt ${sc.rainOptRangeMm})`
+          `#${idx + 1} ${sc.commonName} (${sc.scientificName}, ${sc.family ?? sc.category}): ${sc.suitabilityScore}% aptitud (Temp ópt ${sc.tempOptRangeC}, Lluvia ópt ${sc.rainOptRangeMm})`,
       )
       .join(' | ');
-    lines.push(`Ranking FAO EcoCrop de semillas más aptas para el clima de esta ubicación: ${topText}.`);
+    lines.push(
+      `Ranking FAO EcoCrop de semillas más aptas para el clima de esta ubicación: ${topText}.`,
+    );
   }
 
   const local = context.localContext;
   if (local) {
     if (local.soilObservations?.length > 0) {
       const obsLabels = local.soilObservations.map((o) => SOIL_OBSERVATION_LABELS[o] ?? o);
-      lines.push(`Observaciones locales de suelo reportadas por el agricultor: ${obsLabels.join(', ')}.`);
+      lines.push(
+        `Observaciones locales de suelo reportadas por el agricultor: ${obsLabels.join(', ')}.`,
+      );
     }
     if (local.priorities?.length > 0) {
       const prioLabels = local.priorities.map((p) => FARMER_PRIORITY_LABELS[p] ?? p);
@@ -302,13 +312,13 @@ export function buildGeminiContents(rawMessages) {
       if (!ALLOWED_IMAGE_MIME_TYPES.has(msg.image.mimeType)) {
         throw new AgronomistHttpError(
           400,
-          'Formato de imagen no compatible. Usa JPEG, PNG o WebP.'
+          'Formato de imagen no compatible. Usa JPEG, PNG o WebP.',
         );
       }
       if (!msg.image.dataBase64 || msg.image.dataBase64.length > MAX_BASE64_LENGTH) {
         throw new AgronomistHttpError(
           413,
-          'La imagen adjunta excede el tamaño máximo permitido (4 MB).'
+          'La imagen adjunta excede el tamaño máximo permitido (4 MB).',
         );
       }
 
@@ -356,7 +366,7 @@ export function buildGeminiContents(rawMessages) {
   if (contents.length === 0 || !contents.some((c) => c.role === 'user')) {
     throw new AgronomistHttpError(
       400,
-      'Escribe una consulta o adjunta una imagen para conversar con la Superinteligencia Agrónoma.'
+      'Escribe una consulta o adjunta una imagen para conversar con la Superinteligencia Agrónoma.',
     );
   }
 
@@ -374,7 +384,7 @@ export async function generateAgronomistReply(payload, clientApiKey) {
   if (!effectiveKey) {
     throw new AgronomistHttpError(
       400,
-      'Falta configurar la API key gratuita de Google Gemini (GEMINI_API_KEY en Vercel o desde la configuración de la Superinteligencia).'
+      'Falta configurar la API key gratuita de Google Gemini (GEMINI_API_KEY en Vercel o desde la configuración de la Superinteligencia).',
     );
   }
 
@@ -496,33 +506,33 @@ function mapGeminiError(error) {
   ) {
     return new AgronomistHttpError(
       401,
-      'La API key de Google Gemini no es válida o fue revocada. Verifica tu clave gratuita en Google AI Studio (aistudio.google.com/apikey).'
+      'La API key de Google Gemini no es válida o fue revocada. Verifica tu clave gratuita en Google AI Studio (aistudio.google.com/apikey).',
     );
   }
 
   if (status === 429 || lower.includes('resource_exhausted') || lower.includes('quota')) {
     return new AgronomistHttpError(
       429,
-      'Se alcanzó temporalmente el límite de solicitudes de la capa gratuita de Google Gemini (RPM/RPD). Espera unos segundos e inténtalo de nuevo.'
+      'Se alcanzó temporalmente el límite de solicitudes de la capa gratuita de Google Gemini (RPM/RPD). Espera unos segundos e inténtalo de nuevo.',
     );
   }
 
   if (status === 400) {
     return new AgronomistHttpError(
       400,
-      'La solicitud no pudo ser procesada por Gemini. Revisa el formato de la imagen o reduce el texto enviado.'
+      'La solicitud no pudo ser procesada por Gemini. Revisa el formato de la imagen o reduce el texto enviado.',
     );
   }
 
   if (status === 503 || status === 500) {
     return new AgronomistHttpError(
       503,
-      'El servicio de Google Gemini está temporalmente saturado. Intenta nuevamente en unos segundos.'
+      'El servicio de Google Gemini está temporalmente saturado. Intenta nuevamente en unos segundos.',
     );
   }
 
   return new AgronomistHttpError(
     502,
-    'No se pudo conectar con la Superinteligencia Agrónoma en este momento. Verifica tu conexión e inténtalo nuevamente.'
+    'No se pudo conectar con la Superinteligencia Agrónoma en este momento. Verifica tu conexión e inténtalo nuevamente.',
   );
 }

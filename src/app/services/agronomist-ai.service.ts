@@ -37,14 +37,14 @@ export interface DashboardStateBridge {
   }) => void;
 }
 
-const SESSION_KEY_STORAGE = 'agronasa.gemini_api_key';
+const SESSION_KEY_STORAGE = 'AgroHelper.gemini_api_key';
 
 const WELCOME_MESSAGE: AgronomistMessage = {
   id: 'welcome',
   role: 'model',
   createdAt: new Date().toISOString(),
   text: [
-    'Hola, soy **AgroNasa Superinteligencia**, tu superinteligencia agronómica conectada en vivo con **NASA POWER**, **Open-Meteo** y **FAO EcoCrop**.',
+    'Hola, soy **AgroHelper Superinteligencia**, tu superinteligencia agronómica conectada en vivo con **NASA POWER**, **Open-Meteo** y **FAO EcoCrop**.',
     '',
     '- **Menciona un lugar y una semilla** (ej. *"Quiero sembrar maíz en Comayagua, Honduras"* o *"¿Qué semilla recomiendas en Sinaloa?"*) y buscaré automáticamente el clima satelital, pronóstico y plan de rotación.',
     '- Pregúntame sobre aptitud climática, riego, balance hídrico (ET₀) o tu secuencia de rotación de 3 ciclos.',
@@ -80,7 +80,7 @@ export class AgronomistAiService {
   readonly customFieldNotes = signal<string>('');
 
   readonly hasActiveApiKey = computed(
-    () => this.serverConfigured() || this.customApiKey().trim().length > 0
+    () => this.serverConfigured() || this.customApiKey().trim().length > 0,
   );
 
   registerDashboardBridge(bridge: DashboardStateBridge): void {
@@ -105,7 +105,7 @@ export class AgronomistAiService {
         catchError(() => {
           this.statusChecked.set(true);
           return of(null);
-        })
+        }),
       )
       .subscribe();
   }
@@ -148,13 +148,13 @@ export class AgronomistAiService {
     this.soilObservations.update((curr) =>
       curr.includes(observation)
         ? curr.filter((item) => item !== observation)
-        : [...curr, observation]
+        : [...curr, observation],
     );
   }
 
   togglePriority(priority: FarmerPriority): void {
     this.priorities.update((curr) =>
-      curr.includes(priority) ? curr.filter((item) => item !== priority) : [...curr, priority]
+      curr.includes(priority) ? curr.filter((item) => item !== priority) : [...curr, priority],
     );
   }
 
@@ -175,7 +175,7 @@ export class AgronomistAiService {
   async sendMessage(
     rawText: string,
     context: AgronomistParcelContext,
-    attachment?: AgronomistImagePayload & { dataUrl: string }
+    attachment?: AgronomistImagePayload & { dataUrl: string },
   ): Promise<void> {
     const text = rawText.trim();
     if ((!text && !attachment) || this.isSending()) {
@@ -225,9 +225,7 @@ export class AgronomistAiService {
     if (text && this.dashboardBridge) {
       try {
         const liveState = this.dashboardBridge.getState();
-        const recentUserTexts = currentHistory
-          .filter((m) => m.role === 'user')
-          .map((m) => m.text);
+        const recentUserTexts = currentHistory.filter((m) => m.role === 'user').map((m) => m.text);
 
         const resolution = await this.queryResolver.resolveFromMessage(
           text,
@@ -239,7 +237,7 @@ export class AgronomistAiService {
           },
           (label) => this.progressLabel.set(label),
           recentUserTexts,
-          (immediateState) => this.dashboardBridge?.applyState(immediateState)
+          (immediateState) => this.dashboardBridge?.applyState(immediateState),
         );
 
         effectiveContext = resolution.context;
@@ -274,12 +272,12 @@ export class AgronomistAiService {
             finalize(() => {
               this.isSending.set(false);
               this.progressLabel.set(null);
-            })
-          )
+            }),
+          ),
       );
 
       const { cleanReply, detectedLocation, detectedSeed } = this.extractDetectedEntitiesTag(
-        response.reply
+        response.reply,
       );
 
       if (this.dashboardBridge && (detectedLocation || detectedSeed)) {
@@ -293,7 +291,7 @@ export class AgronomistAiService {
               soilObservations: this.soilObservations(),
               priorities: this.priorities(),
               customNotes: this.customFieldNotes(),
-            }
+            },
           );
           if (postResolution && postResolution.stateChanged) {
             this.dashboardBridge.applyState(postResolution.updatedState);
@@ -333,8 +331,7 @@ export class AgronomistAiService {
     detectedLocation?: string;
     detectedSeed?: string;
   } {
-    const tagRegex =
-      /\[\[AGRONASA_DETECTED:\s*lugar="([^"]*)"\s*\|\s*semilla="([^"]*)"\s*\]\]/gi;
+    const tagRegex = /\[\[AgroHelper_DETECTED:\s*lugar="([^"]*)"\s*\|\s*semilla="([^"]*)"\s*\]\]/gi;
     let detectedLocation: string | undefined;
     let detectedSeed: string | undefined;
 
@@ -362,7 +359,7 @@ export class AgronomistAiService {
         return apiError;
       }
       if (error.status === 0) {
-        return 'No se pudo contactar al servidor de AgroNasa para consultar a Gemini. Verifica que el servidor SSR esté activo.';
+        return 'No se pudo contactar al servidor de AgroHelper para consultar a Gemini. Verifica que el servidor SSR esté activo.';
       }
     }
     return 'Ocurrió un error al consultar a la Superinteligencia Agrónoma. Intenta de nuevo en unos segundos.';

@@ -4,12 +4,18 @@
       <div class="brand">
         <div class="brand__mark" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 20V10M12 10c0-4 3.5-7 8-7 0 4.5-3 7-8 7Zm0 0C12 7 8.5 4.5 4 4.5 4 8.5 7 10 12 10Z" />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M12 20V10M12 10c0-4 3.5-7 8-7 0 4.5-3 7-8 7Zm0 0C12 7 8.5 4.5 4 4.5 4 8.5 7 10 12 10Z"
+            />
           </svg>
         </div>
         <div>
-          <p class="brand__eyebrow">NASA POWER · FAO EcoCrop · Gemini Superintelligence</p>
-          <h1 class="brand__title">AgroNasa</h1>
+          <p class="brand__eyebrow">
+            {{ i18n.t('Información satelital para planificar mejor tus cultivos.') }}
+          </p>
+          <h1 class="brand__title">AgroHelper</h1>
         </div>
       </div>
 
@@ -17,8 +23,12 @@
         type="button"
         class="agro-btn agro-btn--secondary agro-btn--sm"
         (click)="i18n.toggle()"
-        [attr.aria-label]="i18n.language() === 'en' ? 'Cambiar idioma a español' : 'Switch language to English'"
-        [attr.title]="i18n.language() === 'en' ? 'Cambiar idioma a español' : 'Switch language to English'"
+        [attr.aria-label]="
+          i18n.language() === 'en' ? 'Cambiar idioma a español' : 'Switch language to English'
+        "
+        [attr.title]="
+          i18n.language() === 'en' ? 'Cambiar idioma a español' : 'Switch language to English'
+        "
       >
         {{ i18n.language() === 'en' ? 'ES' : 'EN' }}
       </button>
@@ -32,11 +42,24 @@
               (click)="selectTab('map')"
               [title]="i18n.t('Ver ubicación en el mapa')"
             >
-              <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z" />
+              <svg
+                class="agro-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z"
+                />
                 <circle cx="12" cy="10" r="3" />
               </svg>
-              <span class="parcel-pill__name">{{ selectedLocationName() || i18n.t('Parcela activa') }}</span>
+              <span class="parcel-pill__name">{{
+                selectedLocationName() || i18n.t('Parcela activa')
+              }}</span>
               <span class="parcel-pill__coords num-mono">{{ coords.lat }}, {{ coords.lon }}</span>
             </button>
           }
@@ -48,8 +71,19 @@
               (click)="selectTab(selectedCoordinates() ? 'recommendations' : 'crops')"
               [title]="i18n.t('Ver cultivo y rotación')"
             >
-              <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 20V10M12 10c0-4 3.5-7 8-7 0 4.5-3 7-8 7Zm0 0C12 7 8.5 4.5 4 4.5 4 8.5 7 10 12 10Z" />
+              <svg
+                class="agro-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M12 20V10M12 10c0-4 3.5-7 8-7 0 4.5-3 7-8 7Zm0 0C12 7 8.5 4.5 4 4.5 4 8.5 7 10 12 10Z"
+                />
               </svg>
               <span class="parcel-pill__name capitalize">{{ primaryName(crop) }}</span>
               @if (cropEvaluation(); as ev) {
@@ -120,11 +154,22 @@
 
 <main class="dashboard">
   <!-- 01 · Mapa -->
-  <section class="panel" role="tabpanel" [attr.aria-label]="i18n.t('Mapa')" [hidden]="activeTab() !== 'map'">
+  <section
+    class="panel"
+    role="tabpanel"
+    [attr.aria-label]="i18n.t('Mapa')"
+    [hidden]="activeTab() !== 'map'"
+  >
     <header class="panel__head">
       <span class="eyebrow">{{ i18n.t('Paso 01 / Encuentra tu zona') }}</span>
       <h2 class="panel__title">{{ i18n.t('¿Dónde quieres cultivar?') }}</h2>
-      <p class="panel__lead">{{ i18n.t('Busca un lugar o haz clic sobre el mapa. Al fijar tu parcela te llevaremos a sus cultivos.') }}</p>
+      <p class="panel__lead">
+        {{
+          i18n.t(
+            'Busca un lugar o haz clic sobre el mapa. Al fijar tu parcela te llevaremos a sus cultivos.'
+          )
+        }}
+      </p>
     </header>
 
     <app-farm-map
@@ -137,13 +182,20 @@
   </section>
 
   <!-- 02 · Cultivos -->
-  <section class="panel" role="tabpanel" [attr.aria-label]="i18n.t('Cultivos')" [hidden]="activeTab() !== 'crops'">
+  <section
+    class="panel"
+    role="tabpanel"
+    [attr.aria-label]="i18n.t('Cultivos')"
+    [hidden]="activeTab() !== 'crops'"
+  >
     <header class="panel__head">
       <span class="eyebrow">{{ i18n.t('Paso 02 / Explora cultivos') }}</span>
       <h2 class="panel__title">{{ i18n.t('Cultivos de tu zona') }}</h2>
       <p class="panel__lead">
         @if (selectedCoordinates()) {
-          {{ i18n.t('Catálogo disponible para') }} {{ selectedLocationName() || i18n.t('tu parcela') }}{{ i18n.t('. Selecciona uno para continuar.') }}
+          {{ i18n.t('Catálogo disponible para') }}
+          {{ selectedLocationName() || i18n.t('tu parcela')
+          }}{{ i18n.t('. Selecciona uno para continuar.') }}
         } @else {
           {{ i18n.t('Aún no has seleccionado una ubicación.') }}
         }
@@ -154,13 +206,19 @@
       <div class="empty-card">
         <span class="empty-card__icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z" />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z"
+            />
             <circle cx="12" cy="10" r="3" />
           </svg>
         </span>
         <h3>{{ i18n.t('Primero elige una ubicación') }}</h3>
         <p>{{ i18n.t('Selecciona un punto en el mapa para ver los cultivos disponibles.') }}</p>
-        <button type="button" class="agro-btn agro-btn--primary" (click)="selectTab('map')">{{ i18n.t('Ir al mapa') }}</button>
+        <button type="button" class="agro-btn agro-btn--primary" (click)="selectTab('map')">
+          {{ i18n.t('Ir al mapa') }}
+        </button>
       </div>
     }
 
@@ -176,13 +234,19 @@
   </section>
 
   <!-- 03 · Recomendaciones -->
-  <section class="panel" role="tabpanel" [attr.aria-label]="i18n.t('Recomendaciones')" [hidden]="activeTab() !== 'recommendations'">
+  <section
+    class="panel"
+    role="tabpanel"
+    [attr.aria-label]="i18n.t('Recomendaciones')"
+    [hidden]="activeTab() !== 'recommendations'"
+  >
     <header class="panel__head">
       <span class="eyebrow">{{ i18n.t('Paso 03 / Planifica con información') }}</span>
       <h2 class="panel__title">{{ i18n.t('Información para tu cultivo') }}</h2>
       <p class="panel__lead">
         @if (selectedCrop(); as crop) {
-          <span class="capitalize">{{ primaryName(crop) }}</span> · {{ selectedLocationName() || i18n.t('Parcela seleccionada') }}
+          <span class="capitalize">{{ primaryName(crop) }}</span> ·
+          {{ selectedLocationName() || i18n.t('Parcela seleccionada') }}
         } @else {
           {{ i18n.t('Aún no has elegido un cultivo.') }}
         }
@@ -197,7 +261,8 @@
               <span class="eyebrow">{{ i18n.t('Ficha de cultivo') }}</span>
               <h3 class="sheet__title">{{ primaryName(crop) }}</h3>
               <p class="sheet__meta">
-                <em>{{ crop.scientificName }}</em> · {{ selectedLocationName() || i18n.t('Parcela seleccionada') }}
+                <em>{{ crop.scientificName }}</em> ·
+                {{ selectedLocationName() || i18n.t('Parcela seleccionada') }}
               </p>
             </div>
             <div class="sheet__actions">
@@ -206,19 +271,39 @@
                 class="agro-btn agro-btn--primary agro-btn--sm"
                 (click)="openAssistantDrawer()"
               >
-                <svg class="agro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z" />
+                <svg
+                  class="agro-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  aria-hidden="true"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z"
+                  />
                 </svg>
                 {{ i18n.t('Consultar Superinteligencia') }}
               </button>
-              <button type="button" class="agro-btn agro-btn--secondary agro-btn--sm" (click)="selectTab('crops')">
+              <button
+                type="button"
+                class="agro-btn agro-btn--secondary agro-btn--sm"
+                (click)="selectTab('crops')"
+              >
                 {{ i18n.t('Cambiar cultivo') }}
               </button>
             </div>
           </header>
 
           <div class="sheet__body">
-            <div class="segmented" role="tablist" [attr.aria-label]="i18n.t('Vista de recomendaciones')" [attr.data-active]="recommendationView()">
+            <div
+              class="segmented"
+              role="tablist"
+              [attr.aria-label]="i18n.t('Vista de recomendaciones')"
+              [attr.data-active]="recommendationView()"
+            >
               <span class="segmented__thumb" aria-hidden="true"></span>
               <button
                 type="button"
@@ -242,12 +327,17 @@
 
             <div class="sheet__view" [hidden]="recommendationView() !== 'recommendations'">
               @if (isLoadingClimate()) {
-                <p class="status-note"><span class="spinner"></span> {{ i18n.t('Analizando datos de NASA POWER...') }}</p>
+                <p class="status-note">
+                  <span class="spinner"></span> {{ i18n.t('Analizando datos de NASA POWER...') }}
+                </p>
               }
               @if (climateError(); as err) {
                 <p class="agro-alert-error" role="alert">{{ i18n.t(err) }}</p>
               }
-              <app-rotation-timeline [cropEvaluation]="cropEvaluation()" [rotationPlan]="rotationPlan()" />
+              <app-rotation-timeline
+                [cropEvaluation]="cropEvaluation()"
+                [rotationPlan]="rotationPlan()"
+              />
             </div>
 
             <div class="sheet__view" [hidden]="recommendationView() !== 'forecast'">
@@ -259,36 +349,69 @@
         <div class="empty-card">
           <span class="empty-card__icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 21V11M12 11C12 6.5 16 4 20 4c0 4.5-3 7-8 7Zm0 0C12 7.5 8 5 4 5c0 4.5 3 6 8 6Z" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M12 21V11M12 11C12 6.5 16 4 20 4c0 4.5-3 7-8 7Zm0 0C12 7.5 8 5 4 5c0 4.5 3 6 8 6Z"
+              />
             </svg>
           </span>
           <h3>{{ i18n.t('Elige un cultivo') }}</h3>
-          <p>{{ i18n.t('Selecciona o busca un cultivo para ver sus recomendaciones y el pronóstico de tu parcela.') }}</p>
-          <button type="button" class="agro-btn agro-btn--primary" (click)="selectTab('crops')">{{ i18n.t('Ir a cultivos') }}</button>
+          <p>
+            {{
+              i18n.t(
+                'Selecciona o busca un cultivo para ver sus recomendaciones y el pronóstico de tu parcela.'
+              )
+            }}
+          </p>
+          <button type="button" class="agro-btn agro-btn--primary" (click)="selectTab('crops')">
+            {{ i18n.t('Ir a cultivos') }}
+          </button>
         </div>
       }
     } @else {
       <div class="empty-card">
         <span class="empty-card__icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z" />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z"
+            />
             <circle cx="12" cy="10" r="3" />
           </svg>
         </span>
         <h3>{{ i18n.t('Primero elige una ubicación') }}</h3>
-        <p>{{ i18n.t('Necesitamos tu parcela para calcular las recomendaciones con datos de la NASA.') }}</p>
-        <button type="button" class="agro-btn agro-btn--primary" (click)="selectTab('map')">{{ i18n.t('Ir al mapa') }}</button>
+        <p>
+          {{
+            i18n.t('Necesitamos tu parcela para calcular las recomendaciones con datos de la NASA.')
+          }}
+        </p>
+        <button type="button" class="agro-btn agro-btn--primary" (click)="selectTab('map')">
+          {{ i18n.t('Ir al mapa') }}
+        </button>
       </div>
     }
   </section>
 
   <!-- 04 · Superinteligencia -->
-  <section class="panel" role="tabpanel" [attr.aria-label]="i18n.t('Superinteligencia')" [hidden]="activeTab() !== 'assistant'">
+  <section
+    class="panel"
+    role="tabpanel"
+    [attr.aria-label]="i18n.t('Superinteligencia')"
+    [hidden]="activeTab() !== 'assistant'"
+  >
     <header class="panel__head">
-      <span class="eyebrow">{{ i18n.t('Paso 04 / Consultoría agronómica con Superinteligencia') }}</span>
+      <span class="eyebrow">{{
+        i18n.t('Paso 04 / Consultoría agronómica con Superinteligencia')
+      }}</span>
       <h2 class="panel__title">{{ i18n.t('Superinteligencia Agrónoma') }}</h2>
       <p class="panel__lead">
-        {{ i18n.t('Conversa sobre aptitud climática, balance hídrico, manejo del suelo o sube una foto de tu cultivo con Gemini.') }}
+        {{
+          i18n.t(
+            'Conversa sobre aptitud climática, balance hídrico, manejo del suelo o sube una foto de tu cultivo con Gemini.'
+          )
+        }}
       </p>
     </header>
 
@@ -311,7 +434,11 @@
   >
     <span class="ai-fab__icon" aria-hidden="true">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 20V10M12 10c0-4 3.5-7 8-7 0 4.5-3 7-8 7Zm0 0C12 7 8.5 4.5 4 4.5 4 8.5 7 10 12 10Z" />
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M12 20V10M12 10c0-4 3.5-7 8-7 0 4.5-3 7-8 7Zm0 0C12 7 8.5 4.5 4 4.5 4 8.5 7 10 12 10Z"
+        />
       </svg>
     </span>
     <span class="ai-fab__label">{{ i18n.t('Superinteligencia') }}</span>
@@ -353,20 +480,48 @@
         <span class="modal__ring"></span>
         <span class="modal__ring modal__ring--late"></span>
         <svg viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 22s-7.5-6.9-7.5-12.5a7.5 7.5 0 0 1 15 0C19.5 15.1 12 22 12 22Zm0-9.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
+          <path
+            d="M12 22s-7.5-6.9-7.5-12.5a7.5 7.5 0 0 1 15 0C19.5 15.1 12 22 12 22Zm0-9.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
+          />
         </svg>
       </div>
 
-      <h2 id="confirm-location-title" class="modal__title">{{ i18n.t('¿Confirmas esta ubicación?') }}</h2>
+      <h2 id="confirm-location-title" class="modal__title">
+        {{ i18n.t('¿Confirmas esta ubicación?') }}
+      </h2>
 
       <div class="modal__actions">
-        <button type="button" class="agro-btn agro-btn--secondary" (click)="cancelLocation()">{{ i18n.t('No') }}</button>
-        <button #confirmButton type="button" class="agro-btn agro-btn--primary" (click)="confirmLocation()">{{ i18n.t('Sí') }}</button>
+        <button type="button" class="agro-btn agro-btn--secondary" (click)="cancelLocation()">
+          {{ i18n.t('No') }}
+        </button>
+        <button
+          #confirmButton
+          type="button"
+          class="agro-btn agro-btn--primary"
+          (click)="confirmLocation()"
+        >
+          {{ i18n.t('Sí') }}
+        </button>
       </div>
     </div>
   </div>
 }
 
 <footer class="site-footer">
-  {{ i18n.t('Datos: NASA POWER · Open-Meteo · FAO EcoCrop · Gemini Superinteligencia. Comprueba siempre las condiciones locales.') }}
+  {{ i18n.t('Datos climáticos:') }}
+  <a href="https://power.larc.nasa.gov/" target="_blank" rel="noopener noreferrer">NASA POWER</a>
+  {{ i18n.t('y') }}
+  <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a>.
+  {{ i18n.t('Datos de cultivos:') }}
+  <a
+    href="https://cgiar-climate-data-hub.github.io/catalog/ecocrop/#access"
+    target="_blank"
+    rel="noopener noreferrer"
+    >FAO EcoCrop</a
+  >.
+  {{
+    i18n.t(
+      'Gemini Superinteligencia solo interpreta los datos de estas fuentes y ofrece recomendaciones; no genera datos meteorológicos ni de cultivos.'
+    )
+  }}
 </footer>

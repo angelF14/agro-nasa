@@ -60,7 +60,7 @@ export class AgronomistAssistantComponent {
   protected readonly i18n = inject(LanguageService);
   protected readonly ai = inject(AgronomistAiService);
   private readonly englishWelcomeMessage = [
-    'Hello, I’m **AgroNasa Superintelligence**, your agronomic assistant connected live to **NASA POWER**, **Open-Meteo**, and **FAO EcoCrop**.',
+    'Hello, I’m **AgroHelper Superintelligence**, your agronomic assistant connected live to **NASA POWER**, **Open-Meteo**, and **FAO EcoCrop**.',
     '',
     '- **Mention a place and a crop** (e.g. *"I want to grow corn in Comayagua, Honduras"* or *"Which crop do you recommend in Sinaloa?"*) and I’ll automatically look up satellite climate, forecasts, and a rotation plan.',
     '- Ask me about climate suitability, irrigation, water balance (ET₀), or your 3-cycle rotation sequence.',
@@ -181,7 +181,8 @@ export class AgronomistAssistantComponent {
     if (!ctx.coordinates) {
       return this.i18n.t('Consulta general (sin parcela fijada)');
     }
-    const location = ctx.locationName?.split(',')[0]?.trim() || `${ctx.coordinates.lat}, ${ctx.coordinates.lon}`;
+    const location =
+      ctx.locationName?.split(',')[0]?.trim() || `${ctx.coordinates.lat}, ${ctx.coordinates.lon}`;
     if (ctx.selectedCrop && ctx.cropEvaluation) {
       return `${location} · ${ctx.selectedCrop.commonName} (${ctx.cropEvaluation.overallScore}%)`;
     }
@@ -379,7 +380,7 @@ export class AgronomistAssistantComponent {
       this.pendingImage.set(compressed);
     } catch (error) {
       this.attachmentError.set(
-        error instanceof Error ? error.message : 'No se pudo cargar la imagen.'
+        error instanceof Error ? error.message : 'No se pudo cargar la imagen.',
       );
     } finally {
       this.isProcessingImage.set(false);

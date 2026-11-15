@@ -112,7 +112,17 @@ export const SPANISH_CROP_ALIASES: SpanishCropAlias[] = [
   },
   {
     spanishLabel: 'chile / pimiento',
-    terms: ['chile', 'chiles', 'pimiento', 'pimientos', 'aji', 'morron', 'jalapeno', 'serrano', 'habanero'],
+    terms: [
+      'chile',
+      'chiles',
+      'pimiento',
+      'pimientos',
+      'aji',
+      'morron',
+      'jalapeno',
+      'serrano',
+      'habanero',
+    ],
     scientificTargets: ['Capsicum annuum', 'Capsicum frutescens', 'Capsicum chinense'],
   },
   {
@@ -374,7 +384,7 @@ const NON_LOCATION_STOPWORDS = new Set([
   'rotacion',
   'el mapa',
   'agro-nasa',
-  'agronasa',
+  'AgroHelper',
   'nasa power',
   'open-meteo',
   'ecocrop',
@@ -456,14 +466,14 @@ export function getLocalizedCropName(crop: Crop, language: 'en' | 'es'): string 
   const commonNames = crop.commonNames ?? [];
   const spanishAlias = SPANISH_CROP_ALIASES.find((alias) =>
     alias.scientificTargets.some(
-      (scientificName) => scientificName.toLowerCase() === crop.scientificName.toLowerCase()
-    )
+      (scientificName) => scientificName.toLowerCase() === crop.scientificName.toLowerCase(),
+    ),
   )?.spanishLabel;
 
   if (spanishAlias) {
     const normalizedAlias = normalizeSearchText(spanishAlias);
     const matchingSpanishName = commonNames.find(
-      (name) => normalizeSearchText(name) === normalizedAlias
+      (name) => normalizeSearchText(name) === normalizedAlias,
     );
     if (language === 'es' && matchingSpanishName) {
       return matchingSpanishName;
@@ -473,7 +483,7 @@ export function getLocalizedCropName(crop: Crop, language: 'en' | 'es'): string 
       const preferredEnglishName = ENGLISH_CROP_NAMES[spanishAlias];
       const matchingEnglishName = preferredEnglishName
         ? commonNames.find(
-            (name) => normalizeSearchText(name) === normalizeSearchText(preferredEnglishName)
+            (name) => normalizeSearchText(name) === normalizeSearchText(preferredEnglishName),
           )
         : undefined;
       if (matchingEnglishName) {
@@ -481,7 +491,7 @@ export function getLocalizedCropName(crop: Crop, language: 'en' | 'es'): string 
       }
 
       const otherCommonName = commonNames.find(
-        (name) => normalizeSearchText(name) !== normalizedAlias
+        (name) => normalizeSearchText(name) !== normalizedAlias,
       );
       if (otherCommonName) {
         return otherCommonName;
@@ -551,7 +561,7 @@ export function searchCatalogWithAliases(query: string, catalog: Crop[]): Crop[]
     ) {
       for (const sciTarget of alias.scientificTargets) {
         const match = catalog.find(
-          (c) => c.scientificName.toLowerCase() === sciTarget.toLowerCase()
+          (c) => c.scientificName.toLowerCase() === sciTarget.toLowerCase(),
         );
         addCrop(match);
       }
@@ -577,7 +587,7 @@ export function searchCatalogWithAliases(query: string, catalog: Crop[]): Crop[]
     ) {
       for (const sciTarget of alias.scientificTargets) {
         const match = catalog.find(
-          (c) => c.scientificName.toLowerCase() === sciTarget.toLowerCase()
+          (c) => c.scientificName.toLowerCase() === sciTarget.toLowerCase(),
         );
         addCrop(match);
       }
@@ -602,7 +612,7 @@ export function searchCatalogWithAliases(query: string, catalog: Crop[]): Crop[]
  */
 export function extractCropsFromPrompt(
   text: string,
-  catalog: Crop[]
+  catalog: Crop[],
 ): { crops: Crop[]; matchedTerms: string[] } {
   const normText = normalizeSearchText(text);
   if (!normText || catalog.length === 0) {
@@ -637,7 +647,7 @@ export function extractCropsFromPrompt(
     if (matchIndex >= 0) {
       for (const sciTarget of candidate.scientificTargets) {
         const found = catalog.find(
-          (c) => c.scientificName.toLowerCase() === sciTarget.toLowerCase()
+          (c) => c.scientificName.toLowerCase() === sciTarget.toLowerCase(),
         );
         if (found) {
           addCrop(found, candidate.term, matchIndex);
@@ -707,7 +717,7 @@ export function extractCropsFromPrompt(
  */
 export function extractLocationFromPrompt(
   text: string,
-  matchedCropTerms: string[] = []
+  matchedCropTerms: string[] = [],
 ): { locationQuery?: string; explicitCoordinates?: Coordinates } {
   const trimmed = text.trim();
   if (!trimmed) {
@@ -721,7 +731,12 @@ export function extractLocationFromPrompt(
   if (coordMatch) {
     const lat = Number(coordMatch[1]);
     const lon = Number(coordMatch[2]);
-    if (Number.isFinite(lat) && Number.isFinite(lon) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180) {
+    if (
+      Number.isFinite(lat) &&
+      Number.isFinite(lon) &&
+      Math.abs(lat) <= 90 &&
+      Math.abs(lon) <= 180
+    ) {
       return {
         explicitCoordinates: {
           lat: Math.round(lat * 100000) / 100000,
@@ -776,7 +791,7 @@ export function isAskingForSeedRecommendation(text: string): boolean {
   const norm = normalizeSearchText(text);
   return (
     /\b(?:que\s+semilla|que\s+semillas|que\s+cultivo|que\s+cultivos|que\s+sembrar|que\s+puedo\s+sembrar|que\s+me\s+recomiendas\s+sembrar|recomiendame\s+una\s+semilla|recomiendame\s+un\s+cultivo|mejor\s+semilla|mejores\s+semillas)\b/.test(
-      norm
+      norm,
     ) || norm.includes('semilla')
   );
 }
@@ -809,15 +824,13 @@ function findWholeTermIndex(normalizedHaystack: string, normalizedNeedle: string
 }
 
 function cleanLocationCandidate(raw: string, matchedCropTerms: string[]): string {
-  let cleaned = raw
-    .split(/[?¿!¡;:\n\r()]/)[0]
-    .trim();
+  let cleaned = raw.split(/[?¿!¡;:\n\r()]/)[0].trim();
 
   // Strip leading generic geographic/parcel descriptors so "mi parcela de Comayagua" or "la zona de Sinaloa" -> "Comayagua" / "Sinaloa"
   cleaned = cleaned
     .replace(
       /^(?:(?:mi|la|el|una|un|esta|este|nuestra|nuestro)\s+)?(?:parcela|finca|terreno|lote|huerto|campo|tierra|zona|regi[oó]n|municipio|departamento|estado|provincia|ciudad|comunidad|aldea|pueblo|lugar|ubicaci[oó]n)\s+(?:de|del|en)\s+/i,
-      ''
+      '',
     )
     .trim();
 
@@ -840,9 +853,9 @@ function cleanLocationCandidate(raw: string, matchedCropTerms: string[]): string
       .replace(
         new RegExp(
           `(?:,|\\s)+(?:(?:con|para|de|y|o|sembrando|cultivando|semilla\\s+de|cultivo\\s+de)\\s+)?${escaped}\\b.*$`,
-          'i'
+          'i',
         ),
-        ''
+        '',
       )
       .trim();
   }
@@ -855,7 +868,10 @@ function cleanLocationCandidate(raw: string, matchedCropTerms: string[]): string
   return cleaned;
 }
 
-function extractBareLocationFallback(rawText: string, matchedCropTerms: string[]): string | undefined {
+function extractBareLocationFallback(
+  rawText: string,
+  matchedCropTerms: string[],
+): string | undefined {
   // Only apply to relatively concise prompts (<= 10 words) where the user may write "Comayagua, maíz" or "Sinaloa, México"
   const withoutPunct = rawText.split(/[?¿!¡;:\n\r()]/)[0].trim();
   const words = withoutPunct.split(/\s+/);
@@ -868,7 +884,7 @@ function extractBareLocationFallback(rawText: string, matchedCropTerms: string[]
   candidate = candidate
     .replace(
       /^(?:hola[,.\s]*|buenos\s+d[ií]as[,.\s]*|buenas\s+tardes[,.\s]*|buenas\s+noches[,.\s]*|quiero\s+sembrar|quisiera\s+sembrar|sembrar|cultivar|evaluar|buscar|recomienda(?:me)?|dame\s+recomendaci[oó]n\s+para)\s+/i,
-      ''
+      '',
     )
     .trim();
 
@@ -907,7 +923,7 @@ function isValidLocationCandidate(candidate: string, matchedCropTerms: string[])
   // Reject candidates that contain purely agronomic/question words rather than place names
   if (
     /\b(?:nitrogeno|fosforo|potasio|fertilizante|abono|plaga|plagas|hongo|hongos|insecto|riego|goteo|humedad|lluvia|lluvias|sequia|calor|helada|temperatura|suelo|suelos|hoja|hojas|tallo|raiz|fruto|semilla|semillas|cultivo|cultivos|rotacion|ciclo|ciclos|rendimiento|produccion|enfermedad|sintoma|sintomas|deficiencia|analisis|recomendacion|recomiendas|conviene|viable|mejor|mejores|como|cuando|donde|porque|cual|cuales|cuanto|hola|ayuda|gracias)\b/.test(
-      norm
+      norm,
     )
   ) {
     return false;
@@ -916,7 +932,7 @@ function isValidLocationCandidate(candidate: string, matchedCropTerms: string[])
   // Reject if candidate starts with possessive/demonstrative non-geographic determiners
   if (
     /^(?:mi|mis|tu|tus|su|sus|este|esta|estos|estas|ese|esa|un|una|unos|unas|el\s+suelo|la\s+hoja|las\s+hojas|el\s+cultivo|la\s+semilla|los\s+datos)\b/.test(
-      norm
+      norm,
     )
   ) {
     return false;
