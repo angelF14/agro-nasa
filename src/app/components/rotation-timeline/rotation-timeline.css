@@ -9,7 +9,7 @@
 .eval-summary { margin: 0.4rem 0 0; font-size: 0.9rem; color: var(--text); }
 
 .score-badge { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 116px; padding: 0.7rem 1rem; border-radius: var(--radius); border: 1px solid transparent; text-align: center; animation: pop 0.6s var(--spring) backwards; }
-.score-badge--optimal { background: var(--brand-soft); color: var(--ink); border-color: #c4dcc1; }
+.score-badge--optimal { background: var(--brand-soft); color: var(--ink); border-color: #bfe5cd; }
 .score-badge--acceptable { background: var(--amber-bg); color: var(--amber-text); border-color: var(--amber-border); }
 .score-badge--low { background: var(--danger-bg); color: var(--danger-text); border-color: var(--danger-border); }
 .score-badge__number { font-size: 1.6rem; font-weight: 700; line-height: 1.1; }

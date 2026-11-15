@@ -232,7 +232,7 @@
   width: calc(50% - 4px);
   border-radius: 9px;
   background: var(--ink);
-  box-shadow: 0 4px 10px -4px rgba(23, 58, 42, 0.6);
+  box-shadow: 0 4px 10px -4px rgba(11, 93, 59, 0.6);
   transition: transform 0.5s var(--spring);
 }
 

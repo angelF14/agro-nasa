@@ -2,49 +2,50 @@
 @import 'leaflet/dist/leaflet.css';
 
 /* ============================================================
-   Design tokens — agro palette (sage paper, forest ink, terracotta, wheat)
+   Design tokens — emerald field palette (emerald, fresh leaf, sunny yellow, cool whites)
    ============================================================ */
 :root {
-  --font-sans: 'Work Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-serif: 'Fraunces', Georgia, 'Times New Roman', serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-sans: 'Outfit', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-serif: var(--font-sans);
+  --font-mono: var(--font-sans);
 
-  --bg: #f2f1e7;
+  --bg: #f1f5f2;
   --surface: #ffffff;
-  --surface-2: #f6f6ef;
-  --surface-tint: #e9efe2;
+  --surface-2: #f6f9f7;
+  --surface-tint: #e5f2ea;
 
-  --ink: #173a2a;
-  --ink-hover: #0e281c;
-  --text: #26372e;
-  --text-muted: #66756b;
+  --heading: #13251c;
+  --ink: #0b5d3b;
+  --ink-hover: #084a2f;
+  --text: #24332b;
+  --text-muted: #6b7b72;
 
-  --line: #e3e5d8;
-  --line-strong: #cdd3c1;
+  --line: #e3ebe6;
+  --line-strong: #c9d8cf;
 
-  --brand: #2f7d4f;
-  --brand-soft: #e2efe0;
-  --accent: #b0602a;
-  --accent-soft: #f6e8d8;
-  --wheat: #e7b24a;
+  --brand: #16a05a;
+  --brand-soft: #dcf2e4;
+  --accent: #0e8a4f;
+  --accent-soft: #ddf3e6;
+  --wheat: #f6b93b;
 
-  --amber-bg: #fdf5df;
-  --amber-text: #7a5414;
-  --amber-border: #efdba8;
-  --sky-bg: #eaf3f3;
-  --sky-text: #2d6670;
-  --sky-border: #c3dddf;
-  --danger-bg: #fbeeec;
-  --danger-text: #9b2c22;
-  --danger-border: #efc4be;
+  --amber-bg: #fff7e2;
+  --amber-text: #8a5a0b;
+  --amber-border: #f6e0a6;
+  --sky-bg: #e9f4fb;
+  --sky-text: #1d6a8e;
+  --sky-border: #c5e1f1;
+  --danger-bg: #fdeff0;
+  --danger-text: #b4232c;
+  --danger-border: #f4c7ca;
 
   --radius-sm: 10px;
   --radius: 14px;
   --radius-lg: 22px;
 
-  --shadow-sm: 0 1px 2px rgba(23, 58, 42, 0.05);
-  --shadow: 0 1px 2px rgba(23, 58, 42, 0.04), 0 10px 30px -12px rgba(23, 58, 42, 0.16);
-  --shadow-lg: 0 2px 6px rgba(23, 58, 42, 0.05), 0 24px 48px -16px rgba(23, 58, 42, 0.24);
+  --shadow-sm: 0 1px 2px rgba(11, 93, 59, 0.05);
+  --shadow: 0 1px 2px rgba(11, 93, 59, 0.04), 0 10px 30px -12px rgba(11, 93, 59, 0.16);
+  --shadow-lg: 0 2px 6px rgba(11, 93, 59, 0.05), 0 24px 48px -16px rgba(11, 93, 59, 0.24);
 
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -81,7 +82,7 @@ body {
   line-height: 1.55;
   color: var(--text);
   background-color: var(--bg);
-  background-image: radial-gradient(1100px 520px at 100% 0%, rgba(226, 232, 196, 0.7), transparent 65%);
+  background-image: radial-gradient(1100px 520px at 100% 0%, rgba(22, 160, 90, 0.08), transparent 65%);
   background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
@@ -97,9 +98,9 @@ h1,
 h2,
 h3 {
   font-family: var(--font-serif);
-  font-weight: 700;
-  color: var(--ink);
-  letter-spacing: -0.01em;
+  font-weight: 600;
+  color: var(--heading);
+  letter-spacing: -0.015em;
   line-height: 1.2;
 }
 
@@ -126,7 +127,7 @@ h3 {
   font-family: var(--font-mono);
   font-size: 0.7rem;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--accent);
 }
@@ -262,7 +263,7 @@ h3 {
 .agro-btn--primary {
   background: var(--ink);
   color: #fff;
-  box-shadow: 0 6px 14px -8px rgba(23, 58, 42, 0.7);
+  box-shadow: 0 6px 14px -8px rgba(11, 93, 59, 0.7);
 }
 
 .agro-btn--primary:hover:not(:disabled) {
@@ -299,13 +300,13 @@ h3 {
 }
 
 .agro-input::placeholder {
-  color: #98a299;
+  color: #9aa9a0;
 }
 
 .agro-input:focus {
   outline: none;
   border-color: var(--brand);
-  box-shadow: 0 0 0 3px rgba(47, 125, 79, 0.15);
+  box-shadow: 0 0 0 3px rgba(22, 160, 90, 0.18);
 }
 
 .spinner {
@@ -419,7 +420,7 @@ h3 {
   align-items: flex-end;
   justify-content: center;
   padding: 0;
-  background: rgba(14, 40, 28, 0.45);
+  background: rgba(8, 40, 26, 0.45);
   backdrop-filter: blur(6px);
   animation: backdrop-in 0.3s ease-out both;
 }
@@ -468,7 +469,7 @@ h3 {
   position: relative;
   width: 2rem;
   height: 2rem;
-  filter: drop-shadow(0 6px 6px rgba(176, 96, 42, 0.35));
+  filter: drop-shadow(0 6px 6px rgba(11, 93, 59, 0.3));
   animation: pin-drop 0.8s var(--spring) 0.15s both, bob 3s ease-in-out 1s infinite;
 }
 
